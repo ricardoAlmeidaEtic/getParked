@@ -1,12 +1,16 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Poppins } from 'next/font/google'
 import '@/styles/globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const poppins = Poppins({ 
+  weight: ['400', '500', '600', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
-  title: 'GetParked',
-  description: 'Sistema de gerenciamento de estacionamento',
+  title: 'GetParked - Sistema de Gerenciamento de Estacionamento',
+  description: 'Sistema inteligente para gerenciamento de estacionamentos',
 }
 
 export default function RootLayout({
@@ -16,8 +20,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body className={inter.className}>
-        <main className="min-h-screen bg-gray-50">
+      <body className={poppins.className}>
+        <main className="min-h-screen">
           {children}
         </main>
       </body>
