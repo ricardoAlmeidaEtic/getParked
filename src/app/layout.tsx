@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
 import '@/styles/globals.css'
+import { SupabaseProvider } from '@/providers/SupabaseProvider'
 
 const poppins = Poppins({ 
   weight: ['400', '500', '600', '700'],
@@ -21,9 +22,11 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={poppins.className}>
-        <main className="min-h-screen">
-          {children}
-        </main>
+        <SupabaseProvider>
+          <main className="min-h-screen">
+            {children}
+          </main>
+        </SupabaseProvider>
       </body>
     </html>
   )
