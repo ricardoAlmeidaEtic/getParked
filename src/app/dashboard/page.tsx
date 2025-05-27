@@ -5,6 +5,8 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './map-styles.css'
 import { showToast } from '@/lib/toast'
+import { getPublicSpotMarkers, getPrivateParkingMarkers } from '@/lib/map-markers'
+import { createPublicSpotMarker, createPrivateParkingMarker } from '@/lib/map-utils'
 
 export default function DashboardPage() {
   const mapRef = useRef<L.Map | null>(null)
@@ -15,7 +17,7 @@ export default function DashboardPage() {
 
     // Inicializa o mapa
     const map = L.map(mapContainerRef.current, {
-      zoomControl: false // Desativa o controle de zoom padrão
+      zoomControl: false
     }).setView([0, 0], 13)
     mapRef.current = map
 
@@ -69,6 +71,28 @@ export default function DashboardPage() {
       circle.bindPopup(`Sua localização atual (precisão: ${Math.round(accuracy)}m)`)
     }
 
+    // Função para carregar os marcadores
+    const loadMarkers = async () => {
+      if (!mapRef.current) return
+
+      try {
+        // Carrega marcadores públicos
+        const publicMarkers = await getPublicSpotMarkers()
+        publicMarkers.forEach(marker => {
+          createPublicSpotMarker(marker).addTo(mapRef.current!)
+        })
+
+        // Carrega marcadores privados
+        const privateMarkers = await getPrivateParkingMarkers()
+        privateMarkers.forEach(marker => {
+          createPrivateParkingMarker(marker).addTo(mapRef.current!)
+        })
+      } catch (error) {
+        console.error('Erro ao carregar marcadores:', error)
+        showToast.error('Erro ao carregar os estacionamentos')
+      }
+    }
+
     // Aguarda o mapa carregar completamente
     map.whenReady(() => {
       // Solicita a localização do usuário
@@ -83,6 +107,9 @@ export default function DashboardPage() {
       } else {
         showToast.error('Seu navegador não suporta geolocalização')
       }
+
+      // Carrega os marcadores
+      loadMarkers()
     })
 
     // Cleanup
