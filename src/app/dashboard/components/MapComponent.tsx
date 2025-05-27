@@ -1,0 +1,190 @@
+'use client'
+
+import { useEffect, useRef, useCallback } from 'react'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+import 'leaflet-routing-machine/dist/leaflet-routing-machine.css'
+import '../map-styles.css'
+import { showToast } from '@/lib/toast'
+import { getPublicSpotMarkers, getPrivateParkingMarkers } from '@/lib/map-markers'
+import { createPublicSpotMarker, createPrivateParkingMarker } from '@/lib/map-utils'
+import { RouteManager } from '@/lib/route-utils'
+import { PublicSpotCreator } from '@/lib/public-spot-creator'
+import { MapMarker } from '@/types/map'
+
+interface MapComponentProps {
+  isCreatingSpot: boolean
+  onMarkerPositionChange: (position: L.LatLng | null) => void
+  onMarkerCreated: () => void
+}
+
+export default function MapComponent({
+  isCreatingSpot,
+  onMarkerPositionChange,
+  onMarkerCreated
+}: MapComponentProps) {
+  const mapRef = useRef<L.Map | null>(null)
+  const mapContainerRef = useRef<HTMLDivElement>(null)
+  const routeManagerRef = useRef<RouteManager | null>(null)
+  const userMarkerRef = useRef<L.CircleMarker | null>(null)
+  const publicSpotCreatorRef = useRef<PublicSpotCreator | null>(null)
+
+  // Função para carregar os marcadores
+  const loadMarkers = useCallback(async () => {
+    if (!mapRef.current) return
+
+    try {
+      // Carrega marcadores públicos
+      const publicMarkers = await getPublicSpotMarkers()
+      publicMarkers.forEach(marker => {
+        createPublicSpotMarker(marker).addTo(mapRef.current!)
+      })
+
+      // Carrega marcadores privados
+      const privateMarkers = await getPrivateParkingMarkers()
+      privateMarkers.forEach(marker => {
+        createPrivateParkingMarker(marker).addTo(mapRef.current!)
+      })
+    } catch (error) {
+      console.error('Erro ao carregar marcadores:', error)
+      showToast.error('Erro ao carregar os estacionamentos')
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!mapContainerRef.current) return
+
+    // Inicializa o mapa
+    const map = L.map(mapContainerRef.current, {
+      zoomControl: false
+    }).setView([0, 0], 13)
+    mapRef.current = map
+
+    // Inicializa o gerenciador de rotas
+    routeManagerRef.current = new RouteManager(map)
+
+    // Adiciona o tile layer do OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map)
+
+    // Adiciona controle de zoom personalizado no canto inferior direito
+    L.control.zoom({
+      position: 'bottomright'
+    }).addTo(map)
+
+    // Função para adicionar a localização do usuário
+    const addUserLocation = (position: GeolocationPosition) => {
+      if (!mapRef.current) return
+
+      const { latitude, longitude } = position.coords
+      mapRef.current.setView([latitude, longitude], 13)
+      
+      // Adiciona um círculo azul na localização do usuário com tamanho fixo
+      const accuracy = position.coords.accuracy
+      const circle = L.circleMarker([latitude, longitude], {
+        radius: 15,
+        color: '#3B82F6',
+        fillColor: '#3B82F6',
+        fillOpacity: 0.3,
+        weight: 2,
+      }).addTo(mapRef.current)
+
+      userMarkerRef.current = circle
+
+      // Adiciona um círculo menor no centro para melhor visualização
+      L.circleMarker([latitude, longitude], {
+        radius: 8,
+        color: '#3B82F6',
+        fillColor: '#3B82F6',
+        fillOpacity: 0.8,
+        weight: 2,
+      }).addTo(mapRef.current)
+
+      // Adiciona um círculo de precisão (este pode mudar de tamanho com o zoom)
+      L.circle([latitude, longitude], {
+        radius: accuracy,
+        color: '#3B82F6',
+        fillColor: '#3B82F6',
+        fillOpacity: 0.1,
+        weight: 1,
+        dashArray: '5, 5',
+      }).addTo(mapRef.current)
+
+      // Adiciona um popup com informações de precisão
+      circle.bindPopup(`Sua localização atual (precisão: ${Math.round(accuracy)}m)`)
+    }
+
+    // Adiciona listener para cálculo de rota
+    const handleCalculateRoute = (event: CustomEvent<MapMarker>) => {
+      if (!mapRef.current || !routeManagerRef.current || !userMarkerRef.current) return
+
+      const destination = event.detail
+      const userPosition = userMarkerRef.current.getLatLng()
+
+      routeManagerRef.current.calculateRoute(
+        userPosition,
+        destination,
+        userMarkerRef.current
+      )
+    }
+
+    window.addEventListener('calculate-route', handleCalculateRoute as EventListener)
+
+    // Aguarda o mapa carregar completamente
+    map.whenReady(() => {
+      // Solicita a localização do usuário
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          addUserLocation,
+          (error) => {
+            showToast.error('Por favor, autorize o acesso à sua localização para uma melhor experiência')
+            console.error('Erro ao obter localização:', error)
+          }
+        )
+      } else {
+        showToast.error('Seu navegador não suporta geolocalização')
+      }
+
+      // Carrega os marcadores
+      loadMarkers()
+    })
+
+    // Cleanup
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove()
+      }
+      window.removeEventListener('calculate-route', handleCalculateRoute as EventListener)
+      if (routeManagerRef.current) {
+        routeManagerRef.current.clearRoute()
+      }
+      if (publicSpotCreatorRef.current) {
+        publicSpotCreatorRef.current.stopCreation()
+      }
+    }
+  }, [loadMarkers])
+
+  // Efeito para gerenciar o modo de criação de spots
+  useEffect(() => {
+    if (!mapRef.current || !userMarkerRef.current) return
+
+    if (isCreatingSpot) {
+      const userPosition = userMarkerRef.current.getLatLng()
+      publicSpotCreatorRef.current = new PublicSpotCreator(mapRef.current, userPosition)
+      publicSpotCreatorRef.current.startCreation((position) => {
+        onMarkerPositionChange(position)
+      })
+    } else {
+      publicSpotCreatorRef.current?.stopCreation()
+      onMarkerPositionChange(null)
+    }
+  }, [isCreatingSpot, onMarkerPositionChange])
+
+  return (
+    <div 
+      ref={mapContainerRef} 
+      className="absolute inset-0 w-full h-full z-0"
+    />
+  )
+} 
