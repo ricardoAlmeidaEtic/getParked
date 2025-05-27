@@ -3,14 +3,19 @@
 import { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import 'leaflet-routing-machine/dist/leaflet-routing-machine.css'
 import './map-styles.css'
 import { showToast } from '@/lib/toast'
 import { getPublicSpotMarkers, getPrivateParkingMarkers } from '@/lib/map-markers'
 import { createPublicSpotMarker, createPrivateParkingMarker } from '@/lib/map-utils'
+import { RouteManager } from '@/lib/route-utils'
+import { MapMarker } from '@/types/map'
 
 export default function DashboardPage() {
   const mapRef = useRef<L.Map | null>(null)
   const mapContainerRef = useRef<HTMLDivElement>(null)
+  const routeManagerRef = useRef<RouteManager | null>(null)
+  const userMarkerRef = useRef<L.CircleMarker | null>(null)
 
   useEffect(() => {
     if (!mapContainerRef.current) return
@@ -20,6 +25,9 @@ export default function DashboardPage() {
       zoomControl: false
     }).setView([0, 0], 13)
     mapRef.current = map
+
+    // Inicializa o gerenciador de rotas
+    routeManagerRef.current = new RouteManager(map)
 
     // Adiciona o tile layer do OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -47,6 +55,8 @@ export default function DashboardPage() {
         fillOpacity: 0.3,
         weight: 2,
       }).addTo(mapRef.current)
+
+      userMarkerRef.current = circle
 
       // Adiciona um círculo menor no centro para melhor visualização
       L.circleMarker([latitude, longitude], {
@@ -93,6 +103,22 @@ export default function DashboardPage() {
       }
     }
 
+    // Adiciona listener para cálculo de rota
+    const handleCalculateRoute = (event: CustomEvent<MapMarker>) => {
+      if (!mapRef.current || !routeManagerRef.current || !userMarkerRef.current) return
+
+      const destination = event.detail
+      const userPosition = userMarkerRef.current.getLatLng()
+
+      routeManagerRef.current.calculateRoute(
+        userPosition,
+        destination,
+        userMarkerRef.current
+      )
+    }
+
+    window.addEventListener('calculate-route', handleCalculateRoute as EventListener)
+
     // Aguarda o mapa carregar completamente
     map.whenReady(() => {
       // Solicita a localização do usuário
@@ -116,6 +142,10 @@ export default function DashboardPage() {
     return () => {
       if (mapRef.current) {
         mapRef.current.remove()
+      }
+      window.removeEventListener('calculate-route', handleCalculateRoute as EventListener)
+      if (routeManagerRef.current) {
+        routeManagerRef.current.clearRoute()
       }
     }
   }, [])
