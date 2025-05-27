@@ -1,0 +1,111 @@
+'use client'
+
+import { useEffect, useRef } from 'react'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+import './map-styles.css'
+import { showToast } from '@/lib/toast'
+
+export default function DashboardPage() {
+  const mapRef = useRef<L.Map | null>(null)
+  const mapContainerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!mapContainerRef.current) return
+
+    // Inicializa o mapa
+    const map = L.map(mapContainerRef.current, {
+      zoomControl: false // Desativa o controle de zoom padrão
+    }).setView([0, 0], 13)
+    mapRef.current = map
+
+    // Adiciona o tile layer do OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map)
+
+    // Adiciona controle de zoom personalizado no canto inferior direito
+    L.control.zoom({
+      position: 'bottomright'
+    }).addTo(map)
+
+    // Função para adicionar a localização do usuário
+    const addUserLocation = (position: GeolocationPosition) => {
+      if (!mapRef.current) return
+
+      const { latitude, longitude } = position.coords
+      mapRef.current.setView([latitude, longitude], 13)
+      
+      // Adiciona um círculo azul na localização do usuário com tamanho fixo
+      const accuracy = position.coords.accuracy
+      const circle = L.circleMarker([latitude, longitude], {
+        radius: 15,
+        color: '#3B82F6',
+        fillColor: '#3B82F6',
+        fillOpacity: 0.3,
+        weight: 2,
+      }).addTo(mapRef.current)
+
+      // Adiciona um círculo menor no centro para melhor visualização
+      L.circleMarker([latitude, longitude], {
+        radius: 8,
+        color: '#3B82F6',
+        fillColor: '#3B82F6',
+        fillOpacity: 0.8,
+        weight: 2,
+      }).addTo(mapRef.current)
+
+      // Adiciona um círculo de precisão (este pode mudar de tamanho com o zoom)
+      L.circle([latitude, longitude], {
+        radius: accuracy,
+        color: '#3B82F6',
+        fillColor: '#3B82F6',
+        fillOpacity: 0.1,
+        weight: 1,
+        dashArray: '5, 5',
+      }).addTo(mapRef.current)
+
+      // Adiciona um popup com informações de precisão
+      circle.bindPopup(`Sua localização atual (precisão: ${Math.round(accuracy)}m)`)
+    }
+
+    // Aguarda o mapa carregar completamente
+    map.whenReady(() => {
+      // Solicita a localização do usuário
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          addUserLocation,
+          (error) => {
+            showToast.error('Por favor, autorize o acesso à sua localização para uma melhor experiência')
+            console.error('Erro ao obter localização:', error)
+          }
+        )
+      } else {
+        showToast.error('Seu navegador não suporta geolocalização')
+      }
+    })
+
+    // Cleanup
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove()
+      }
+    }
+  }, [])
+
+  return (
+    <div className="relative w-full h-screen">
+      <div 
+        ref={mapContainerRef} 
+        className="absolute inset-0 w-full h-full z-0"
+      />
+      <div className="absolute top-0 left-0 right-0 z-10 pointer-events-none">
+        <div className="container mx-auto px-4 py-4">
+          <h1 className="text-2xl font-bold text-gray-800 bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-lg">
+            GetParked - Dashboard
+          </h1>
+        </div>
+      </div>
+    </div>
+  )
+} 
