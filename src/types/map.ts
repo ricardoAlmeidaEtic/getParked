@@ -16,4 +16,10 @@ export interface PrivateParkingMarker extends MapMarker {
   type: 'private'
   price_per_hour: number
   is_open: boolean
+}
+
+export interface RouteInfo {
+  duration: number // em minutos
+  distance: number // em quilômetros
+  waypoints: [number, number][] // array de [latitude, longitude]
 } 
