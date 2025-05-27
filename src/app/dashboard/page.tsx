@@ -27,7 +27,8 @@ export default function DashboardPage() {
   const [currentMarkerPosition, setCurrentMarkerPosition] = useState<any>(null)
 
   const handleCreateSpotClick = () => {
-    setIsCreatingSpot(!isCreatingSpot)
+    setIsCreatingSpot(true)
+    setIsModalOpen(true)
   }
 
   const handleMarkerCreated = () => {
@@ -35,11 +36,18 @@ export default function DashboardPage() {
     setCurrentMarkerPosition(null)
   }
 
+  const handleMarkerPositionChange = (position: any) => {
+    setCurrentMarkerPosition(position)
+    if (position) {
+      setIsModalOpen(true)
+    }
+  }
+
   return (
     <div className="relative w-full h-screen">
       <MapComponent
         isCreatingSpot={isCreatingSpot}
-        onMarkerPositionChange={setCurrentMarkerPosition}
+        onMarkerPositionChange={handleMarkerPositionChange}
         onMarkerCreated={handleMarkerCreated}
       />
       <div className="absolute top-0 left-0 right-0 z-10 pointer-events-none">

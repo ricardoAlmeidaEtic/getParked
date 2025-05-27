@@ -39,4 +39,11 @@
 
 .custom-marker div:hover {
   transform: scale(1.1);
+}
+
+/* Estilos específicos para o pin público */
+.custom-marker.public-spot div {
+  background-color: #FBBF24 !important;
+  border: 2px solid #D97706 !important;
+  color: #92400E !important;
 } 

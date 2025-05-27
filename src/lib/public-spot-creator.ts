@@ -1,5 +1,6 @@
 import L from 'leaflet'
 import { createPublicSpotMarker } from './map-utils'
+import { showToast } from '@/lib/toast'
 
 export class PublicSpotCreator {
   private map: L.Map
@@ -52,6 +53,7 @@ export class PublicSpotCreator {
 
     // Verifica se o clique está dentro do raio permitido
     if (distance > this.MAX_DISTANCE) {
+      showToast.error('A vaga deve estar dentro de 1km da sua localização')
       return
     }
 
@@ -60,10 +62,36 @@ export class PublicSpotCreator {
       this.marker.remove()
     }
 
-    // Cria um novo marcador temporário
+    // Cria um ícone amarelo personalizado
+    const icon = L.divIcon({
+      className: 'custom-marker public-spot',
+      html: `
+        <div style="
+          width: 24px;
+          height: 24px;
+          background-color: #FBBF24;
+          border: 2px solid #D97706;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          font-weight: bold;
+          color: #92400E;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        ">
+          P
+        </div>
+      `,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+    })
+
+    // Cria um novo marcador temporário com o ícone amarelo
     this.marker = L.marker(clickPosition, {
       draggable: true,
-      autoPan: true
+      autoPan: true,
+      icon
     }).addTo(this.map)
 
     // Adiciona eventos de drag
@@ -73,14 +101,32 @@ export class PublicSpotCreator {
 
     this.marker.on('drag', () => {
       if (this.onMarkerDragEnd && this.marker) {
-        this.onMarkerDragEnd(this.marker.getLatLng())
+        const newPosition = this.marker.getLatLng()
+        const distance = this.userPosition!.distanceTo(newPosition)
+        
+        if (distance > this.MAX_DISTANCE) {
+          this.marker.setLatLng(this.marker.getLatLng())
+          showToast.error('A vaga deve estar dentro de 1km da sua localização')
+          return
+        }
+        
+        this.onMarkerDragEnd(newPosition)
       }
     })
 
     this.marker.on('dragend', () => {
       this.map.getContainer().style.cursor = 'crosshair'
       if (this.onMarkerDragEnd && this.marker) {
-        this.onMarkerDragEnd(this.marker.getLatLng())
+        const newPosition = this.marker.getLatLng()
+        const distance = this.userPosition!.distanceTo(newPosition)
+        
+        if (distance > this.MAX_DISTANCE) {
+          this.marker.setLatLng(this.marker.getLatLng())
+          showToast.error('A vaga deve estar dentro de 1km da sua localização')
+          return
+        }
+        
+        this.onMarkerDragEnd(newPosition)
       }
     })
 
