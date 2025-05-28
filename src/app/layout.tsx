@@ -3,6 +3,7 @@ import { Poppins } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
 import '@/styles/globals.css'
 import { SupabaseProvider } from '@/providers/SupabaseProvider'
+import ProtectedRoute from '@/components/auth/protected-route'
 
 const poppins = Poppins({ 
   weight: ['400', '500', '600', '700'],
@@ -26,10 +27,12 @@ export default function RootLayout({
         <SupabaseProvider>
           <Toaster />
           <main className="min-h-screen">
-            {children}
+            <ProtectedRoute>
+              {children}
+            </ProtectedRoute>
           </main>
         </SupabaseProvider>
       </body>
     </html>
   )
-} 
+}
