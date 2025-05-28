@@ -1,17 +1,23 @@
 import L from 'leaflet';
 
 export class SelectionArea {
-  private map: L.Map;
+  private map: L.Map | null;
   private userPosition: L.LatLng;
   private selectionCircle: L.Circle | null = null;
   private readonly MAX_RADIUS = 1000; // 1km em metros
 
-  constructor(map: L.Map, userPosition: L.LatLng) {
+  constructor(map: L.Map | null, userPosition: L.LatLng) {
     this.map = map;
     this.userPosition = userPosition;
   }
 
+  public getUserPosition(): L.LatLng {
+    return this.userPosition;
+  }
+
   public show(): void {
+    if (!this.map) return;
+    
     // Remove o círculo existente se houver
     this.hide();
 
@@ -41,10 +47,10 @@ export class SelectionArea {
   }
 
   private adjustZoom(): void {
-    if (this.selectionCircle) {
+    if (this.selectionCircle && this.map) {
       this.map.fitBounds(this.selectionCircle.getBounds(), {
         padding: [50, 50],
-        maxZoom: 15
+        maxZoom: 16
       });
     }
   }

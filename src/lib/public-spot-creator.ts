@@ -17,6 +17,12 @@ export class PublicSpotCreator {
     this.onPositionChange = onPositionChange
     this.selectionArea.show()
 
+    // Garante que o zoom inicial seja aplicado
+    this.map.setView(this.selectionArea.getUserPosition(), 18, {
+      animate: true,
+      duration: 0.5
+    })
+
     this.map.on('click', this.handleMapClick)
   }
 
@@ -32,24 +38,50 @@ export class PublicSpotCreator {
     }
   }
 
+  private createMarkerIcon(): L.DivIcon {
+    return L.divIcon({
+      className: 'custom-marker public-spot',
+      html: `
+        <div class="w-6 h-6 bg-yellow-400 rounded-full border-2 border-yellow-600 flex items-center justify-center text-xs font-bold">
+          P
+        </div>
+      `,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+    })
+  }
+
   private handleMapClick = (e: L.LeafletMouseEvent): void => {
     const position = e.latlng
 
     if (!this.selectionArea.isWithinRadius(position)) {
+      showToast.error('A vaga deve estar dentro de 1km da sua localização atual')
       return
     }
+
+    // Mantém o zoom atual ao clicar
+    this.map.setView(position, this.map.getZoom(), {
+      animate: true,
+      duration: 0.2
+    })
 
     if (this.marker) {
       this.marker.setLatLng(position)
     } else {
       this.marker = L.marker(position, {
-        draggable: true
+        draggable: true,
+        icon: this.createMarkerIcon()
       }).addTo(this.map)
 
       this.marker.on('dragend', () => {
         const newPosition = this.marker?.getLatLng()
         if (newPosition && this.onPositionChange) {
-          this.onPositionChange(newPosition)
+          if (this.selectionArea.isWithinRadius(newPosition)) {
+            this.onPositionChange(newPosition)
+          } else {
+            showToast.error('A vaga deve estar dentro de 1km da sua localização atual')
+            this.marker?.setLatLng(position) // Volta para a posição anterior
+          }
         }
       })
     }
