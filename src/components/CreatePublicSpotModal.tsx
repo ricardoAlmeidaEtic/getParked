@@ -10,30 +10,22 @@ interface CreatePublicSpotModalProps {
   onClose: () => void
   initialPosition: L.LatLng | null
   onMarkerCreated: () => void
+  onEditPosition: () => void
 }
 
 export function CreatePublicSpotModal({
   isOpen,
   onClose,
   initialPosition,
-  onMarkerCreated
+  onMarkerCreated,
+  onEditPosition
 }: CreatePublicSpotModalProps) {
   const [position, setPosition] = useState<L.LatLng | null>(initialPosition)
-  const [isDragging, setIsDragging] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     setPosition(initialPosition)
   }, [initialPosition])
-
-  const handleDragStart = () => {
-    setIsDragging(true)
-  }
-
-  const handleDragEnd = (e: L.DragEndEvent) => {
-    setIsDragging(false)
-    setPosition(e.target.getLatLng())
-  }
 
   const handleSubmit = async () => {
     if (!position) return
@@ -72,14 +64,12 @@ export function CreatePublicSpotModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Registrar Vaga Pública"
+      title="Confirmar Localização da Vaga"
     >
       <div className="space-y-4">
         <div className="bg-gray-100 p-4 rounded-lg">
           <p className="text-sm text-gray-600">
-            {isDragging 
-              ? 'Arraste o pin para ajustar a localização...'
-              : 'Clique e arraste o pin para ajustar a localização exata'}
+            Confirme se a localização selecionada está correta:
           </p>
           {position && (
             <p className="text-sm text-gray-600 mt-2">
@@ -89,6 +79,13 @@ export function CreatePublicSpotModal({
         </div>
 
         <div className="flex justify-end space-x-2">
+          <Button
+            variant="outline"
+            onClick={onEditPosition}
+            disabled={isSubmitting}
+          >
+            Editar Localização
+          </Button>
           <Button
             variant="outline"
             onClick={onClose}
@@ -101,7 +98,7 @@ export function CreatePublicSpotModal({
             disabled={!position || isSubmitting}
             loading={isSubmitting}
           >
-            Registrar Vaga
+            Confirmar e Salvar
           </Button>
         </div>
       </div>

@@ -169,14 +169,27 @@ export default function MapComponent({
   useEffect(() => {
     if (!mapRef.current || !userMarkerRef.current) return
 
+    console.log('MapComponent - Modo de criação:', isCreatingSpot)
+
     if (isCreatingSpot) {
       const userPosition = userMarkerRef.current.getLatLng()
-      publicSpotCreatorRef.current = new PublicSpotCreator(mapRef.current, userPosition)
+      console.log('MapComponent - Iniciando criação de marcador na posição do usuário:', userPosition)
+      
+      if (!publicSpotCreatorRef.current) {
+        publicSpotCreatorRef.current = new PublicSpotCreator(mapRef.current, userPosition)
+      }
+      
       publicSpotCreatorRef.current.startCreation((position) => {
-        onMarkerPositionChange(position)
+        console.log('MapComponent - Recebendo nova posição do marcador:', position)
+        if (position) {
+          onMarkerPositionChange(position)
+        }
       })
     } else {
-      publicSpotCreatorRef.current?.stopCreation()
+      console.log('MapComponent - Parando criação de marcador')
+      if (publicSpotCreatorRef.current) {
+        publicSpotCreatorRef.current.stopCreation()
+      }
       onMarkerPositionChange(null)
     }
   }, [isCreatingSpot, onMarkerPositionChange])

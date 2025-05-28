@@ -17,6 +17,7 @@ export class PublicSpotCreator {
 
   public startCreation(onMarkerDragEnd?: (position: L.LatLng) => void): void {
     if (this.isCreating) return
+    console.log('PublicSpotCreator - Iniciando criação de spot')
     this.isCreating = true
     this.onMarkerDragEnd = onMarkerDragEnd || null
 
@@ -29,6 +30,7 @@ export class PublicSpotCreator {
 
   public stopCreation(): void {
     if (!this.isCreating) return
+    console.log('PublicSpotCreator - Parando criação de spot')
     this.isCreating = false
     this.onMarkerDragEnd = null
 
@@ -50,6 +52,12 @@ export class PublicSpotCreator {
 
     const clickPosition = e.latlng
     const distance = this.userPosition.distanceTo(clickPosition)
+
+    console.log('PublicSpotCreator - Clique no mapa:', {
+      clickPosition,
+      distance,
+      maxDistance: this.MAX_DISTANCE
+    })
 
     // Verifica se o clique está dentro do raio permitido
     if (distance > this.MAX_DISTANCE) {
@@ -87,6 +95,8 @@ export class PublicSpotCreator {
       iconAnchor: [12, 12],
     })
 
+    console.log('PublicSpotCreator - Criando novo marcador')
+
     // Cria um novo marcador temporário com o ícone amarelo
     this.marker = L.marker(clickPosition, {
       draggable: true,
@@ -94,8 +104,14 @@ export class PublicSpotCreator {
       icon
     }).addTo(this.map)
 
+    console.log('PublicSpotCreator - Marcador criado, notificando posição:', clickPosition)
+    if (this.onMarkerDragEnd) {
+      this.onMarkerDragEnd(clickPosition)
+    }
+
     // Adiciona eventos de drag
     this.marker.on('dragstart', () => {
+      console.log('PublicSpotCreator - Iniciando arrasto do marcador')
       this.map.getContainer().style.cursor = 'grabbing'
     })
 
@@ -115,6 +131,7 @@ export class PublicSpotCreator {
     })
 
     this.marker.on('dragend', () => {
+      console.log('PublicSpotCreator - Finalizando arrasto do marcador')
       this.map.getContainer().style.cursor = 'crosshair'
       if (this.onMarkerDragEnd && this.marker) {
         const newPosition = this.marker.getLatLng()

@@ -27,21 +27,53 @@ export default function DashboardPage() {
   const [currentMarkerPosition, setCurrentMarkerPosition] = useState<any>(null)
 
   const handleCreateSpotClick = () => {
+    console.log('Iniciando criação de vaga pública')
     setIsCreatingSpot(true)
-    setIsModalOpen(true)
-  }
-
-  const handleMarkerCreated = () => {
-    setIsCreatingSpot(false)
     setCurrentMarkerPosition(null)
   }
 
+  const handleMarkerCreated = () => {
+    console.log('Marcador criado - desativando modo de criação')
+    setIsCreatingSpot(false)
+  }
+
   const handleMarkerPositionChange = (position: any) => {
-    setCurrentMarkerPosition(position)
+    console.log('Posição do marcador alterada:', position)
     if (position) {
+      console.log('Abrindo modal de confirmação com posição:', position)
+      setCurrentMarkerPosition(position)
       setIsModalOpen(true)
+    } else {
+      console.log('Posição nula recebida, fechando modal')
+      setIsModalOpen(false)
+      setCurrentMarkerPosition(null)
     }
   }
+
+  const handleModalClose = () => {
+    console.log('Fechando modal')
+    setIsModalOpen(false)
+    setCurrentMarkerPosition(null)
+  }
+
+  const handleEditPosition = () => {
+    console.log('Editando posição - voltando para seleção no mapa')
+    setIsModalOpen(false)
+    setCurrentMarkerPosition(null)
+    setIsCreatingSpot(true)
+  }
+
+  // Adicionar useEffect para monitorar mudanças de estado
+  useEffect(() => {
+    console.log('Estado atual:', {
+      isCreatingSpot,
+      isModalOpen,
+      currentMarkerPosition: currentMarkerPosition ? {
+        lat: currentMarkerPosition.lat,
+        lng: currentMarkerPosition.lng
+      } : null
+    })
+  }, [isCreatingSpot, isModalOpen, currentMarkerPosition])
 
   return (
     <div className="relative w-full h-screen">
@@ -69,12 +101,10 @@ export default function DashboardPage() {
 
       <CreatePublicSpotModal
         isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false)
-          setCurrentMarkerPosition(null)
-        }}
+        onClose={handleModalClose}
         initialPosition={currentMarkerPosition}
         onMarkerCreated={handleMarkerCreated}
+        onEditPosition={handleEditPosition}
       />
     </div>
   )
