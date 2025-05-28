@@ -1,10 +1,10 @@
 'use client';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSupabase } from '@/providers/SupabaseProvider';
+import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
 export default function AdminLogin() {
-  const { supabase } = useSupabase();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -57,9 +57,17 @@ export default function AdminLogin() {
             className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition disabled:opacity-50"
             disabled={loading}
           >
-            {loading ? 'Entrando...' : 'Login'}
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+        <div className="mt-4 text-center">
+          <p className="text-sm text-gray-600">
+            Don't have an admin account?{' '}
+            <Link href="/admin/register" className="text-blue-600 hover:text-blue-800 font-medium">
+              Register here
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
