@@ -27,9 +27,17 @@ export default function DashboardPage() {
   const [currentMarkerPosition, setCurrentMarkerPosition] = useState<any>(null)
 
   const handleCreateSpotClick = () => {
-    console.log('Iniciando criação de vaga pública')
-    setIsCreatingSpot(true)
-    setCurrentMarkerPosition(null)
+    if (isCreatingSpot) {
+      // Se já estiver criando, cancela a criação
+      setIsCreatingSpot(false)
+      setCurrentMarkerPosition(null)
+      setIsModalOpen(false)
+    } else {
+      // Inicia a criação
+      console.log('Iniciando criação de vaga pública')
+      setIsCreatingSpot(true)
+      setCurrentMarkerPosition(null)
+    }
   }
 
   const handleMarkerCreated = () => {
