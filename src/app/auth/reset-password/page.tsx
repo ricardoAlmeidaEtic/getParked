@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Lock, ArrowRight } from "lucide-react"
@@ -23,17 +22,32 @@ export default function ResetPasswordPage() {
   const [passwordConfirm, setPasswordConfirm] = useState("")
   const [isSuccess, setIsSuccess] = useState(false)
 
-  // Check if we have hash parameters from the password reset link
   useEffect(() => {
-    // The hash params will be handled by the Supabase client automatically
-    // We're just adding this effect to show that we're aware of the hash params
-  }, [])
+    const handleRecovery = async () => {
+      // Get the tokens from URL hash
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const accessToken = hashParams.get('access_token')
+      const refreshToken = hashParams.get('refresh_token')
+      const type = hashParams.get('type')
+
+      console.log('Full URL:', window.location.href) // Debug log
+      console.log('Hash params:', Object.fromEntries(hashParams.entries())) // Debug log
+      console.log('Recovery params:', { accessToken, type }) // Debug log
+
+      if (!accessToken || !refreshToken || type !== 'recovery') {
+        showToast.error("Link de recuperação inválido")
+        router.push("/auth/forgot-password")
+        return
+      }
+    }
+
+    handleRecovery()
+  }, [router, supabase.auth])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
 
-    // Validate passwords
     if (password !== passwordConfirm) {
       setError("As senhas não coincidem")
       showToast.error("As senhas não coincidem")
@@ -49,23 +63,51 @@ export default function ResetPasswordPage() {
     setIsLoading(true)
 
     try {
-      // Update the user's password using Supabase auth
-      const { data, error: updateError } = await supabase.auth.updateUser({
+      // Get the tokens from URL hash
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const accessToken = hashParams.get('access_token')
+      const refreshToken = hashParams.get('refresh_token')
+
+      if (!accessToken || !refreshToken) {
+        throw new Error("Link de recuperação inválido")
+      }
+
+      // Set the session first
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken
+      })
+
+      if (sessionError) throw sessionError
+
+      // Update the password
+      const { error: updateError } = await supabase.auth.updateUser({
         password: password
       })
 
-      if (updateError) throw updateError
+      if (updateError) {
+        //logout
+        await supabase.auth.signOut()
+        router.push("/auth/reset-password")
+        // If the error is about password being the same, show a specific message
+        if (updateError.message.includes('same password')) {
+          throw new Error("A nova senha deve ser diferente da senha atual")
+        }
+        throw updateError
+      }
 
+      // Sign out after successful password update
+      await supabase.auth.signOut()
       setIsSuccess(true)
       showToast.success("Senha alterada com sucesso!")
       
-      // Redirect to login after success
       setTimeout(() => {
         router.push("/auth/signin")
       }, 2000)
     } catch (error: any) {
-      setError(error.message || "Ocorreu um erro ao redefinir sua senha")
-      showToast.error(error.message || "Ocorreu um erro ao redefinir sua senha")
+      console.error('Submit error:', error) // Debug log
+      setError(error.message || "Erro ao redefinir senha")
+      showToast.error(error.message || "Erro ao redefinir senha")
     } finally {
       setIsLoading(false)
     }

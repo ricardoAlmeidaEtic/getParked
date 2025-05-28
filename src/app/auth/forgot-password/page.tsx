@@ -26,18 +26,18 @@ export default function ForgotPasswordPage() {
     setIsLoading(true)
 
     try {
-      // Use Supabase password reset functionality
-      const { data, error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`
       })
-      
-      if (resetError) throw resetError;
+
+      if (error) throw error
 
       setIsSubmitted(true)
-      showToast.success("Email de recuperação enviado com sucesso!")
+      showToast.success("Email de recuperação enviado!")
     } catch (error: any) {
-      setError(error.message || "Ocorreu um erro ao enviar o email de recuperação")
-      showToast.error(error.message || "Ocorreu um erro ao enviar o email de recuperação")
+      console.error('Forgot password error:', error) // Debug log
+      setError(error.message || "Erro ao enviar email de recuperação")
+      showToast.error(error.message || "Erro ao enviar email de recuperação")
     } finally {
       setIsLoading(false)
     }
