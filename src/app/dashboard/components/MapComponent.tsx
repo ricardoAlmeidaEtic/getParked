@@ -11,6 +11,7 @@ import { createPublicSpotMarker, createPrivateParkingMarker } from '@/lib/map-ut
 import { RouteManager } from '@/lib/route-utils'
 import { PublicSpotCreator } from '@/lib/public-spot-creator'
 import { MapMarker } from '@/types/map'
+import { SelectionArea } from '@/lib/map-functions/selection-area'
 
 interface MapComponentProps {
   isCreatingSpot: boolean
@@ -56,8 +57,10 @@ export default function MapComponent({
 
     // Inicializa o mapa
     const map = L.map(mapContainerRef.current, {
-      zoomControl: false
-    }).setView([0, 0], 13)
+      zoomControl: false,
+      minZoom: 15,
+      maxZoom: 19
+    }).setView([0, 0], 16)
     mapRef.current = map
 
     // Inicializa o gerenciador de rotas
@@ -70,7 +73,9 @@ export default function MapComponent({
 
     // Adiciona controle de zoom personalizado no canto inferior direito
     L.control.zoom({
-      position: 'bottomright'
+      position: 'bottomright',
+      zoomInText: '+',
+      zoomOutText: '-'
     }).addTo(map)
 
     // Função para adicionar a localização do usuário
@@ -78,7 +83,7 @@ export default function MapComponent({
       if (!mapRef.current) return
 
       const { latitude, longitude } = position.coords
-      mapRef.current.setView([latitude, longitude], 13)
+      mapRef.current.setView([latitude, longitude], 16)
       
       // Adiciona um círculo azul na localização do usuário com tamanho fixo
       const accuracy = position.coords.accuracy
@@ -174,6 +179,12 @@ export default function MapComponent({
     if (isCreatingSpot) {
       const userPosition = userMarkerRef.current.getLatLng()
       console.log('MapComponent - Iniciando criação de marcador na posição do usuário:', userPosition)
+      
+      // Ajusta o zoom para a posição do usuário
+      mapRef.current.setView(userPosition, 18, {
+        animate: true,
+        duration: 0.5
+      })
       
       if (!publicSpotCreatorRef.current) {
         publicSpotCreatorRef.current = new PublicSpotCreator(mapRef.current, userPosition)

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
 import { showToast } from '@/lib/toast'
 import L from 'leaflet'
+import { SelectionArea } from '@/lib/map-functions/selection-area'
 
 interface CreatePublicSpotModalProps {
   isOpen: boolean
@@ -11,6 +12,7 @@ interface CreatePublicSpotModalProps {
   initialPosition: L.LatLng | null
   onMarkerCreated: () => void
   onEditPosition: () => void
+  userPosition: L.LatLng | null
 }
 
 export function CreatePublicSpotModal({
@@ -18,7 +20,8 @@ export function CreatePublicSpotModal({
   onClose,
   initialPosition,
   onMarkerCreated,
-  onEditPosition
+  onEditPosition,
+  userPosition
 }: CreatePublicSpotModalProps) {
   const [position, setPosition] = useState<L.LatLng | null>(initialPosition)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -28,7 +31,14 @@ export function CreatePublicSpotModal({
   }, [initialPosition])
 
   const handleSubmit = async () => {
-    if (!position) return
+    if (!position || !userPosition) return
+
+    // Verifica se a posição está dentro do raio permitido
+    const selectionArea = new SelectionArea(null as any, userPosition)
+    if (!selectionArea.isWithinRadius(position)) {
+      showToast.error('A vaga deve estar dentro de 1km da sua localização atual')
+      return
+    }
 
     setIsSubmitting(true)
     try {
