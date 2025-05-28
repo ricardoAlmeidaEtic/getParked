@@ -190,7 +190,7 @@ export default function SignInPage() {
                 </div>
               </form>
 
-              <SocialLogin />
+              {/* <SocialLogin /> */}
             </div>
 
             <AuthTerms />
