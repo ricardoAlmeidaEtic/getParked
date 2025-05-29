@@ -217,7 +217,6 @@ export default function SignUpPage() {
                   </Button>
                 </div>
               </form>
-
               {/* <SocialLogin /> */}
             </div>
 

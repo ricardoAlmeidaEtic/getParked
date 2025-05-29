@@ -30,14 +30,9 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       </div>
     )
   }
-
-  // If we're on an auth page and the user is authenticated, redirect to home
   if (!loading && user && pathname.startsWith("/auth")) {
     router.push("/")
     return null
   }
-
-  // If we're not on an auth page and the user is not authenticated, route component will redirect
-  // If we're on an auth page or the user is authenticated, render children
   return <>{children}</>
 }
