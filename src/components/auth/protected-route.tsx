@@ -30,14 +30,9 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       </div>
     )
   }
-
-  // Se estamos em uma página de autenticação e o usuário já está autenticado, redirecionar para a página inicial
   if (!loading && user && pathname.startsWith("/auth")) {
     router.push("/")
     return null
   }
-
-  // Se não estamos em uma página de autenticação e o usuário não está autenticado, o hook useEffect tratará o redirecionamento
-  // Se estamos em uma página de autenticação ou o usuário está autenticado, renderizar o conteúdo normalmente
   return <>{children}</>
 }

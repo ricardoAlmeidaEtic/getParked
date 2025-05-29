@@ -1,57 +1,33 @@
-"use client"
-
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { useSupabase } from "@/providers/SupabaseProvider"
-import { showToast } from "@/components/ui/toast"
+import { showToast } from "@/components/ui/toast/toast-config"
 
 export default function SocialLogin() {
-  const router = useRouter()
   const { supabase } = useSupabase()
   const [isLoading, setIsLoading] = useState({
     google: false,
     facebook: false
   })
 
-  const handleGoogleLogin = async () => {
-    setIsLoading(prev => ({ ...prev, google: true }))
+  const handleSocialLogin = async (provider: 'google' | 'facebook') => {
     try {
+      setIsLoading(prev => ({ ...prev, [provider]: true }))
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+        provider: provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
       })
       
       if (error) throw error
       
-      // O redirecionamento será tratado pelo Supabase
     } catch (error: any) {
-      console.error("Erro ao fazer login com Google:", error)
-      showToast.error(error.message || "Erro ao fazer login com Google")
-      setIsLoading(prev => ({ ...prev, google: false }))
-    }
-  }
-
-  const handleFacebookLogin = async () => {
-    setIsLoading(prev => ({ ...prev, facebook: true }))
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'facebook',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-      
-      if (error) throw error
-      
-      // O redirecionamento será tratado pelo Supabase
-    } catch (error: any) {
-      console.error("Erro ao fazer login com Facebook:", error)
-      showToast.error(error.message || "Erro ao fazer login com Facebook")
-      setIsLoading(prev => ({ ...prev, facebook: false }))
+      showToast.error(error.message || `Erro ao entrar com ${provider}`)
+    } finally {
+      setIsLoading(prev => ({ ...prev, [provider]: false }))
     }
   }
 
@@ -70,7 +46,7 @@ export default function SocialLogin() {
         <Button
           variant="outline"
           className="w-full transition-all duration-300 hover:bg-gray-50 transform hover:scale-[1.02]"
-          onClick={handleGoogleLogin}
+          onClick={() => handleSocialLogin('google')}
           disabled={isLoading.google}
         >
           {isLoading.google ? (
@@ -100,7 +76,7 @@ export default function SocialLogin() {
         <Button
           variant="outline"
           className="w-full transition-all duration-300 hover:bg-gray-50 transform hover:scale-[1.02]"
-          onClick={handleFacebookLogin}
+          onClick={() => handleSocialLogin('facebook')}
           disabled={isLoading.facebook}
         >
           {isLoading.facebook ? (
