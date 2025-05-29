@@ -5,6 +5,10 @@ import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from "lucide-react"
+<<<<<<< HEAD
+=======
+import { useSupabase } from "@/providers/SupabaseProvider"
+>>>>>>> 476f46b (Perfil)
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,8 +19,12 @@ import AuthHeader from "@/components/auth/auth-header"
 import SocialLogin from "@/components/auth/social-login"
 import AuthTerms from "@/components/auth/auth-terms"
 import Link from "next/link"
+<<<<<<< HEAD
 import { showToast } from "@/components/ui/toast/toast-config"
 import { useSupabase } from "@/providers/SupabaseProvider"
+=======
+import { showToast } from "@/components/ui/toast"
+>>>>>>> 476f46b (Perfil)
 
 export default function SignUpPage() {
   const router = useRouter()
@@ -54,13 +62,28 @@ export default function SignUpPage() {
     setIsLoading(true)
 
     try {
+<<<<<<< HEAD
       // Register with Supabase auth
       const { data, error: authError } = await supabase.auth.signUp({
+=======
+      // Validar formulário
+      if (!formData.email.includes("@")) {
+        throw new Error("Email inválido")
+      }
+
+      if (formData.password.length < 6) {
+        throw new Error("Senha deve ter pelo menos 6 caracteres")
+      }
+
+      // Criar conta no Supabase
+      const { data, error: signUpError } = await supabase.auth.signUp({
+>>>>>>> 476f46b (Perfil)
         email: formData.email,
         password: formData.password,
         options: {
           data: {
             name: formData.name
+<<<<<<< HEAD
           }
         }
       })
@@ -75,6 +98,30 @@ export default function SignUpPage() {
     } catch (error: any) {
       setError(error.message || "Ocorreu um erro ao criar sua conta")
       showToast.error(error.message || "Ocorreu um erro ao criar sua conta")
+=======
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+
+      if (signUpError) throw signUpError;
+      
+      // Verificar se o usuário foi criado mas precisa de confirmação
+      if (data?.user && !data.session) {
+        // Usuário criado mas não confirmado
+        showToast.success("Conta criada! Verifique seu email para confirmar antes de fazer login.")
+        
+        // Redirect to signin page with message
+        router.push("/auth/signin?message=confirm-email")
+      } else if (data?.session) {
+        // Usuário criado e já logado (confirmação automática desabilitada)
+        showToast.success("Conta criada e login realizado com sucesso!")
+        router.push("/")
+      }
+    } catch (err: any) {
+      setError(err.message || "Ocorreu um erro ao criar sua conta")
+      showToast.error(err.message || "Ocorreu um erro ao criar sua conta")
+>>>>>>> 476f46b (Perfil)
     } finally {
       setIsLoading(false)
     }
@@ -217,7 +264,12 @@ export default function SignUpPage() {
                   </Button>
                 </div>
               </form>
+<<<<<<< HEAD
               {/* <SocialLogin /> */}
+=======
+
+              <SocialLogin />
+>>>>>>> 476f46b (Perfil)
             </div>
 
             <AuthTerms />
@@ -226,4 +278,8 @@ export default function SignUpPage() {
       </div>
     </div>
   )
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 476f46b (Perfil)

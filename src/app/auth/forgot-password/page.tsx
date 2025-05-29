@@ -1,5 +1,6 @@
 "use client"
 
+<<<<<<< HEAD
 import type React from "react"
 
 import { useState } from "react"
@@ -175,3 +176,15 @@ export default function ForgotPasswordPage() {
     </div>
   )
 }
+=======
+export default function ForgotPasswordPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold mb-4">Página em Desenvolvimento</h1>
+        <p>Esta funcionalidade está sendo desenvolvida em outra branch.</p>
+      </div>
+    </div>
+  )
+}
+>>>>>>> 476f46b (Perfil)

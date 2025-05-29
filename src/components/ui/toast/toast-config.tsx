@@ -8,7 +8,18 @@ import toast, {
   type Renderable,
   type ValueOrFunction,
 } from "react-hot-toast"
+<<<<<<< HEAD
 import { cn } from "@/lib/utils"
+=======
+import { clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+import React from "react"
+
+// Replicando a função cn aqui para evitar problemas de importação
+function cn(...inputs: any[]) {
+  return twMerge(clsx(inputs))
+}
+>>>>>>> 476f46b (Perfil)
 
 // Tipos de toast personalizados
 export type ToastType = "success" | "error" | "info" | "warning"
@@ -38,7 +49,11 @@ export const CustomToast = ({
   type,
   message,
   icon,
+<<<<<<< HEAD
 }: { t: Toast; type: ToastType; message: string; icon?: Renderable }) => {
+=======
+}: { t: Toast; type: ToastType; message: string; icon?: React.ReactNode }) => {
+>>>>>>> 476f46b (Perfil)
   // Definir cores e ícones com base no tipo
   const getToastStyles = () => {
     switch (type) {
