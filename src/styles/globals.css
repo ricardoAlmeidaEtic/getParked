@@ -1,3 +1,15 @@
 @tailwind base;
 @tailwind components;
-@tailwind utilities; 
+@tailwind utilities;
+
+/* Animações para os toasts */
+@keyframes enter { 
+  from { opacity: 0; transform: translateY(-8px) } 
+  to { opacity: 1; transform: translateY(0) } 
+}
+@keyframes leave { 
+  from { opacity: 1; transform: translateY(0) } 
+  to { opacity: 0; transform: translateY(-8px) } 
+}
+.animate-enter { animation: enter 0.2s ease-out; }
+.animate-leave { animation: leave 0.15s ease-in forwards; } 
