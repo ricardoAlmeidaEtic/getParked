@@ -20,3 +20,7 @@ const Separator = React.forwardRef<
 Separator.displayName = SeparatorPrimitive.Root.displayName
 
 export { Separator }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 476f46b (Perfil)

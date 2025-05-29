@@ -1,7 +1,12 @@
 "use client"
 
+<<<<<<< HEAD
 import type React from "react"
 
+=======
+import { motion } from "framer-motion"
+import React from "react"
+>>>>>>> 476f46b (Perfil)
 import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 
@@ -11,7 +16,10 @@ interface FadeInProps {
   duration?: number
   delay?: number
   className?: string
+<<<<<<< HEAD
   threshold?: number
+=======
+>>>>>>> 476f46b (Perfil)
 }
 
 export default function FadeIn({
@@ -20,6 +28,7 @@ export default function FadeIn({
   duration = 500,
   delay = 0,
   className,
+<<<<<<< HEAD
   threshold = 0.1,
 }: FadeInProps) {
   const [isVisible, setIsVisible] = useState(false)
@@ -80,5 +89,37 @@ export default function FadeIn({
     >
       {children}
     </div>
+=======
+}: FadeInProps) {
+  // Definir a configuração de animação baseada na direção
+  let initial = {}
+  
+  switch (direction) {
+    case "up":
+      initial = { opacity: 0, y: 20 }
+      break
+    case "down":
+      initial = { opacity: 0, y: -20 }
+      break
+    case "left":
+      initial = { opacity: 0, x: 20 }
+      break
+    case "right":
+      initial = { opacity: 0, x: -20 }
+      break
+    default:
+      initial = { opacity: 0 }
+  }
+
+  return (
+    <motion.div
+      className={cn(className)}
+      initial={initial}
+      animate={{ opacity: 1, x: 0, y: 0 }}
+      transition={{ duration: duration / 1000, delay: delay / 1000 }}
+    >
+      {children}
+    </motion.div>
+>>>>>>> 476f46b (Perfil)
   )
 }

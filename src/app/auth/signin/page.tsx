@@ -2,21 +2,36 @@
 
 import type React from "react"
 
+<<<<<<< HEAD
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react"
+=======
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react"
+import { useSupabase } from "@/providers/SupabaseProvider"
+>>>>>>> 476f46b (Perfil)
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import FadeIn from "@/components/animations/fade-in"
+<<<<<<< HEAD
 import AuthHeader from "@/components/auth/auth-header"
 import SocialLogin from "@/components/auth/social-login"
 import AuthTerms from "@/components/auth/auth-terms"
 import { showToast } from "@/components/ui/toast/toast-config"
 import { useSupabase } from "@/providers/SupabaseProvider"
+=======
+import { SocialLogin } from "@/components/auth"
+import AuthHeader from "@/components/auth/auth-header"
+import AuthTerms from "@/components/auth/auth-terms"
+import { showToast } from "@/components/ui/toast"
+>>>>>>> 476f46b (Perfil)
 
 export default function SignInPage() {
   const router = useRouter()
@@ -24,12 +39,27 @@ export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
+<<<<<<< HEAD
+=======
+  const [showEmailConfirmMessage, setShowEmailConfirmMessage] = useState(false)
+>>>>>>> 476f46b (Perfil)
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     rememberMe: false,
   })
 
+<<<<<<< HEAD
+=======
+  // Verificar se há mensagem de confirmação de email na URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('message') === 'confirm-email') {
+      setShowEmailConfirmMessage(true)
+    }
+  }, [])
+
+>>>>>>> 476f46b (Perfil)
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -45,6 +75,7 @@ export default function SignInPage() {
     setIsLoading(true)
 
     try {
+<<<<<<< HEAD
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password
@@ -63,13 +94,45 @@ export default function SignInPage() {
       if (error) throw error;
 
       // Show success toast
+=======
+      // Validações básicas
+      if (!formData.email.includes("@")) {
+        throw new Error("Email inválido")
+      }
+
+      if (formData.password.length < 6) {
+        throw new Error("Senha deve ter pelo menos 6 caracteres")
+      }
+
+      // Fazer login com Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+      
+      if (error) {
+        // Tratamento específico para email não confirmado
+        if (error.message === "Email not confirmed") {
+          throw new Error("Email não confirmado. Verifique sua caixa de entrada e clique no link de confirmação antes de fazer login.")
+        }
+        throw error
+      }
+      
+      // Login bem-sucedido
+>>>>>>> 476f46b (Perfil)
       showToast.success("Login realizado com sucesso!")
 
       // Redirect to home page on successful login
       router.push("/")
     } catch (err: any) {
+<<<<<<< HEAD
       setError(err.message || "Ocorreu um erro ao fazer login")
       showToast.error(err.message || "Ocorreu um erro ao fazer login")
+=======
+      const errorMessage = err.message || "Ocorreu um erro ao fazer login"
+      setError(errorMessage)
+      showToast.error(errorMessage)
+>>>>>>> 476f46b (Perfil)
     } finally {
       setIsLoading(false)
     }
@@ -91,6 +154,17 @@ export default function SignInPage() {
         <FadeIn direction="up" duration={800} delay={200}>
           <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
             <div className="bg-white px-6 py-8 shadow sm:rounded-lg sm:px-12">
+<<<<<<< HEAD
+=======
+              {showEmailConfirmMessage && (
+                <Alert className="mb-6 border-blue-200 bg-blue-50">
+                  <AlertDescription className="text-blue-800">
+                    📧 Conta criada com sucesso! Verifique seu email e clique no link de confirmação antes de fazer login.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+>>>>>>> 476f46b (Perfil)
               {error && (
                 <Alert variant="destructive" className="mb-6 animate-shake">
                   <AlertDescription>{error}</AlertDescription>
@@ -190,7 +264,11 @@ export default function SignInPage() {
                 </div>
               </form>
 
+<<<<<<< HEAD
               {/* <SocialLogin /> */}
+=======
+              <SocialLogin />
+>>>>>>> 476f46b (Perfil)
             </div>
 
             <AuthTerms />
@@ -200,3 +278,7 @@ export default function SignInPage() {
     </div>
   )
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 476f46b (Perfil)
