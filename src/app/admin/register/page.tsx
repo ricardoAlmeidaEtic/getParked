@@ -17,7 +17,7 @@ export default function AdminRegister() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
+  
     try {
       // First, sign up the user
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
@@ -26,44 +26,21 @@ export default function AdminRegister() {
         options: {
           data: {
             name: name,
-            role: 'admin'
+            role: 'admin',
+            is_admin: true
           }
         }
       });
-
+  
       if (signUpError) throw signUpError;
-
+  
       if (authData.user) {
-        const timestamp = new Date().toISOString();
-        
-        // Create profile entry
-        const { data, error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: authData.user.id,
-              email: email,
-              name: name,
-              is_admin: true,
-              status: 'pending',
-              created_at: timestamp,
-              updated_at: timestamp
-            }
-          ])
-          .select();
-
-        console.log('Profile data:', data);
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          throw profileError;
-        }
-
         // Show success message and redirect
         alert('Registration successful! Please check your email to verify your account.');
         router.push('/admin/login');
       }
     } catch (err: any) {
+      console.error('Registration error:', err);
       setError(err.message || 'An error occurred during registration');
     } finally {
       setLoading(false);

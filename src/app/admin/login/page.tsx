@@ -15,12 +15,59 @@ export default function AdminLogin() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      setError(error.message);
-    } else {
-      router.push('/admin/dashboard');
+    
+    try {
+      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (signInError) throw signInError;
+      
+      console.log("Complete auth data:", authData);
+      
+      if (authData.user) {
+        const userId = authData.user.id;
+        console.log("Auth user ID:", userId);
+        console.log("Auth user ID length:", userId.length);
+        console.log("Auth user object:", authData.user);
+        
+        // Fetch the profile
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+
+        console.log("Profile query result:", { profile, error: profileError });
+        console.log("Raw profile data:", profile);
+
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+          throw new Error('Failed to fetch user profile');
+        }
+
+        if (!profile) {
+          throw new Error('User profile not found');
+        }
+
+        // Check if user has a parking space
+        const { data: parking, error: parkingError } = await supabase
+          .from('parkings')
+          .select('*')
+          .eq('owner_id', userId)
+          .single();
+
+        console.log("parking:", parking);
+
+        if (!parking) {
+          router.push('/admin/register_park');
+          return;
+        }
+
+        router.push('/admin/dashboard');
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during login');
+    } finally {
+      setLoading(false);
     }
   };
 

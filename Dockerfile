@@ -16,4 +16,5 @@ RUN npm run build
 
 EXPOSE 3000
 
+# Use development command for hot reloading
 CMD ["npm", "run", "dev"] 

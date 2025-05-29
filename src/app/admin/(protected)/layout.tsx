@@ -42,7 +42,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <a href="/admin/dashboard" className="text-gray-700 hover:text-blue-700 font-medium">Dashboard</a>
           <a href="/admin/parking" className="text-gray-700 hover:text-blue-700 font-medium">Vagas</a>
           <a href="/admin/clients" className="text-gray-700 hover:text-blue-700 font-medium">Clientes</a>
-          <a href="/admin/payments" className="text-gray-700 hover:text-blue-700 font-medium">Pagamentos</a>
+          <a href="/admin/reservations" className="text-gray-700 hover:text-blue-700 font-medium">Reservas</a>
+          <a href="/admin/settings" className="text-gray-700 hover:text-blue-700 font-medium">Configurações</a>
         </nav>
       </aside>
       <main className="flex-1 container mx-auto px-8 py-8">
