@@ -1,33 +1,57 @@
+"use client"
+
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { useSupabase } from "@/providers/SupabaseProvider"
-import { showToast } from "@/components/ui/toast/toast-config"
+import { showToast } from "@/components/ui/toast"
 
 export default function SocialLogin() {
+  const router = useRouter()
   const { supabase } = useSupabase()
   const [isLoading, setIsLoading] = useState({
     google: false,
     facebook: false
   })
 
-  const handleSocialLogin = async (provider: 'google' | 'facebook') => {
+  const handleGoogleLogin = async () => {
+    setIsLoading(prev => ({ ...prev, google: true }))
     try {
-      setIsLoading(prev => ({ ...prev, [provider]: true }))
-      
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: provider,
+        provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
       })
       
       if (error) throw error
       
+      // O redirecionamento será tratado pelo Supabase
     } catch (error: any) {
-      showToast.error(error.message || `Erro ao entrar com ${provider}`)
-    } finally {
-      setIsLoading(prev => ({ ...prev, [provider]: false }))
+      console.error("Erro ao fazer login com Google:", error)
+      showToast.error(error.message || "Erro ao fazer login com Google")
+      setIsLoading(prev => ({ ...prev, google: false }))
+    }
+  }
+
+  const handleFacebookLogin = async () => {
+    setIsLoading(prev => ({ ...prev, facebook: true }))
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'facebook',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+      
+      if (error) throw error
+      
+      // O redirecionamento será tratado pelo Supabase
+    } catch (error: any) {
+      console.error("Erro ao fazer login com Facebook:", error)
+      showToast.error(error.message || "Erro ao fazer login com Facebook")
+      setIsLoading(prev => ({ ...prev, facebook: false }))
     }
   }
 
@@ -46,7 +70,7 @@ export default function SocialLogin() {
         <Button
           variant="outline"
           className="w-full transition-all duration-300 hover:bg-gray-50 transform hover:scale-[1.02]"
-          onClick={() => handleSocialLogin('google')}
+          onClick={handleGoogleLogin}
           disabled={isLoading.google}
         >
           {isLoading.google ? (
@@ -76,7 +100,7 @@ export default function SocialLogin() {
         <Button
           variant="outline"
           className="w-full transition-all duration-300 hover:bg-gray-50 transform hover:scale-[1.02]"
-          onClick={() => handleSocialLogin('facebook')}
+          onClick={handleFacebookLogin}
           disabled={isLoading.facebook}
         >
           {isLoading.facebook ? (
