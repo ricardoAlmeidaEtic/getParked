@@ -5,9 +5,9 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import MobileNav from "@/components/mobile-nav"
-import { User, LogOut } from "lucide-react"
+import { User } from "lucide-react"
 import { useSupabase } from "@/providers/SupabaseProvider"
-import { showToast } from "@/lib/toast"
+import LogoutButton from "@/components/auth/logout-button"
 
 interface NavbarProps {
   items?: {
@@ -18,7 +18,7 @@ interface NavbarProps {
 
 export default function Navbar({ items = [] }: NavbarProps) {
   const pathname = usePathname()
-  const { user, loading, supabase } = useSupabase()
+  const { user, loading } = useSupabase()
 
   const isAuthPage = pathname?.startsWith('/auth')
   const isDashboardPage = pathname?.startsWith('/dashboard')
@@ -41,17 +41,6 @@ export default function Navbar({ items = [] }: NavbarProps) {
   ]
 
   const navItems = items.length > 0 ? items : (user ? authenticatedItems : unauthenticatedItems)
-
-  const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
-      showToast.success("Logout realizado com sucesso!")
-    } catch (error: any) {
-      console.error("Erro ao fazer logout:", error)
-      showToast.error("Erro ao fazer logout")
-    }
-  }
 
   // Renderiza null ou um placeholder enquanto carrega
   if (loading) {
@@ -98,13 +87,12 @@ export default function Navbar({ items = [] }: NavbarProps) {
                   </span>
                 </Button>
               </Link>
-              <Button
+              <LogoutButton
                 variant="ghost"
+                size="icon"
                 className="text-white hover:bg-white/10"
-                onClick={handleLogout}
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
+                onlyIcon
+              />
             </>
           ) : (
             <>

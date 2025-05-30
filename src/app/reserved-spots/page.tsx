@@ -1,4 +1,11 @@
+"use client"
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useSupabase } from '@/providers/SupabaseProvider'
 import { useProfile } from '@/hooks/useProfile'
+import { Button } from '@/components/ui/button'
+import { Spot } from '@/types/spot'
 
 export default function ReservedSpotsPage() {
   const router = useRouter()

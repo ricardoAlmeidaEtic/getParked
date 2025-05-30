@@ -10,7 +10,8 @@ import { useSupabase } from "@/providers/SupabaseProvider"
 import { showToast } from "@/components/ui/toast"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from "next/link"
-import { User, LogOut } from "lucide-react"
+import { User } from "lucide-react"
+import LogoutButton from "@/components/auth/logout-button"
 
 export default function TestAuthPage() {
   const router = useRouter()
@@ -68,7 +69,6 @@ export default function TestAuthPage() {
       if (error) throw error
       
       showToast.success("Login realizado com sucesso!")
-      router.push("/profile")
     } catch (error: any) {
       console.error("Erro ao fazer login:", error)
       showToast.error(error.message || "Erro ao fazer login")
@@ -213,10 +213,7 @@ export default function TestAuthPage() {
                   Ir para Página de Perfil
                 </Link>
               </Button>
-              <Button variant="outline" className="w-full" onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                Sair
-              </Button>
+              <LogoutButton variant="outline" className="w-full" />
             </CardFooter>
           </>
         )}

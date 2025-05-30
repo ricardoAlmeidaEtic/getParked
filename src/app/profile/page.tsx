@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { User, Mail, Car, CreditCard, Calendar, Plus, Edit, Save, Trash2, LogOut } from "lucide-react"
+import { User, Mail, Car, CreditCard, Calendar, Plus, Edit, Save, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -23,6 +23,7 @@ import { showToast } from "@/lib/toast"
 import { useSupabase } from "@/providers/SupabaseProvider"
 import { useProfile } from '@/hooks/useProfile'
 import { Profile } from '@/lib/api/profile'
+import LogoutButton from "@/components/auth/logout-button"
 
 interface UserData {
   id: string
@@ -241,19 +242,6 @@ export default function ProfilePage() {
     }
   }
 
-  const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
-      
-      showToast.success("Logout realizado com sucesso!")
-      router.push("/auth/signin")
-    } catch (error: any) {
-      console.error("Erro ao fazer logout:", error)
-      showToast.error(error.message || "Ocorreu um erro ao fazer logout")
-    }
-  }
-
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!session || !profile) return
     
@@ -381,13 +369,10 @@ export default function ProfilePage() {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button
+                  <LogoutButton
                     variant="outline"
                     className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="mr-2 h-4 w-4" /> Sair
-                  </Button>
+                  />
                 </CardFooter>
               </Card>
             </div>

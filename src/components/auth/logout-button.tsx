@@ -1,6 +1,5 @@
 "use client"
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useSupabase } from "@/providers/SupabaseProvider"
@@ -22,32 +21,34 @@ export default function LogoutButton({
   onlyIcon = false
 }: LogoutButtonProps) {
   const { supabase } = useSupabase()
-  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
   const handleLogout = async () => {
+    if (isLoading) return // Previne múltiplos cliques
+    
     setIsLoading(true)
     try {
-      const { error } = await supabase.auth.signOut()
+      // Redireciona primeiro para a página inicial
+      window.location.href = "/"
       
+      // Depois faz o logout
+      const { error } = await supabase.auth.signOut()
       if (error) throw error
+      
+      // Mostra mensagem de sucesso
       showToast.success("Logout realizado com sucesso!")
-      router.push("/auth/signin")
     } catch (error) {
       console.error("Erro ao fazer logout:", error)
       showToast.error("Erro ao fazer logout. Tente novamente.")
-      showToast.success("Logout realizado com sucesso")
-      router.push("/auth/signin")
-    } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <>
     <Button 
       onClick={handleLogout}
       variant={variant}
+      size={size}
       className={className}
       disabled={isLoading}
     >
@@ -56,27 +57,11 @@ export default function LogoutButton({
           <span className="animate-spin mr-2">⏳</span> Saindo...
         </span>
       ) : (
-        <span className="flex items-center">
-          <LogOut className="h-4 w-4 mr-2" /> Sair
-        </span>
-      )}
-    </Button>
-    <Button
-      variant={variant}
-      size={size}
-      onClick={handleLogout}
-      disabled={isLoading}
-      className={className}
-    >
-      {isLoading ? (
-        <span className="animate-spin">⏳</span>
-      ) : (
         <>
           {showIcon && <LogOut className={`h-4 w-4 ${onlyIcon ? "" : "mr-2"}`} />}
           {!onlyIcon && "Sair"}
         </>
       )}
     </Button>
-    </>
   )
 }

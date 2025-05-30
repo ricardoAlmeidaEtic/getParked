@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabase'
 import { showToast } from '@/lib/toast'
 import L from 'leaflet'
 import { SelectionArea } from '@/lib/map-functions/selection-area'
+import { getPublicSpotMarkers } from '@/lib/map-markers'
+import { createPublicSpotMarker } from '@/lib/map-utils'
 
 interface CreatePublicSpotModalProps {
   isOpen: boolean
@@ -77,7 +79,12 @@ export function CreatePublicSpotModal({
           latitude: position.lat,
           longitude: position.lng,
           created_at: new Date().toISOString(),
-          user_id: user.id
+          user_id: user.id,
+          type: 'public',
+          total_spots: 1,
+          available_spots: 1,
+          status: 'active',
+          name: `Vaga Pública - ${user.email?.split('@')[0] || 'Usuário'}`
         })
 
       if (insertError) {

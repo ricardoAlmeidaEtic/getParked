@@ -3,6 +3,7 @@
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react'
 import { SupabaseClient, User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import { showToast } from '@/lib/toast'
 
 type SupabaseContextType = {
   supabase: SupabaseClient
@@ -28,8 +29,27 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
 
         setSession(session)
         setUser(session?.user ?? null)
+
+        // Se houver uma sessão, verificar se o perfil existe
+        if (session?.user) {
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single()
+
+          if (error) {
+            console.error('Erro ao verificar perfil:', error)
+            showToast.error('Erro ao verificar perfil')
+          }
+
+          if (!profile) {
+            showToast.error('Perfil não encontrado')
+          }
+        }
       } catch (error) {
         console.error('Erro ao buscar sessão:', error)
+        showToast.error('Erro ao verificar autenticação')
       } finally {
         setLoading(false)
       }
@@ -38,10 +58,33 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
     getInitialSession()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
+      async (_event, newSession) => {
         setSession(newSession)
         setUser(newSession?.user ?? null)
         setLoading(false)
+
+        // Se houver uma nova sessão, verificar se o perfil existe
+        if (newSession?.user) {
+          try {
+            const { data: profile, error } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', newSession.user.id)
+              .single()
+
+            if (error) {
+              console.error('Erro ao verificar perfil:', error)
+              showToast.error('Erro ao verificar perfil')
+            }
+
+            if (!profile) {
+              showToast.error('Perfil não encontrado')
+            }
+          } catch (error) {
+            console.error('Erro ao verificar perfil:', error)
+            showToast.error('Erro ao verificar perfil')
+          }
+        }
       },
     )
 

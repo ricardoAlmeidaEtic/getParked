@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from 'react'
 import { useSupabase } from '@/providers/SupabaseProvider'
 import { Profile } from '@/lib/api/profile'
