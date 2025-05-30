@@ -14,8 +14,8 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const pathname = usePathname()
 
   useEffect(() => {
-    if (!loading && !user && !pathname.startsWith("/auth")) {
-      router.push("/auth/signin")
+    if (!loading && !user && !pathname.startsWith("/auth") && !pathname.startsWith("/landing")) {
+      router.push("/landing")
     }
   }, [user, loading, router, pathname])
 
