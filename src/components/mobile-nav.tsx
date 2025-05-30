@@ -2,8 +2,9 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Menu, X } from "lucide-react"
+import { Menu, X, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useSupabase } from "@/providers/SupabaseProvider"
 
 interface MobileNavProps {
   items: {
@@ -14,6 +15,7 @@ interface MobileNavProps {
 
 export default function MobileNav({ items }: MobileNavProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const { user } = useSupabase()
 
   const closeMenu = () => setIsOpen(false)
   const toggleMenu = () => setIsOpen(!isOpen)
@@ -70,23 +72,42 @@ export default function MobileNav({ items }: MobileNavProps) {
           {/* Separator */}
           <div className="border-t border-gray-200 my-4"></div>
 
-          {/* Login Menu Item */}
-          <Link
-            href="/auth/signin"
-            className="flex items-center p-3 rounded-md text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-            onClick={closeMenu}
-          >
-            Entrar
-          </Link>
-
-          {/* Sign Up Menu Item */}
-          <Link
-            href="/auth/signup"
-            className="flex items-center p-3 rounded-md text-primary font-medium hover:bg-primary/10 transition-colors duration-200"
-            onClick={closeMenu}
-          >
-            Cadastre-se
-          </Link>
+          {user ? (
+            <>
+              <Link
+                href="/profile"
+                className="flex items-center p-3 rounded-md text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                onClick={closeMenu}
+              >
+                <User className="h-4 w-4 mr-2" />
+                Meu Perfil
+              </Link>
+              <Link
+                href="/dashboard"
+                className="flex items-center p-3 rounded-md text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                onClick={closeMenu}
+              >
+                Dashboard
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/auth/signin"
+                className="flex items-center p-3 rounded-md text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                onClick={closeMenu}
+              >
+                Entrar
+              </Link>
+              <Link
+                href="/auth/signup"
+                className="flex items-center p-3 rounded-md text-primary font-medium hover:bg-primary/10 transition-colors duration-200"
+                onClick={closeMenu}
+              >
+                Cadastre-se
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </div>
