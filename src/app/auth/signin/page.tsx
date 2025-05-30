@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import FadeIn from "@/components/animations/fade-in"
 import AuthHeader from "@/components/auth/auth-header"
 import AuthTerms from "@/components/auth/auth-terms"
-import { showToast } from "@/components/ui/toast"
+import { showToast } from "@/lib/toast"
 import { useSupabase } from "@/providers/SupabaseProvider"
 //import { SocialLogin } from "@/components/auth"
 
@@ -73,8 +73,28 @@ export default function SignInPage() {
         throw error
       }
 
-      showToast.success("Login realizado com sucesso!")
-      router.push("/dashboard")
+      // Verificar se o perfil existe
+      if (data.user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single()
+
+        if (profileError) {
+          console.error('Erro ao verificar perfil:', profileError)
+          showToast.error('Erro ao verificar perfil')
+          return
+        }
+
+        if (!profile) {
+          showToast.error('Perfil não encontrado')
+          return
+        }
+      }
+
+      showToast.success('Login realizado com sucesso!')
+      router.push('/profile')
     } catch (err: any) {
       const errorMessage = err.message || "Ocorreu um erro ao fazer login"
       setError(errorMessage)

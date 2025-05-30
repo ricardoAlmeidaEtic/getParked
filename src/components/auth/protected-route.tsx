@@ -8,14 +8,34 @@ interface ProtectedRouteProps {
   children: React.ReactNode
 }
 
+// Lista de rotas públicas que não precisam de autenticação
+const publicRoutes = [
+  "/",
+  "/auth/signin",
+  "/auth/signup",
+  "/auth/forgot-password",
+  "/auth/reset-password",
+]
+
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading } = useSupabase()
   const router = useRouter()
   const pathname = usePathname()
 
   useEffect(() => {
-    if (!loading && !user && !pathname.startsWith("/auth")) {
-      router.push("/auth/signin")
+    if (!loading) {
+      const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith(route + "/"))
+      const isAuthRoute = pathname.startsWith("/auth")
+
+      // Se não estiver em uma rota pública e não estiver autenticado, redireciona para login
+      if (!isPublicRoute && !user) {
+        router.push("/auth/signin")
+      }
+
+      // Se estiver autenticado e tentar acessar uma rota de auth, redireciona para o dashboard
+      if (user && isAuthRoute) {
+        router.push("/dashboard")
+      }
     }
   }, [user, loading, router, pathname])
 
