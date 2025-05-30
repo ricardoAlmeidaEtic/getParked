@@ -4,8 +4,8 @@ import React from "react"
 import { CheckCircle, AlertCircle, Info, X, AlertTriangle } from "lucide-react"
 import toast, {
   type Toast,
-  type ToastPosition,
-  type ToastOptions,
+  type ToasterProps,
+  type DefaultToastOptions,
   type Renderable,
   type ValueOrFunction,
 } from "react-hot-toast"
@@ -23,20 +23,7 @@ export type ToastType = "success" | "error" | "info" | "warning"
 // Default toast options
 export const DEFAULT_TOAST_OPTIONS: ToastOptions = {
   duration: 4000,
-  position: "top-right" as ToastPosition,
-  className: "getparked-toast",
-  style: {
-    background: "white",
-    color: "black",
-    padding: "12px 16px",
-    borderRadius: "8px",
-    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    maxWidth: "350px",
-    width: "100%",
-  },
+  position: "top-right",
 }
 
 // Custom Toast component
@@ -72,6 +59,7 @@ export const CustomToast = ({
           background: "bg-amber-50",
         }
       case "info":
+        return "bg-blue-50 text-blue-900 border-blue-200"
       default:
         return {
           borderLeft: "4px solid #3b82f6", // blue
@@ -81,16 +69,13 @@ export const CustomToast = ({
     }
   }
 
-  const styles = getToastStyles()
-
   return (
     <div
       className={cn(
-        "flex items-center gap-3 rounded-md py-3 px-4 shadow-md",
-        styles.background,
-        t.visible ? "animate-enter" : "animate-leave",
+        "flex items-center gap-2 py-2 px-4 rounded-lg border shadow-sm",
+        getToastStyles(),
+        t.visible ? "animate-enter" : "animate-leave"
       )}
-      style={{ borderLeft: styles.borderLeft }}
     >
       {styles.icon}
       <div className="flex-1 text-sm font-medium">{message}</div>

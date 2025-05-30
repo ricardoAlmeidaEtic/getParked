@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-const config = {
+module.exports = {
   darkMode: ["class"],
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
@@ -11,7 +11,6 @@ const config = {
     './src/**/*.{ts,tsx}',
     '*.{js,ts,jsx,tsx,mdx}',
   ],
-  prefix: "",
   theme: {
     container: {
       center: true,
@@ -78,61 +77,6 @@ const config = {
         "accordion-up": {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
-        },
-        "dialog-overlay-show": {
-          from: { opacity: "0" },
-          to: { opacity: "1" },
-        },
-        "dialog-content-show": {
-          from: {
-            opacity: "0",
-            transform: "translate(-50%, -48%) scale(0.85)",
-          },
-          to: {
-            opacity: "1",
-            transform: "translate(-50%, -50%) scale(1)",
-          },
-        },
-        "dialog-overlay-hide": {
-          from: { opacity: "1" },
-          to: { opacity: "0" },
-        },
-        "dialog-content-hide": {
-          from: {
-            opacity: "1",
-            transform: "translate(-50%, -50%) scale(1)",
-          },
-          to: {
-            opacity: "0",
-            transform: "translate(-50%, -48%) scale(0.85)",
-          },
-        },
-        "slide-in-from-top": {
-          from: {
-            opacity: "0",
-            transform: "translateY(-20px)",
-          },
-          to: {
-            opacity: "1",
-            transform: "translateY(0)",
-          },
-        },
-        "bounce-in": {
-          "0%": {
-            opacity: "0",
-            transform: "scale(0.3)",
-          },
-          "50%": {
-            opacity: "1",
-            transform: "scale(1.05)",
-          },
-          "70%": {
-            transform: "scale(0.95)",
-          },
-          "100%": {
-            opacity: "1",
-            transform: "scale(1)",
-          },
         },
       },
       animation: {

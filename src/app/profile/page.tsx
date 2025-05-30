@@ -74,18 +74,18 @@ export default function ProfilePage() {
       }
 
       try {
-        // Criar dados do usuário baseado apenas na autenticação do Supabase
+        // Criar dados do usuário baseado na autenticação do Supabase
         const userInfo: UserData = {
           id: user.id,
           name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Usuário',
           email: user.email || '',
-          plan: 'Gratuito',
+          plan: user.user_metadata?.plan || 'Gratuito',
           joinDate: new Date(user.created_at).toLocaleDateString('pt-BR', { 
             month: 'long', 
             year: 'numeric' 
           }),
-          credits: 10, // Créditos iniciais
-          vehicles: [], // Começar com array vazio por enquanto
+          credits: user.user_metadata?.credits ?? 0,
+          vehicles: user.user_metadata?.vehicles || [],
           profileImage: user.user_metadata?.avatar_url
         }
         
@@ -112,7 +112,7 @@ export default function ProfilePage() {
     if (!loading) {
       fetchUserData()
     }
-  }, [user, loading, supabase])
+  }, [user, loading])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -176,9 +176,9 @@ export default function ProfilePage() {
     if (!user || !userData) return
     
     // Check vehicle limit based on plan
-    const maxVehicles = userData.plan === "Premium" ? 2 : 1
+    const maxVehicles = userData.plan === "Business" ? Infinity : userData.plan === "Premium" ? 3 : 1
     if (userData.vehicles.length >= maxVehicles) {
-      showToast.error(`Plano ${userData.plan} permite apenas ${maxVehicles} veículo${maxVehicles > 1 ? "s" : ""}`)
+      showToast.error(`Plano ${userData.plan} permite apenas ${maxVehicles === Infinity ? "veículos ilimitados" : `${maxVehicles} veículo${maxVehicles > 1 ? "s" : ""}`}`)
       return
     }
 
@@ -478,21 +478,32 @@ export default function ProfilePage() {
                         <CardDescription>Gerencie os veículos cadastrados em sua conta.</CardDescription>
                         <div className="text-sm text-gray-600 mt-2">
                           <p>
-                            Plano {userData.plan}: {userData.vehicles.length}/{userData.plan === "Premium" ? 2 : 1} veículo
-                            {userData.plan === "Premium" ? "s" : ""} cadastrado{userData.plan === "Premium" ? "s" : ""}
+                            Plano {userData.plan}:{" "}
+                            {userData.plan === "Business" ? (
+                              `${userData.vehicles.length} veículos cadastrados (ilimitado)`
+                            ) : (
+                              `${userData.vehicles.length}/${userData.plan === "Premium" ? "3" : "1"} veículo${userData.plan === "Premium" ? "s" : ""} cadastrado${userData.plan === "Premium" ? "s" : ""}`
+                            )}
                           </p>
-                          {userData.plan === "Gratuita" && userData.vehicles.length >= 1 && (
+                          {userData.plan === "Gratuito" && userData.vehicles.length >= 1 && (
                             <p className="text-amber-600 mt-1">
-                              Atualize para o plano Premium para adicionar mais veículos!
+                              Atualize para o plano Premium ou Business para adicionar mais veículos!
+                            </p>
+                          )}
+                          {userData.plan === "Premium" && userData.vehicles.length >= 3 && (
+                            <p className="text-amber-600 mt-1">
+                              Atualize para o plano Business para adicionar veículos ilimitados!
                             </p>
                           )}
                         </div>
                       </div>
                       
-                      {/* Rest of vehicle management UI remains the same, but uses userData instead of user */}
                       <Dialog open={isAddingVehicle} onOpenChange={setIsAddingVehicle}>
                         <DialogTrigger asChild>
-                          <Button size="sm" disabled={userData.vehicles.length >= (userData.plan === "Premium" ? 2 : 1)}>
+                          <Button 
+                            size="sm" 
+                            disabled={userData.plan !== "Business" && userData.vehicles.length >= (userData.plan === "Premium" ? 3 : 1)}
+                          >
                             <Plus className="mr-2 h-4 w-4" /> Adicionar Veículo
                           </Button>
                         </DialogTrigger>

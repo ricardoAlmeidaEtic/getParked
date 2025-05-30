@@ -58,7 +58,7 @@ export default function SignInPage() {
       }
 
       if (formData.password.length < 6) {
-        throw new Error("Senha deve ter pelo menos 6 caracteres")
+        throw new Error("A senha deve ter pelo menos 6 caracteres")
       }
 
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -85,16 +85,11 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex min-h-screen flex-1 flex-col justify-center px-6 py-12 lg:px-8">
+    <main className="min-h-screen flex flex-col">
+      <section className="flex min-h-screen flex-1 flex-col justify-center px-6 py-12 lg:px-8">
         <AuthHeader
           title="Entre na sua conta"
-          subtitle="Ou"
-          subtitleLink={{
-            text: "Ou",
-            href: "/auth/signup",
-            label: "crie uma nova conta",
-          }}
+          subtitle="Bem-vindo de volta! Por favor, insira seus dados."
         />
 
         <FadeIn direction="up" duration={800} delay={200}>
@@ -204,10 +199,87 @@ export default function SignInPage() {
               {/* <SocialLogin /> */}
             </div>
 
-            <AuthTerms />
-          </div>
+            <div>
+              <Label htmlFor="password">Senha</Label>
+              <div className="mt-2 relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="pl-10 pr-10"
+                  placeholder="••••••••"
+                />
+                <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Checkbox
+                  id="remember-me"
+                  checked={formData.rememberMe}
+                  onCheckedChange={handleCheckboxChange}
+                />
+                <label
+                  htmlFor="remember-me"
+                  className="ml-2 block text-sm text-gray-900"
+                >
+                  Lembrar-me
+                </label>
+              </div>
+
+              <div className="text-sm">
+                <Link
+                  href="/auth/forgot-password"
+                  className="font-semibold text-primary hover:text-primary/80"
+                >
+                  Esqueceu a senha?
+                </Link>
+              </div>
+            </div>
+
+            <div>
+              <Button
+                type="submit"
+                className="w-full flex justify-center items-center gap-2"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  "Entrando..."
+                ) : (
+                  <>
+                    Entrar
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+
+          <SocialLogin />
+
+          <AuthTerms
+            message="Não tem uma conta?"
+            linkText="Cadastre-se"
+            linkHref="/auth/signup"
+          />
         </FadeIn>
-      </div>
-    </div>
+      </section>
+    </main>
   )
 }
