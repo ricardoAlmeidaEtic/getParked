@@ -53,7 +53,6 @@ export default function Navbar({ items = [] }: NavbarProps) {
         <div className="hidden md:flex items-center space-x-4">
           {isLoggedIn ? (
             <Button
-              asChild
               variant="outline"
               className="bg-white text-primary-foreground border-none hover:bg-gray-100"
             >
@@ -65,13 +64,12 @@ export default function Navbar({ items = [] }: NavbarProps) {
           ) : (
             <>
               <Button
-                asChild
                 variant="outline"
                 className="bg-white text-primary-foreground border-none hover:bg-gray-100"
               >
                 <Link href="/auth/signin">Entrar</Link>
               </Button>
-              <Button asChild className="bg-black text-white hover:bg-gray-800">
+              <Button className="bg-black text-white hover:bg-gray-800">
                 <Link href="/auth/signup">Cadastre-se</Link>
               </Button>
             </>

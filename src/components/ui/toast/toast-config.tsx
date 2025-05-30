@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { CheckCircle, AlertCircle, Info, X, AlertTriangle } from "lucide-react"
 import toast, {
   type Toast,
@@ -8,23 +9,18 @@ import toast, {
   type Renderable,
   type ValueOrFunction,
 } from "react-hot-toast"
-<<<<<<< HEAD
-import { cn } from "@/lib/utils"
-=======
 import { clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import React from "react"
 
-// Replicando a função cn aqui para evitar problemas de importação
+// Utility function to merge class names (replicates cn)
 function cn(...inputs: any[]) {
   return twMerge(clsx(inputs))
 }
->>>>>>> 476f46b (Perfil)
 
-// Tipos de toast personalizados
+// Custom toast types
 export type ToastType = "success" | "error" | "info" | "warning"
 
-// Configurações padrão para todos os toasts
+// Default toast options
 export const DEFAULT_TOAST_OPTIONS: ToastOptions = {
   duration: 4000,
   position: "top-right" as ToastPosition,
@@ -43,42 +39,42 @@ export const DEFAULT_TOAST_OPTIONS: ToastOptions = {
   },
 }
 
-// Componente de toast personalizado
+// Custom Toast component
 export const CustomToast = ({
   t,
   type,
   message,
   icon,
-<<<<<<< HEAD
-}: { t: Toast; type: ToastType; message: string; icon?: Renderable }) => {
-=======
-}: { t: Toast; type: ToastType; message: string; icon?: React.ReactNode }) => {
->>>>>>> 476f46b (Perfil)
-  // Definir cores e ícones com base no tipo
+}: {
+  t: Toast
+  type: ToastType
+  message: string
+  icon?: React.ReactNode
+}) => {
   const getToastStyles = () => {
     switch (type) {
       case "success":
         return {
-          borderLeft: "4px solid #10b981", // verde
+          borderLeft: "4px solid #10b981", // green
           icon: icon || <CheckCircle className="h-5 w-5 text-green-500" />,
           background: "bg-green-50",
         }
       case "error":
         return {
-          borderLeft: "4px solid #ef4444", // vermelho
+          borderLeft: "4px solid #ef4444", // red
           icon: icon || <AlertCircle className="h-5 w-5 text-red-500" />,
           background: "bg-red-50",
         }
       case "warning":
         return {
-          borderLeft: "4px solid #f59e0b", // amarelo
+          borderLeft: "4px solid #f59e0b", // yellow
           icon: icon || <AlertTriangle className="h-5 w-5 text-amber-500" />,
           background: "bg-amber-50",
         }
       case "info":
       default:
         return {
-          borderLeft: "4px solid #3b82f6", // azul
+          borderLeft: "4px solid #3b82f6", // blue
           icon: icon || <Info className="h-5 w-5 text-blue-500" />,
           background: "bg-blue-50",
         }
@@ -101,7 +97,7 @@ export const CustomToast = ({
       <button
         onClick={() => toast.dismiss(t.id)}
         className="rounded-full p-1 transition-colors hover:bg-gray-200"
-        aria-label="Fechar notificação"
+        aria-label="Close notification"
       >
         <X className="h-4 w-4 text-gray-500" />
       </button>
@@ -109,32 +105,32 @@ export const CustomToast = ({
   )
 }
 
-// Funções de toast personalizadas
+// Toast helper functions
 export const showToast = {
-  success: (message: string, options?: ToastOptions) => {
-    return toast.custom((t: Toast) => <CustomToast t={t} type="success" message={message} />, {
+  success: (message: string, options?: ToastOptions) =>
+    toast.custom((t: Toast) => <CustomToast t={t} type="success" message={message} />, {
       ...DEFAULT_TOAST_OPTIONS,
       ...options,
-    })
-  },
-  error: (message: string, options?: ToastOptions) => {
-    return toast.custom((t: Toast) => <CustomToast t={t} type="error" message={message} />, {
+    }),
+
+  error: (message: string, options?: ToastOptions) =>
+    toast.custom((t: Toast) => <CustomToast t={t} type="error" message={message} />, {
       ...DEFAULT_TOAST_OPTIONS,
       ...options,
-    })
-  },
-  info: (message: string, options?: ToastOptions) => {
-    return toast.custom((t: Toast) => <CustomToast t={t} type="info" message={message} />, {
+    }),
+
+  info: (message: string, options?: ToastOptions) =>
+    toast.custom((t: Toast) => <CustomToast t={t} type="info" message={message} />, {
       ...DEFAULT_TOAST_OPTIONS,
       ...options,
-    })
-  },
-  warning: (message: string, options?: ToastOptions) => {
-    return toast.custom((t: Toast) => <CustomToast t={t} type="warning" message={message} />, {
+    }),
+
+  warning: (message: string, options?: ToastOptions) =>
+    toast.custom((t: Toast) => <CustomToast t={t} type="warning" message={message} />, {
       ...DEFAULT_TOAST_OPTIONS,
       ...options,
-    })
-  },
+    }),
+
   promise: <T,>(
     promise: Promise<T>,
     {
@@ -147,27 +143,36 @@ export const showToast = {
       error: ValueOrFunction<Renderable, any>
     },
     options?: ToastOptions,
-  ) => {
-    return toast.promise(
+  ) =>
+    toast.promise(
       promise,
       {
-        loading: loading,
-        success: (result: T) => {
-          const message = typeof success === "function" ? success(result) : success
-          return message as string
-        },
-        error: (err: any) => {
-          const message = typeof error === "function" ? error(err) : error
-          return message as string
-        },
+        loading,
+        success: (result: T) => (typeof success === "function" ? success(result) : success) as string,
+        error: (err: any) => (typeof error === "function" ? error(err) : error) as string,
       },
       { ...DEFAULT_TOAST_OPTIONS, ...options },
-    )
-  },
+    ),
 }
 
-// Adicione animações ao seu arquivo globals.css
-// @keyframes enter { from { opacity: 0; transform: translateY(-8px) } to { opacity: 1; transform: translateY(0) } }
-// @keyframes leave { from { opacity: 1; transform: translateY(0) } to { opacity: 0; transform: translateY(-8px) } }
-// .animate-enter { animation: enter 0.2s ease-out; }
-// .animate-leave { animation: leave 0.15s ease-in forwards; }
+/*
+Add these animations to your global CSS:
+
+@keyframes enter {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes leave {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-8px); }
+}
+
+.animate-enter {
+  animation: enter 0.2s ease-out;
+}
+
+.animate-leave {
+  animation: leave 0.15s ease-in forwards;
+}
+*/

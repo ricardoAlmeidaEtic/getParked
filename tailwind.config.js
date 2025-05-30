@@ -2,26 +2,17 @@
 const config = {
   darkMode: ["class"],
   content: [
-<<<<<<< HEAD
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-=======
-    "./pages/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
-    "./app/**/*.{ts,tsx}",
-    "./src/**/*.{ts,tsx}",
-    "*.{js,ts,jsx,tsx,mdx}",
->>>>>>> 476f46b (Perfil)
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
+    '*.{js,ts,jsx,tsx,mdx}',
   ],
   prefix: "",
   theme: {
-<<<<<<< HEAD
-    extend: {
-      zIndex: {
-        'map': '1',
-        'map-controls': '1000',
-=======
     container: {
       center: true,
       padding: "2rem",
@@ -40,7 +31,7 @@ const config = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#F8D648", // Yellow primary color
+          DEFAULT: "#F8D648",
           foreground: "#000000",
           hover: "#F5CB2E",
           light: "#FFF8E1",
@@ -74,6 +65,10 @@ const config = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      zIndex: {
+        map: '1',
+        'map-controls': '1000',
       },
       keyframes: {
         "accordion-down": {
@@ -153,11 +148,10 @@ const config = {
           "dialog-content-hide 0.15s cubic-bezier(0.16, 1, 0.3, 1)",
         "slide-in-from-top": "slide-in-from-top 0.3s ease-out",
         "bounce-in": "bounce-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
->>>>>>> 476f46b (Perfil)
       },
     },
   },
   plugins: [require("tailwindcss-animate")],
-}
+};
 
-module.exports = config
+module.exports = config;

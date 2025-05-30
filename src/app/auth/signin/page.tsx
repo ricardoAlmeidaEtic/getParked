@@ -1,37 +1,22 @@
 "use client"
 
 import type React from "react"
-
-<<<<<<< HEAD
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react"
-=======
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react"
-import { useSupabase } from "@/providers/SupabaseProvider"
->>>>>>> 476f46b (Perfil)
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import FadeIn from "@/components/animations/fade-in"
-<<<<<<< HEAD
-import AuthHeader from "@/components/auth/auth-header"
-import SocialLogin from "@/components/auth/social-login"
-import AuthTerms from "@/components/auth/auth-terms"
-import { showToast } from "@/components/ui/toast/toast-config"
-import { useSupabase } from "@/providers/SupabaseProvider"
-=======
-import { SocialLogin } from "@/components/auth"
 import AuthHeader from "@/components/auth/auth-header"
 import AuthTerms from "@/components/auth/auth-terms"
 import { showToast } from "@/components/ui/toast"
->>>>>>> 476f46b (Perfil)
+import { useSupabase } from "@/providers/SupabaseProvider"
+//import { SocialLogin } from "@/components/auth"
 
 export default function SignInPage() {
   const router = useRouter()
@@ -39,27 +24,20 @@ export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
-<<<<<<< HEAD
-=======
   const [showEmailConfirmMessage, setShowEmailConfirmMessage] = useState(false)
->>>>>>> 476f46b (Perfil)
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     rememberMe: false,
   })
 
-<<<<<<< HEAD
-=======
-  // Verificar se há mensagem de confirmação de email na URL
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
-    if (urlParams.get('message') === 'confirm-email') {
+    if (urlParams.get("message") === "confirm-email") {
       setShowEmailConfirmMessage(true)
     }
   }, [])
 
->>>>>>> 476f46b (Perfil)
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -75,27 +53,6 @@ export default function SignInPage() {
     setIsLoading(true)
 
     try {
-<<<<<<< HEAD
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password
-      })
-      
-      // Configurar a persistência da sessão caso o usuário tenha marcado "Lembrar de mim"
-      if (!error && formData.rememberMe) {
-        // Em versões atuais do Supabase, a persistência é gerenciada automaticamente
-        // Essa configuração já não é mais necessária explicitamente
-        await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token
-        })
-      }
-      
-      if (error) throw error;
-
-      // Show success toast
-=======
-      // Validações básicas
       if (!formData.email.includes("@")) {
         throw new Error("Email inválido")
       }
@@ -104,35 +61,24 @@ export default function SignInPage() {
         throw new Error("Senha deve ter pelo menos 6 caracteres")
       }
 
-      // Fazer login com Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
-      });
-      
+      })
+
       if (error) {
-        // Tratamento específico para email não confirmado
         if (error.message === "Email not confirmed") {
           throw new Error("Email não confirmado. Verifique sua caixa de entrada e clique no link de confirmação antes de fazer login.")
         }
         throw error
       }
-      
-      // Login bem-sucedido
->>>>>>> 476f46b (Perfil)
-      showToast.success("Login realizado com sucesso!")
 
-      // Redirect to home page on successful login
+      showToast.success("Login realizado com sucesso!")
       router.push("/")
     } catch (err: any) {
-<<<<<<< HEAD
-      setError(err.message || "Ocorreu um erro ao fazer login")
-      showToast.error(err.message || "Ocorreu um erro ao fazer login")
-=======
       const errorMessage = err.message || "Ocorreu um erro ao fazer login"
       setError(errorMessage)
       showToast.error(errorMessage)
->>>>>>> 476f46b (Perfil)
     } finally {
       setIsLoading(false)
     }
@@ -154,8 +100,6 @@ export default function SignInPage() {
         <FadeIn direction="up" duration={800} delay={200}>
           <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
             <div className="bg-white px-6 py-8 shadow sm:rounded-lg sm:px-12">
-<<<<<<< HEAD
-=======
               {showEmailConfirmMessage && (
                 <Alert className="mb-6 border-blue-200 bg-blue-50">
                   <AlertDescription className="text-blue-800">
@@ -164,7 +108,6 @@ export default function SignInPage() {
                 </Alert>
               )}
 
->>>>>>> 476f46b (Perfil)
               {error && (
                 <Alert variant="destructive" className="mb-6 animate-shake">
                   <AlertDescription>{error}</AlertDescription>
@@ -195,14 +138,12 @@ export default function SignInPage() {
                 <div>
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password">Senha</Label>
-                    <div className="text-sm">
-                      <Link
-                        href="/auth/forgot-password"
-                        className="font-medium text-primary hover:text-primary-hover transition-colors duration-300"
-                      >
-                        Esqueceu a senha?
-                      </Link>
-                    </div>
+                    <Link
+                      href="/auth/forgot-password"
+                      className="text-sm font-medium text-primary hover:text-primary-hover transition-colors duration-300"
+                    >
+                      Esqueceu a senha?
+                    </Link>
                   </div>
                   <div className="mt-2 relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -231,44 +172,36 @@ export default function SignInPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Checkbox
-                      id="remember-me"
-                      checked={formData.rememberMe}
-                      onCheckedChange={handleCheckboxChange}
-                      className="transition-colors duration-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                    />
-                    <Label htmlFor="remember-me" className="ml-2 text-sm text-gray-900">
-                      Lembrar de mim
-                    </Label>
-                  </div>
+                <div className="flex items-center">
+                  <Checkbox
+                    id="remember-me"
+                    checked={formData.rememberMe}
+                    onCheckedChange={handleCheckboxChange}
+                    className="transition-colors duration-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  />
+                  <Label htmlFor="remember-me" className="ml-2 text-sm text-gray-900">
+                    Lembrar de mim
+                  </Label>
                 </div>
 
-                <div>
-                  <Button
-                    type="submit"
-                    className="w-full transition-all duration-300 hover:bg-primary-hover transform hover:scale-[1.02]"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <span className="flex items-center">
-                        <span className="animate-spin mr-2">⏳</span> Entrando...
-                      </span>
-                    ) : (
-                      <span className="flex items-center">
-                        Entrar <ArrowRight className="ml-2 h-4 w-4" />
-                      </span>
-                    )}
-                  </Button>
-                </div>
+                <Button
+                  type="submit"
+                  className="w-full transition-all duration-300 hover:bg-primary-hover transform hover:scale-[1.02]"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <span className="flex items-center">
+                      <span className="animate-spin mr-2">⏳</span> Entrando...
+                    </span>
+                  ) : (
+                    <span className="flex items-center">
+                      Entrar <ArrowRight className="ml-2 h-4 w-4" />
+                    </span>
+                  )}
+                </Button>
               </form>
 
-<<<<<<< HEAD
               {/* <SocialLogin /> */}
-=======
-              <SocialLogin />
->>>>>>> 476f46b (Perfil)
             </div>
 
             <AuthTerms />
@@ -278,7 +211,3 @@ export default function SignInPage() {
     </div>
   )
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> 476f46b (Perfil)

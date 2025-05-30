@@ -12,7 +12,6 @@ export default function CtaSection() {
             Junte-se a milhares de motoristas que economizam tempo e dinheiro com o GetParked todos os dias.
           </p>
           <Button
-            asChild
             size="lg"
             className="bg-primary text-black hover:bg-primary-hover transition-all duration-300 transform hover:scale-105"
           >

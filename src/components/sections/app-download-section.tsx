@@ -20,7 +20,6 @@ export default function AppDownloadSection() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button
-                asChild
                 className="bg-black text-white hover:bg-gray-800 transition-colors duration-300 transform hover:scale-105"
               >
                 <Link href="#" className="flex items-center">
@@ -31,7 +30,6 @@ export default function AppDownloadSection() {
                 </Link>
               </Button>
               <Button
-                asChild
                 className="bg-black text-white hover:bg-gray-800 transition-colors duration-300 transform hover:scale-105"
               >
                 <Link href="#" className="flex items-center">

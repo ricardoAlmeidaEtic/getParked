@@ -208,7 +208,7 @@ export default function TestAuthPage() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-2">
-              <Button variant="default" className="w-full" asChild>
+              <Button variant="default" className="w-full">
                 <Link href="/profile">
                   Ir para Página de Perfil
                 </Link>

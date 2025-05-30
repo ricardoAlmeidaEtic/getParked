@@ -1,6 +1,5 @@
 "use client"
 
-<<<<<<< HEAD
 import type React from "react"
 
 import { useState } from "react"
@@ -28,7 +27,7 @@ export default function ForgotPasswordPage() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`
+        redirectTo: `${window.location.origin}/auth/reset-password`,
       })
 
       if (error) throw error
@@ -36,7 +35,7 @@ export default function ForgotPasswordPage() {
       setIsSubmitted(true)
       showToast.success("Email de recuperação enviado!")
     } catch (error: any) {
-      console.error('Forgot password error:', error) // Debug log
+      console.error("Forgot password error:", error)
       setError(error.message || "Erro ao enviar email de recuperação")
       showToast.error(error.message || "Erro ao enviar email de recuperação")
     } finally {
@@ -49,7 +48,7 @@ export default function ForgotPasswordPage() {
       <div className="flex min-h-screen flex-1 flex-col justify-center px-6 py-12 lg:px-8">
         <FadeIn direction="down" duration={800}>
           <div className="sm:mx-auto sm:w-full sm:max-w-md">
-            <Link href="/landing" className="flex justify-center transition-transform duration-300 hover:scale-105">
+            <Link href="" className="flex justify-center transition-transform duration-300 hover:scale-105">
               <span className="font-bold text-2xl text-primary uppercase tracking-wider">
                 GET<span className="font-black">PARKED</span>
               </span>
@@ -176,15 +175,3 @@ export default function ForgotPasswordPage() {
     </div>
   )
 }
-=======
-export default function ForgotPasswordPage() {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold mb-4">Página em Desenvolvimento</h1>
-        <p>Esta funcionalidade está sendo desenvolvida em outra branch.</p>
-      </div>
-    </div>
-  )
-}
->>>>>>> 476f46b (Perfil)

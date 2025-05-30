@@ -1,14 +1,11 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from "lucide-react"
-<<<<<<< HEAD
-=======
 import { useSupabase } from "@/providers/SupabaseProvider"
->>>>>>> 476f46b (Perfil)
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,12 +16,7 @@ import AuthHeader from "@/components/auth/auth-header"
 import SocialLogin from "@/components/auth/social-login"
 import AuthTerms from "@/components/auth/auth-terms"
 import Link from "next/link"
-<<<<<<< HEAD
-import { showToast } from "@/components/ui/toast/toast-config"
-import { useSupabase } from "@/providers/SupabaseProvider"
-=======
 import { showToast } from "@/components/ui/toast"
->>>>>>> 476f46b (Perfil)
 
 export default function SignUpPage() {
   const router = useRouter()
@@ -32,6 +24,7 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -52,76 +45,42 @@ export default function SignUpPage() {
     e.preventDefault()
     setError(null)
 
-    // Validate form
     if (!formData.agreeTerms) {
-      setError("Você precisa concordar com os termos para continuar")
-      showToast.warning("Você precisa concordar com os termos para continuar")
+      const msg = "Você precisa concordar com os termos para continuar"
+      setError(msg)
+      showToast.warning(msg)
       return
     }
 
     setIsLoading(true)
 
     try {
-<<<<<<< HEAD
-      // Register with Supabase auth
-      const { data, error: authError } = await supabase.auth.signUp({
-=======
-      // Validar formulário
-      if (!formData.email.includes("@")) {
-        throw new Error("Email inválido")
-      }
+      if (!formData.email.includes("@")) throw new Error("Email inválido")
+      if (formData.password.length < 6) throw new Error("Senha deve ter pelo menos 6 caracteres")
 
-      if (formData.password.length < 6) {
-        throw new Error("Senha deve ter pelo menos 6 caracteres")
-      }
-
-      // Criar conta no Supabase
       const { data, error: signUpError } = await supabase.auth.signUp({
->>>>>>> 476f46b (Perfil)
         email: formData.email,
         password: formData.password,
         options: {
           data: {
-            name: formData.name
-<<<<<<< HEAD
-          }
-        }
-      })
-      
-      if (authError) throw authError;
-
-      // Show success toast
-      showToast.success("Conta criada com sucesso! Por favor, verifique seu email para confirmar seu cadastro.")
-
-      // Redirect to home page on successful registration
-      router.push("/")
-    } catch (error: any) {
-      setError(error.message || "Ocorreu um erro ao criar sua conta")
-      showToast.error(error.message || "Ocorreu um erro ao criar sua conta")
-=======
+            name: formData.name,
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`
-        }
-      });
+        },
+      })
 
-      if (signUpError) throw signUpError;
-      
-      // Verificar se o usuário foi criado mas precisa de confirmação
+      if (signUpError) throw signUpError
+
       if (data?.user && !data.session) {
-        // Usuário criado mas não confirmado
         showToast.success("Conta criada! Verifique seu email para confirmar antes de fazer login.")
-        
-        // Redirect to signin page with message
         router.push("/auth/signin?message=confirm-email")
       } else if (data?.session) {
-        // Usuário criado e já logado (confirmação automática desabilitada)
         showToast.success("Conta criada e login realizado com sucesso!")
         router.push("/")
       }
     } catch (err: any) {
-      setError(err.message || "Ocorreu um erro ao criar sua conta")
-      showToast.error(err.message || "Ocorreu um erro ao criar sua conta")
->>>>>>> 476f46b (Perfil)
+      const message = err.message || "Ocorreu um erro ao criar sua conta"
+      setError(message)
+      showToast.error(message)
     } finally {
       setIsLoading(false)
     }
@@ -162,7 +121,7 @@ export default function SignUpPage() {
                       type="text"
                       autoComplete="name"
                       required
-                      className="pl-10 transition-all duration-300 focus:border-primary focus:ring-primary"
+                      className="pl-10"
                       placeholder="Seu nome completo"
                       value={formData.name}
                       onChange={handleChange}
@@ -182,7 +141,7 @@ export default function SignUpPage() {
                       type="email"
                       autoComplete="email"
                       required
-                      className="pl-10 transition-all duration-300 focus:border-primary focus:ring-primary"
+                      className="pl-10"
                       placeholder="seu@email.com"
                       value={formData.email}
                       onChange={handleChange}
@@ -202,7 +161,7 @@ export default function SignUpPage() {
                       type={showPassword ? "text" : "password"}
                       autoComplete="new-password"
                       required
-                      className="pl-10 pr-10 transition-all duration-300 focus:border-primary focus:ring-primary"
+                      className="pl-10 pr-10"
                       placeholder="••••••••"
                       value={formData.password}
                       onChange={handleChange}
@@ -211,7 +170,7 @@ export default function SignUpPage() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="text-gray-400 hover:text-gray-500 transition-colors duration-300"
+                        className="text-gray-400 hover:text-gray-500"
                       >
                         {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </button>
@@ -226,21 +185,14 @@ export default function SignUpPage() {
                     checked={formData.agreeTerms}
                     onCheckedChange={handleCheckboxChange}
                     required
-                    className="transition-colors duration-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                   />
                   <Label htmlFor="agree-terms" className="ml-2 text-sm text-gray-900">
                     Eu concordo com os{" "}
-                    <Link
-                      href="#"
-                      className="font-medium text-primary hover:text-primary-hover transition-colors duration-300"
-                    >
+                    <Link href="#" className="font-medium text-primary hover:text-primary-hover">
                       Termos de Serviço
                     </Link>{" "}
                     e{" "}
-                    <Link
-                      href="#"
-                      className="font-medium text-primary hover:text-primary-hover transition-colors duration-300"
-                    >
+                    <Link href="#" className="font-medium text-primary hover:text-primary-hover">
                       Política de Privacidade
                     </Link>
                   </Label>
@@ -249,7 +201,7 @@ export default function SignUpPage() {
                 <div>
                   <Button
                     type="submit"
-                    className="w-full transition-all duration-300 hover:bg-primary-hover transform hover:scale-[1.02]"
+                    className="w-full"
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -264,12 +216,8 @@ export default function SignUpPage() {
                   </Button>
                 </div>
               </form>
-<<<<<<< HEAD
-              {/* <SocialLogin /> */}
-=======
 
-              <SocialLogin />
->>>>>>> 476f46b (Perfil)
+              {/* <SocialLogin /> */}
             </div>
 
             <AuthTerms />
@@ -278,8 +226,4 @@ export default function SignUpPage() {
       </div>
     </div>
   )
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 476f46b (Perfil)

@@ -2,8 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-<<<<<<< HEAD
-
+/* Leaflet map styles */
 .leaflet-container {
   width: 100%;
   height: 100%;
@@ -13,8 +12,9 @@
 .leaflet-control-container .leaflet-top,
 .leaflet-control-container .leaflet-bottom {
   z-index: 1000;
-} 
+}
 
+/* Design Tokens and Theming */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -60,28 +60,22 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
   }
-}
 
-@layer base {
   * {
     border-color: hsl(var(--border));
   }
+
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-family: var(--font-poppins), system-ui, sans-serif;
   }
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+
+  h1, h2, h3, h4, h5, h6 {
     font-weight: 500;
     letter-spacing: -0.025em;
   }
 
-  /* Smooth scrolling for anchor links */
   html {
     scroll-behavior: smooth;
   }
@@ -100,7 +94,7 @@
     z-index: 100;
   }
 
-  /* Animation utilities */
+  /* Floating animation */
   .animate-float {
     animation: float 3s ease-in-out infinite;
   }
@@ -122,8 +116,7 @@
   }
 
   @keyframes pulse {
-    0%,
-    100% {
+    0%, 100% {
       opacity: 1;
     }
     50% {
@@ -163,7 +156,7 @@
   }
 }
 
-/* Mobile optimizations */
+/* Mobile padding fix */
 @media (max-width: 640px) {
   .container {
     padding-left: 1rem;
@@ -171,7 +164,7 @@
   }
 }
 
-/* Custom scrollbar */
+/* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 10px;
 }
@@ -188,16 +181,3 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #f5cb2e;
 }
-=======
-/* Animações para os toasts */
-@keyframes enter { 
-  from { opacity: 0; transform: translateY(-8px) } 
-  to { opacity: 1; transform: translateY(0) } 
-}
-@keyframes leave { 
-  from { opacity: 1; transform: translateY(0) } 
-  to { opacity: 0; transform: translateY(-8px) } 
-}
-.animate-enter { animation: enter 0.2s ease-out; }
-.animate-leave { animation: leave 0.15s ease-in forwards; } 
->>>>>>> 476f46b (Perfil)

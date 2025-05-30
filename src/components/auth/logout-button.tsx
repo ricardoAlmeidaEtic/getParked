@@ -38,14 +38,13 @@ export default function LogoutButton({
       showToast.error("Erro ao fazer logout. Tente novamente.")
       showToast.success("Logout realizado com sucesso")
       router.push("/auth/signin")
-    } catch (error: any) {
-      showToast.error(error.message || "Erro ao fazer logout")
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
+    <>
     <Button 
       onClick={handleLogout}
       variant={variant}
@@ -60,6 +59,8 @@ export default function LogoutButton({
         <span className="flex items-center">
           <LogOut className="h-4 w-4 mr-2" /> Sair
         </span>
+      )}
+    </Button>
     <Button
       variant={variant}
       size={size}
@@ -76,5 +77,6 @@ export default function LogoutButton({
         </>
       )}
     </Button>
+    </>
   )
 }

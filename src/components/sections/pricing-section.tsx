@@ -107,7 +107,6 @@ export default function PricingSection() {
                 </CardContent>
                 <div className="p-6 pt-0">
                   <Button
-                    asChild
                     variant={plan.buttonVariant as "outline" | "default"}
                     className={`w-full ${
                       plan.buttonVariant === "default"
