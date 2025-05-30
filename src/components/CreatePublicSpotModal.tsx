@@ -31,7 +31,10 @@ export function CreatePublicSpotModal({
   }, [initialPosition])
 
   const handleSubmit = async () => {
-    if (!position || !userPosition) return
+    if (!position || !userPosition) {
+      showToast.error('Posição inválida')
+      return
+    }
 
     // Verifica se a posição está dentro do raio permitido
     const selectionArea = new SelectionArea(null as any, userPosition)
@@ -42,29 +45,52 @@ export function CreatePublicSpotModal({
 
     setIsSubmitting(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      // Verifica autenticação do usuário
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      
+      if (authError) {
+        console.error('Erro de autenticação:', authError)
+        throw new Error('Erro de autenticação')
+      }
       
       if (!user) {
+        console.error('Usuário não autenticado')
         throw new Error('Usuário não autenticado')
       }
 
-      const { error } = await supabase
+      // Verifica se o usuário tem perfil
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single()
+
+      if (profileError || !profile) {
+        console.error('Erro ao verificar perfil:', profileError)
+        throw new Error('Perfil não encontrado')
+      }
+
+      // Insere o marcador
+      const { error: insertError } = await supabase
         .from('public_spot_markers')
         .insert({
           latitude: position.lat,
           longitude: position.lng,
           created_at: new Date().toISOString(),
-          created_by: user.id
+          user_id: user.id
         })
 
-      if (error) throw error
+      if (insertError) {
+        console.error('Erro ao inserir vaga:', insertError)
+        throw insertError
+      }
 
       showToast.success('Vaga pública registrada com sucesso!')
       onMarkerCreated()
       onClose()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao criar vaga pública:', error)
-      showToast.error('Erro ao registrar vaga pública')
+      showToast.error(error.message || 'Erro ao registrar vaga pública')
     } finally {
       setIsSubmitting(false)
     }

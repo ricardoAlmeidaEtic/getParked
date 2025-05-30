@@ -19,8 +19,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { showToast } from "@/components/ui/toast"
+import { showToast } from "@/lib/toast"
 import { useSupabase } from "@/providers/SupabaseProvider"
+import { useProfile } from '@/hooks/useProfile'
+import { Profile } from '@/lib/api/profile'
 
 interface UserData {
   id: string
@@ -35,84 +37,77 @@ interface UserData {
 
 interface Vehicle {
   id: string
-  name: string
+  owner_id: string
   plate: string
-  type: string
-  length: number
-  width: number
-  height: number
+  model: string
+  color: string
+  created_at: string
 }
 
 export default function ProfilePage() {
   const router = useRouter()
-  const { supabase, user, loading } = useSupabase()
-  const [userData, setUserData] = useState<UserData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const { supabase, session } = useSupabase()
+  const { profile: supabaseProfile, loading: profileLoading, updateProfile } = useProfile()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
+    full_name: '',
+    email: '',
+    credits: 0
   })
-  const [newVehicle, setNewVehicle] = useState<Vehicle>({
-    id: "",
-    name: "",
+  const [newVehicle, setNewVehicle] = useState<Partial<Vehicle>>({
     plate: "",
-    type: "Carro",
-    length: 4.5,
-    width: 1.8,
-    height: 1.5,
+    model: "",
+    color: "Preto"
   })
   const [isAddingVehicle, setIsAddingVehicle] = useState(false)
   const [profileImage, setProfileImage] = useState<string>("/images/parking-map.png")
+  const [loading, setLoading] = useState(true)
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (!user) {
-        setIsLoading(false)
-        return
-      }
+    if (!session) {
+      router.push('/auth/signin')
+      return
+    }
 
+    const fetchProfileAndVehicles = async () => {
       try {
-        // Criar dados do usuário baseado apenas na autenticação do Supabase
-        const userInfo: UserData = {
-          id: user.id,
-          name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Usuário',
-          email: user.email || '',
-          plan: 'Gratuito',
-          joinDate: new Date(user.created_at).toLocaleDateString('pt-BR', { 
-            month: 'long', 
-            year: 'numeric' 
-          }),
-          credits: 10, // Créditos iniciais
-          vehicles: [], // Começar com array vazio por enquanto
-          profileImage: user.user_metadata?.avatar_url
-        }
-        
-        setUserData(userInfo)
+        // Buscar perfil
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single()
+
+        if (profileError) throw profileError
+
+        // Buscar veículos
+        const { data: vehiclesData, error: vehiclesError } = await supabase
+          .from('vehicles')
+          .select('*')
+          .eq('owner_id', session.user.id)
+
+        if (vehiclesError) throw vehiclesError
+
+        setProfile(profileData)
+        setVehicles(vehiclesData || [])
         setFormData({
-          name: userInfo.name,
-          email: userInfo.email,
+          full_name: profileData.full_name || '',
+          email: session.user.email || '',
+          credits: profileData.credits || 0
         })
-        
-        if (userInfo.profileImage) {
-          setProfileImage(userInfo.profileImage)
-        }
-        
-        console.log("Dados do usuário carregados:", userInfo)
-        
       } catch (error) {
-        console.error("Error fetching user data:", error)
-        showToast.error("Erro ao carregar perfil")
+        console.error('Erro ao carregar dados:', error)
+        showToast.error('Erro ao carregar dados')
       } finally {
-        setIsLoading(false)
+        setLoading(false)
       }
     }
 
-    if (!loading) {
-      fetchUserData()
-    }
-  }, [user, loading, supabase])
+    fetchProfileAndVehicles()
+  }, [session, router, supabase])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -130,55 +125,55 @@ export default function ProfilePage() {
     })
   }
 
-  const handleSave = async () => {
-    if (!user || !userData) return
-    
-    setIsSaving(true)
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!session) return
+
     try {
-      // Atualizar metadados do usuário no Supabase Auth
+      // Atualizar metadata do usuário no Auth
       const { error: authError } = await supabase.auth.updateUser({
-        data: { 
-          full_name: formData.name,
-          name: formData.name 
-        }
+        data: { full_name: formData.full_name }
       })
-      
+
       if (authError) throw authError
-      
-      // Atualizar estado local
-      setUserData({
-        ...userData,
-        name: formData.name,
-        email: formData.email,
-      })
-      
-      showToast.success("Perfil atualizado com sucesso!")
+
+      // Atualizar perfil no banco de dados
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          full_name: formData.full_name,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', session.user.id)
+
+      if (profileError) throw profileError
+
+      showToast.success('Perfil atualizado com sucesso!')
       setIsEditing(false)
-    } catch (error: any) {
-      console.error("Erro ao salvar perfil:", error)
-      showToast.error(error.message || "Ocorreu um erro ao atualizar o perfil")
-    } finally {
-      setIsSaving(false)
+    } catch (error) {
+      console.error('Erro ao atualizar perfil:', error)
+      showToast.error('Erro ao atualizar perfil')
     }
   }
 
   const handleCancel = () => {
-    if (userData) {
+    if (profile) {
       setFormData({
-        name: userData.name,
-        email: userData.email,
+        full_name: profile.full_name,
+        email: profile.email,
+        credits: profile.credits
       })
     }
     setIsEditing(false)
   }
 
   const handleAddVehicle = async () => {
-    if (!user || !userData) return
+    if (!session || !profile) return
     
     // Check vehicle limit based on plan
-    const maxVehicles = userData.plan === "Premium" ? 2 : 1
-    if (userData.vehicles.length >= maxVehicles) {
-      showToast.error(`Plano ${userData.plan} permite apenas ${maxVehicles} veículo${maxVehicles > 1 ? "s" : ""}`)
+    const maxVehicles = profile.plan === "Premium" ? 3 : 1
+    if (vehicles.length >= maxVehicles) {
+      showToast.error(`Plano ${profile.plan} permite apenas ${maxVehicles} veículo${maxVehicles > 1 ? "s" : ""}`)
       return
     }
 
@@ -190,25 +185,20 @@ export default function ProfilePage() {
     setIsSaving(true)
     
     try {
-      // Por enquanto, vamos salvar apenas localmente
-      // No futuro, quando as tabelas estiverem prontas, isso será salvo no banco
-      const vehicle = {
-        id: Date.now().toString(), // ID temporário
-        name: newVehicle.name,
-        plate: newVehicle.plate,
-        type: newVehicle.type,
-        length: newVehicle.length,
-        width: newVehicle.width,
-        height: newVehicle.height
-      }
-      
-      // Atualizar estado local
-      const updatedUserData = {
-        ...userData,
-        vehicles: [...userData.vehicles, vehicle]
-      }
-      
-      setUserData(updatedUserData)
+      const { data: vehicle, error } = await supabase
+        .from('vehicles')
+        .insert({
+          owner_id: session.user.id,
+          plate: newVehicle.plate,
+          model: newVehicle.name,
+          color: newVehicle.type
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      setVehicles([...vehicles, vehicle])
       showToast.success("Veículo adicionado com sucesso!")
       
       // Limpar formulário
@@ -232,17 +222,18 @@ export default function ProfilePage() {
   }
 
   const handleDeleteVehicle = async (id: string) => {
-    if (!user || !userData) return
+    if (!session || !profile) return
     
     try {
-      // Por enquanto, remover apenas localmente
-      // No futuro, quando as tabelas estiverem prontas, isso será removido do banco
-      const updatedVehicles = userData.vehicles.filter((vehicle) => vehicle.id !== id)
-      setUserData({
-        ...userData,
-        vehicles: updatedVehicles,
-      })
-      
+      const { error } = await supabase
+        .from('vehicles')
+        .delete()
+        .eq('id', id)
+        .eq('owner_id', session.user.id)
+
+      if (error) throw error
+
+      setVehicles(vehicles.filter(vehicle => vehicle.id !== id))
       showToast.success("Veículo removido com sucesso!")
     } catch (error: any) {
       console.error("Erro ao excluir veículo:", error)
@@ -264,7 +255,7 @@ export default function ProfilePage() {
   }
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!user || !userData) return
+    if (!session || !profile) return
     
     const file = e.target.files?.[0]
     if (!file) return
@@ -276,8 +267,8 @@ export default function ProfilePage() {
       reader.onload = (event) => {
         const imageUrl = event.target?.result as string
         setProfileImage(imageUrl)
-        setUserData({
-          ...userData,
+        updateProfile({
+          ...profile,
           profileImage: imageUrl,
         })
         showToast.success("Imagem de perfil atualizada!")
@@ -290,7 +281,7 @@ export default function ProfilePage() {
   }
 
   // Exibir tela de carregamento
-  if (loading || isLoading) {
+  if (loading) {
     return (
       <main className="flex min-h-screen flex-col">
         <div className="flex-1 pt-24 pb-16 px-4 md:px-8 flex items-center justify-center">
@@ -301,7 +292,7 @@ export default function ProfilePage() {
   }
 
   // Redirecionar se não houver usuário
-  if (!user) {
+  if (!session) {
     return (
       <main className="flex min-h-screen flex-col">
         <div className="flex-1 pt-24 pb-16 px-4 md:px-8 flex flex-col items-center justify-center">
@@ -313,7 +304,7 @@ export default function ProfilePage() {
     )
   }
 
-  if (!userData) {
+  if (!profile) {
     return (
       <main className="flex min-h-screen flex-col">
         <div className="flex-1 pt-24 pb-16 px-4 md:px-8 flex items-center justify-center">
@@ -327,7 +318,6 @@ export default function ProfilePage() {
     )
   }
 
-  // O restante do componente continua igual, mas usando userData ao invés de user
   return (
     <main className="flex min-h-screen flex-col">
       <div className="flex-1 pt-24 pb-16 px-4 md:px-8">
@@ -345,8 +335,8 @@ export default function ProfilePage() {
                   <div className="flex justify-center mb-4">
                     <div className="relative">
                       <Avatar className="h-24 w-24">
-                        <AvatarImage src={userData.profileImage || profileImage} alt={userData.name} />
-                        <AvatarFallback>{userData.name.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={profile.profileImage || profileImage} alt={profile.full_name} />
+                        <AvatarFallback>{profile.full_name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <label
                         htmlFor="profile-image-upload"
@@ -363,21 +353,21 @@ export default function ProfilePage() {
                       </label>
                     </div>
                   </div>
-                  <CardTitle>{userData.name}</CardTitle>
-                  <CardDescription>{userData.email}</CardDescription>
+                  <CardTitle>{profile.full_name}</CardTitle>
+                  <CardDescription>{profile.email}</CardDescription>
                 </CardHeader>
                 <CardContent className="text-center">
                   <div className="text-sm text-gray-500 space-y-3">
                     <div className="flex items-center justify-center gap-2">
                       <CreditCard className="h-4 w-4" />
                       <p>
-                        Plano: <span className="font-medium text-gray-700">{userData.plan}</span>
+                        Plano: <span className="font-medium text-gray-700">{profile.plan}</span>
                       </p>
                     </div>
                     <div className="flex items-center justify-center gap-2">
                       <Calendar className="h-4 w-4" />
                       <p>
-                        Membro desde: <span className="font-medium text-gray-700">{userData.joinDate}</span>
+                        Membro desde: <span className="font-medium text-gray-700">{profile.joinDate}</span>
                       </p>
                     </div>
                     <div className="flex items-center justify-center gap-2">
@@ -385,7 +375,7 @@ export default function ProfilePage() {
                         variant="outline"
                         className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1"
                       >
-                        <span className="font-bold">{userData.credits}</span> créditos
+                        <span className="font-bold">{profile.credits}</span> créditos
                       </Badge>
                     </div>
                   </div>
@@ -419,13 +409,13 @@ export default function ProfilePage() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="name" className="flex items-center">
+                        <Label htmlFor="full_name" className="flex items-center">
                           <User className="h-4 w-4 mr-2" /> Nome
                         </Label>
                         <Input
-                          id="name"
-                          name="name"
-                          value={formData.name}
+                          id="full_name"
+                          name="full_name"
+                          value={formData.full_name}
                           onChange={handleInputChange}
                           disabled={!isEditing}
                         />
@@ -442,6 +432,16 @@ export default function ProfilePage() {
                           onChange={handleInputChange}
                           disabled={true} // Email não pode ser alterado - deve fazer isso via Auth
                         />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="credits" className="flex items-center">
+                          <Badge
+                            variant="outline"
+                            className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1"
+                          >
+                            <span className="font-bold">{formData.credits}</span> créditos
+                          </Badge>
+                        </Label>
                       </div>
                     </CardContent>
                     <CardFooter className="flex justify-between">
@@ -472,145 +472,14 @@ export default function ProfilePage() {
                 {/* Veículos tab - continuação do código original */}
                 <TabsContent value="vehicles" className="mt-4">
                   <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                      <div>
-                        <CardTitle>Meus Veículos</CardTitle>
-                        <CardDescription>Gerencie os veículos cadastrados em sua conta.</CardDescription>
-                        <div className="text-sm text-gray-600 mt-2">
-                          <p>
-                            Plano {userData.plan}: {userData.vehicles.length}/{userData.plan === "Premium" ? 2 : 1} veículo
-                            {userData.plan === "Premium" ? "s" : ""} cadastrado{userData.plan === "Premium" ? "s" : ""}
-                          </p>
-                          {userData.plan === "Gratuita" && userData.vehicles.length >= 1 && (
-                            <p className="text-amber-600 mt-1">
-                              Atualize para o plano Premium para adicionar mais veículos!
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {/* Rest of vehicle management UI remains the same, but uses userData instead of user */}
-                      <Dialog open={isAddingVehicle} onOpenChange={setIsAddingVehicle}>
-                        <DialogTrigger asChild>
-                          <Button size="sm" disabled={userData.vehicles.length >= (userData.plan === "Premium" ? 2 : 1)}>
-                            <Plus className="mr-2 h-4 w-4" /> Adicionar Veículo
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="bg-white">
-                          <DialogHeader>
-                            <DialogTitle>Adicionar Novo Veículo</DialogTitle>
-                            <DialogDescription>
-                              Preencha os detalhes do seu veículo para encontrar vagas compatíveis.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="grid gap-4 py-4 bg-white">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="vehicle-name" className="text-right">
-                                Nome
-                              </Label>
-                              <Input
-                                id="vehicle-name"
-                                name="name"
-                                placeholder="Ex: Meu Carro"
-                                className="col-span-3"
-                                value={newVehicle.name}
-                                onChange={handleVehicleInputChange}
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="vehicle-plate" className="text-right">
-                                Placa
-                              </Label>
-                              <Input
-                                id="vehicle-plate"
-                                name="plate"
-                                placeholder="Ex: ABC1234"
-                                className="col-span-3"
-                                value={newVehicle.plate}
-                                onChange={handleVehicleInputChange}
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="vehicle-type" className="text-right">
-                                Tipo
-                              </Label>
-                              <select
-                                id="vehicle-type"
-                                name="type"
-                                className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                value={newVehicle.type}
-                                onChange={handleVehicleInputChange}
-                              >
-                                <option value="Carro">Carro</option>
-                                <option value="SUV">SUV</option>
-                                <option value="Caminhonete">Caminhonete</option>
-                                <option value="Moto">Moto</option>
-                                <option value="Van">Van</option>
-                              </select>
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="vehicle-length" className="text-right">
-                                Comprimento (m)
-                              </Label>
-                              <Input
-                                id="vehicle-length"
-                                name="length"
-                                type="number"
-                                step="0.1"
-                                className="col-span-3"
-                                value={newVehicle.length}
-                                onChange={handleVehicleInputChange}
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="vehicle-width" className="text-right">
-                                Largura (m)
-                              </Label>
-                              <Input
-                                id="vehicle-width"
-                                name="width"
-                                type="number"
-                                step="0.1"
-                                className="col-span-3"
-                                value={newVehicle.width}
-                                onChange={handleVehicleInputChange}
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="vehicle-height" className="text-right">
-                                Altura (m)
-                              </Label>
-                              <Input
-                                id="vehicle-height"
-                                name="height"
-                                type="number"
-                                step="0.1"
-                                className="col-span-3"
-                                value={newVehicle.height}
-                                onChange={handleVehicleInputChange}
-                              />
-                            </div>
-                          </div>
-                          <DialogFooter>
-                            <Button variant="outline" onClick={() => setIsAddingVehicle(false)}>
-                              Cancelar
-                            </Button>
-                            <Button onClick={handleAddVehicle} disabled={isSaving}>
-                              {isSaving ? (
-                                <>
-                                  <span className="animate-spin mr-2">⏳</span> Salvando...
-                                </>
-                              ) : (
-                                "Adicionar"
-                              )}
-                            </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
+                    <CardHeader>
+                      <CardTitle>Meus Veículos</CardTitle>
+                      <CardDescription>
+                        Gerencie seus veículos cadastrados.
+                      </CardDescription>
                     </CardHeader>
-                    
                     <CardContent>
-                      {userData.vehicles.length === 0 ? (
+                      {vehicles.length === 0 ? (
                         <div className="text-center py-8">
                           <Car className="mx-auto h-12 w-12 text-gray-400" />
                           <h3 className="mt-2 text-sm font-semibold text-gray-900">Nenhum veículo cadastrado</h3>
@@ -625,7 +494,7 @@ export default function ProfilePage() {
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          {userData.vehicles.map((vehicle) => (
+                          {vehicles.map((vehicle) => (
                             <Card key={vehicle.id}>
                               <CardContent className="p-4">
                                 <div className="flex items-center justify-between">
@@ -634,11 +503,11 @@ export default function ProfilePage() {
                                       <Car className="h-6 w-6 text-primary" />
                                     </div>
                                     <div>
-                                      <h3 className="font-medium">{vehicle.name}</h3>
+                                      <h3 className="font-medium">{vehicle.model}</h3>
                                       <div className="flex items-center space-x-2 text-sm text-gray-500">
                                         <Badge variant="outline">{vehicle.plate}</Badge>
                                         <span>•</span>
-                                        <span>{vehicle.type}</span>
+                                        <span>{vehicle.color}</span>
                                       </div>
                                     </div>
                                   </div>
@@ -651,23 +520,14 @@ export default function ProfilePage() {
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </div>
-                                <div className="mt-4 grid grid-cols-3 gap-2 text-sm">
-                                  <div className="flex flex-col items-center p-2 bg-gray-50 rounded-md">
-                                    <span className="text-gray-500">Comprimento</span>
-                                    <span className="font-medium">{vehicle.length} m</span>
-                                  </div>
-                                  <div className="flex flex-col items-center p-2 bg-gray-50 rounded-md">
-                                    <span className="text-gray-500">Largura</span>
-                                    <span className="font-medium">{vehicle.width} m</span>
-                                  </div>
-                                  <div className="flex flex-col items-center p-2 bg-gray-50 rounded-md">
-                                    <span className="text-gray-500">Altura</span>
-                                    <span className="font-medium">{vehicle.height} m</span>
-                                  </div>
-                                </div>
                               </CardContent>
                             </Card>
                           ))}
+                          <div className="flex justify-center mt-4">
+                            <Button onClick={() => setIsAddingVehicle(true)}>
+                              <Plus className="mr-2 h-4 w-4" /> Adicionar Veículo
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </CardContent>
@@ -678,6 +538,81 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Diálogo para adicionar veículo */}
+      <Dialog open={isAddingVehicle} onOpenChange={setIsAddingVehicle}>
+        <DialogContent className="bg-white">
+          <DialogHeader>
+            <DialogTitle>Adicionar Novo Veículo</DialogTitle>
+            <DialogDescription>
+              Preencha os detalhes do seu veículo para encontrar vagas compatíveis.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4 bg-white">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="vehicle-name" className="text-right">
+                Modelo
+              </Label>
+              <Input
+                id="vehicle-name"
+                name="name"
+                placeholder="Ex: Fiat Uno"
+                className="col-span-3"
+                value={newVehicle.name}
+                onChange={handleVehicleInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="vehicle-plate" className="text-right">
+                Placa
+              </Label>
+              <Input
+                id="vehicle-plate"
+                name="plate"
+                placeholder="Ex: ABC1234"
+                className="col-span-3"
+                value={newVehicle.plate}
+                onChange={handleVehicleInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="vehicle-type" className="text-right">
+                Cor
+              </Label>
+              <select
+                id="vehicle-type"
+                name="type"
+                className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={newVehicle.type}
+                onChange={handleVehicleInputChange}
+              >
+                <option value="Preto">Preto</option>
+                <option value="Branco">Branco</option>
+                <option value="Prata">Prata</option>
+                <option value="Cinza">Cinza</option>
+                <option value="Vermelho">Vermelho</option>
+                <option value="Azul">Azul</option>
+                <option value="Verde">Verde</option>
+                <option value="Amarelo">Amarelo</option>
+              </select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddingVehicle(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleAddVehicle} disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <span className="animate-spin mr-2">⏳</span> Salvando...
+                </>
+              ) : (
+                "Adicionar"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   )
 }

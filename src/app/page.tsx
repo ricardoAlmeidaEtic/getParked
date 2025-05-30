@@ -1,4 +1,3 @@
-import Navbar from "@/components/layout/navbar"
 import Footer from "@/components/layout/footer"
 import HeroSection from "@/components/sections/hero-section"
 import StatsSection from "@/components/sections/stats-section"
@@ -13,7 +12,6 @@ import CtaSection from "@/components/sections/cta-section"
 export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar />
       <HeroSection />
       <StatsSection />
       <FeaturesSection />

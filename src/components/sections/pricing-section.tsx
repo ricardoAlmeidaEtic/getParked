@@ -11,7 +11,12 @@ export default function PricingSection() {
       price: "€0",
       period: "/mês",
       description: "Ideal para uso ocasional",
-      features: ["Até 3 buscas de vagas por dia", "1 veículo cadastrado", "Acesso a vagas públicas e privadas"],
+      features: [
+        "Até 3 buscas de vagas por dia",
+        "1 veículo cadastrado",
+        "Acesso a vagas públicas e privadas",
+        "Sem custo mensal"
+      ],
       buttonText: "Começar Grátis",
       buttonVariant: "outline",
       popular: false,
@@ -27,6 +32,7 @@ export default function PricingSection() {
         "Até 3 veículos cadastrados",
         "Reserva de vagas",
         "Navegação em tempo real",
+        "Suporte prioritário"
       ],
       buttonText: "Assinar Agora",
       buttonVariant: "default",
