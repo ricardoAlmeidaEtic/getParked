@@ -1,6 +1,6 @@
 {
-  "name": "container",
-  "version": "1.0.0",
+  "name": "getparked",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -21,7 +21,7 @@
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-tabs": "^1.1.12",
-    "@supabase/supabase-js": "^2.49.8",
+    "@supabase/supabase-js": "^2.39.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.15.0",
@@ -36,16 +36,12 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-    "@types/leaflet": "^1.9.8",
-    "@types/leaflet-routing-machine": "^3.2.7",
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "autoprefixer": "^10.0.1",
-    "eslint": "^8",
-    "eslint-config-next": "14.1.0",
-    "postcss": "^8",
-    "tailwindcss": "^3.3.0",
-    "typescript": "^5"
+    "@types/node": "^20.11.30",
+    "@types/react": "^18.2.67",
+    "@types/react-dom": "^18.2.22",
+    "autoprefixer": "^10.4.18",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.4.2"
   }
 }

@@ -66,7 +66,7 @@ export default function SocialLogin() {
           variant="outline"
           type="button"
           disabled={isLoading.google}
-          onClick={handleGoogleLogin}
+          onClick={() => handleSocialLogin('google')}
           className="transition-all duration-300 hover:bg-blue-50"
         >
           <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
@@ -96,7 +96,7 @@ export default function SocialLogin() {
           variant="outline"
           type="button"
           disabled={isLoading.facebook}
-          onClick={handleFacebookLogin}
+          onClick={() => handleSocialLogin('facebook')}
           className="transition-all duration-300 hover:bg-blue-50"
         >
           <svg className="h-5 w-5 mr-2" fill="#1877F2" viewBox="0 0 24 24">
