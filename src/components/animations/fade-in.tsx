@@ -1,13 +1,7 @@
 "use client"
 
-<<<<<<< HEAD
-import type React from "react"
-
-=======
 import { motion } from "framer-motion"
 import React from "react"
->>>>>>> 476f46b (Perfil)
-import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 
 interface FadeInProps {
@@ -16,10 +10,6 @@ interface FadeInProps {
   duration?: number
   delay?: number
   className?: string
-<<<<<<< HEAD
-  threshold?: number
-=======
->>>>>>> 476f46b (Perfil)
 }
 
 export default function FadeIn({
@@ -28,68 +18,6 @@ export default function FadeIn({
   duration = 500,
   delay = 0,
   className,
-<<<<<<< HEAD
-  threshold = 0.1,
-}: FadeInProps) {
-  const [isVisible, setIsVisible] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true)
-          observer.unobserve(entry.target)
-        }
-      },
-      {
-        threshold,
-      },
-    )
-
-    const currentRef = ref.current
-    if (currentRef) {
-      observer.observe(currentRef)
-    }
-
-    return () => {
-      if (currentRef) {
-        observer.unobserve(currentRef)
-      }
-    }
-  }, [threshold])
-
-  const getDirectionStyles = () => {
-    switch (direction) {
-      case "up":
-        return "translate-y-10"
-      case "down":
-        return "-translate-y-10"
-      case "left":
-        return "translate-x-10"
-      case "right":
-        return "-translate-x-10"
-      default:
-        return "translate-y-10"
-    }
-  }
-
-  return (
-    <div
-      ref={ref}
-      className={cn(
-        "transition-all transform",
-        isVisible ? "opacity-100 translate-x-0 translate-y-0" : `opacity-0 ${getDirectionStyles()}`,
-        className,
-      )}
-      style={{
-        transitionDuration: `${duration}ms`,
-        transitionDelay: `${delay}ms`,
-      }}
-    >
-      {children}
-    </div>
-=======
 }: FadeInProps) {
   // Definir a configuração de animação baseada na direção
   let initial = {}
@@ -120,6 +48,5 @@ export default function FadeIn({
     >
       {children}
     </motion.div>
->>>>>>> 476f46b (Perfil)
   )
 }

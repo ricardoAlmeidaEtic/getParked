@@ -1,15 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
 
-<<<<<<< HEAD
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Faltam as variáveis de ambiente do Supabase')
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey) 
-=======
 // Obtenha as variáveis de ambiente 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder-url.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
@@ -21,4 +11,3 @@ if (process.env.NODE_ENV === 'production' && (!supabaseUrl || !supabaseAnonKey))
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
->>>>>>> 476f46b (Perfil)
