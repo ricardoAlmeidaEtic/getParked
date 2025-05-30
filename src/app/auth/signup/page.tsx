@@ -75,7 +75,7 @@ export default function SignUpPage() {
         router.push("/auth/signin?message=confirm-email")
       } else if (data?.session) {
         showToast.success("Conta criada e login realizado com sucesso!")
-        router.push("/")
+        router.push("/dashboard")
       }
     } catch (err: any) {
       const message = err.message || "Ocorreu um erro ao criar sua conta"

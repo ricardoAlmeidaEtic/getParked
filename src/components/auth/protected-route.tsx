@@ -30,9 +30,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       </div>
     )
   }
-  if (!loading && user && pathname.startsWith("/auth")) {
-    router.push("/")
-    return null
-  }
+
   return <>{children}</>
 }

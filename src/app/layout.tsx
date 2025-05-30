@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast'
 import '@/styles/globals.css'
 import { SupabaseProvider } from '@/providers/SupabaseProvider'
 import ProtectedRoute from '@/components/auth/protected-route'
+import Navbar from '@/components/layout/navbar'
 
 const poppins = Poppins({ 
   weight: ['400', '500', '600', '700'],
@@ -16,6 +17,17 @@ export const metadata: Metadata = {
   description: 'Sistema inteligente para gerenciamento de estacionamentos',
 }
 
+function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      <main className="flex-1">
+        {children}
+      </main>
+    </div>
+  )
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -26,11 +38,11 @@ export default function RootLayout({
       <body className={poppins.className}>
         <SupabaseProvider>
           <Toaster />
-          <main className="min-h-screen">
-            <ProtectedRoute>
+          <ProtectedRoute>
+            <AppLayout>
               {children}
-            </ProtectedRoute>
-          </main>
+            </AppLayout>
+          </ProtectedRoute>
         </SupabaseProvider>
       </body>
     </html>

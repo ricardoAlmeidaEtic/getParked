@@ -74,7 +74,7 @@ export default function SignInPage() {
       }
 
       showToast.success("Login realizado com sucesso!")
-      router.push("/")
+      router.push("/dashboard")
     } catch (err: any) {
       const errorMessage = err.message || "Ocorreu um erro ao fazer login"
       setError(errorMessage)
