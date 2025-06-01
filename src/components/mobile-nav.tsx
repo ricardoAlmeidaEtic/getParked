@@ -83,11 +83,11 @@ export default function MobileNav({ items }: MobileNavProps) {
                 Meu Perfil
               </Link>
               <Link
-                href="/dashboard"
+                href="/map"
                 className="flex items-center p-3 rounded-md text-gray-700 hover:bg-gray-100 transition-colors duration-200"
                 onClick={closeMenu}
               >
-                Dashboard
+                Mapa
               </Link>
             </>
           ) : (

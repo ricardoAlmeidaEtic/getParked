@@ -21,12 +21,12 @@ export default function Navbar({ items = [] }: NavbarProps) {
   const { user, loading } = useSupabase()
 
   const isAuthPage = pathname?.startsWith('/auth')
-  const isDashboardPage = pathname?.startsWith('/dashboard')
+  const isMapPage = pathname?.startsWith('/map')
   const isProfilePage = pathname?.startsWith('/profile')
 
   // Itens de navegação para usuários autenticados
   const authenticatedItems = [
-    { href: "/dashboard", label: "Dashboard" },
+    { href: "/map", label: "Mapa" },
     { href: "/available-spots", label: "Vagas Disponíveis" },
     { href: "/reserved-spots", label: "Minhas Reservas" },
     { href: "/profile", label: "Perfil" },
