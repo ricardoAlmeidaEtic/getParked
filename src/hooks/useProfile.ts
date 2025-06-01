@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSupabase } from '@/providers/SupabaseProvider'
 import { Profile } from '@/lib/api/profile'
+import { showToast } from '@/lib/toast'
 
 export function useProfile() {
   const { supabase, session } = useSupabase()
@@ -31,6 +32,7 @@ export function useProfile() {
       } catch (err) {
         console.error('Erro ao carregar perfil:', err)
         setError(err instanceof Error ? err : new Error('Erro ao carregar perfil'))
+        showToast.error('Erro ao carregar perfil')
       } finally {
         setLoading(false)
       }
@@ -63,11 +65,16 @@ export function useProfile() {
 
       if (profileError) throw profileError
 
+      // Atualizar o estado local
       setProfile(updatedProfile)
+      showToast.success('Perfil atualizado com sucesso!')
+      
       return updatedProfile
     } catch (err) {
       console.error('Erro ao atualizar perfil:', err)
-      throw err instanceof Error ? err : new Error('Erro ao atualizar perfil')
+      const error = err instanceof Error ? err : new Error('Erro ao atualizar perfil')
+      showToast.error(error.message)
+      throw error
     }
   }
 
