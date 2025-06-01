@@ -2,8 +2,7 @@
 import { useState } from "react"
 import { LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useSupabase } from "@/providers/SupabaseProvider"
-import { showToast } from "@/components/ui/toast"
+import { useLogout } from "@/hooks/useLogout"
 
 interface LogoutButtonProps {
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
@@ -20,33 +19,18 @@ export default function LogoutButton({
   className = "",
   onlyIcon = false
 }: LogoutButtonProps) {
-  const { supabase } = useSupabase()
+  const { handleLogout } = useLogout()
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleLogout = async () => {
-    if (isLoading) return // Previne múltiplos cliques
-    
+  const onClick = async () => {
+    if (isLoading) return
     setIsLoading(true)
-    try {
-      // Redireciona primeiro para a página inicial
-      window.location.href = "/"
-      
-      // Depois faz o logout
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
-      
-      // Mostra mensagem de sucesso
-      showToast.success("Logout realizado com sucesso!")
-    } catch (error) {
-      console.error("Erro ao fazer logout:", error)
-      showToast.error("Erro ao fazer logout. Tente novamente.")
-      setIsLoading(false)
-    }
+    await handleLogout()
   }
 
   return (
     <Button 
-      onClick={handleLogout}
+      onClick={onClick}
       variant={variant}
       size={size}
       className={className}
