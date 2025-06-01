@@ -17,18 +17,49 @@ interface MapComponentProps {
   isCreatingSpot: boolean
   onMarkerPositionChange: (position: L.LatLng | null) => void
   onMarkerCreated: () => void
+  onUserPositionChange: (position: L.LatLng) => void
 }
 
 export default function MapComponent({
   isCreatingSpot,
   onMarkerPositionChange,
-  onMarkerCreated
+  onMarkerCreated,
+  onUserPositionChange
 }: MapComponentProps) {
   const mapRef = useRef<L.Map | null>(null)
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const routeManagerRef = useRef<RouteManager | null>(null)
   const userMarkerRef = useRef<L.CircleMarker | null>(null)
   const publicSpotCreatorRef = useRef<PublicSpotCreator | null>(null)
+  const lastUserPositionRef = useRef<L.LatLng | null>(null)
+  const positionUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Função para verificar se a posição mudou significativamente
+  const hasPositionChangedSignificantly = (newPosition: L.LatLng): boolean => {
+    if (!lastUserPositionRef.current) return true
+
+    // Calcula a distância entre a posição atual e a última posição registrada
+    const distance = lastUserPositionRef.current.distanceTo(newPosition)
+    
+    // Se a distância for maior que 5 metros, considera que a posição mudou significativamente
+    return distance > 5
+  }
+
+  // Função para atualizar a posição do usuário com debounce
+  const updateUserPosition = (position: L.LatLng) => {
+    if (!hasPositionChangedSignificantly(position)) return
+
+    // Limpa o timeout anterior se existir
+    if (positionUpdateTimeoutRef.current) {
+      clearTimeout(positionUpdateTimeoutRef.current)
+    }
+
+    // Define um novo timeout para atualizar a posição
+    positionUpdateTimeoutRef.current = setTimeout(() => {
+      lastUserPositionRef.current = position
+      onUserPositionChange(position)
+    }, 1000) // Espera 1 segundo antes de atualizar
+  }
 
   // Função para carregar os marcadores
   const loadMarkers = useCallback(async () => {
@@ -83,11 +114,19 @@ export default function MapComponent({
       if (!mapRef.current) return
 
       const { latitude, longitude } = position.coords
-      mapRef.current.setView([latitude, longitude], 16)
+      const userLatLng = L.latLng(latitude, longitude)
+      
+      // Atualiza a posição do usuário com debounce
+      updateUserPosition(userLatLng)
+
+      // Atualiza a visualização do mapa apenas se a posição mudou significativamente
+      if (hasPositionChangedSignificantly(userLatLng)) {
+        mapRef.current.setView(userLatLng, 16)
+      }
       
       // Adiciona um círculo azul na localização do usuário com tamanho fixo
       const accuracy = position.coords.accuracy
-      const circle = L.circleMarker([latitude, longitude], {
+      const circle = L.circleMarker(userLatLng, {
         radius: 15,
         color: '#3B82F6',
         fillColor: '#3B82F6',
@@ -98,7 +137,7 @@ export default function MapComponent({
       userMarkerRef.current = circle
 
       // Adiciona um círculo menor no centro para melhor visualização
-      L.circleMarker([latitude, longitude], {
+      L.circleMarker(userLatLng, {
         radius: 8,
         color: '#3B82F6',
         fillColor: '#3B82F6',
@@ -107,7 +146,7 @@ export default function MapComponent({
       }).addTo(mapRef.current)
 
       // Adiciona um círculo de precisão (este pode mudar de tamanho com o zoom)
-      L.circle([latitude, longitude], {
+      L.circle(userLatLng, {
         radius: accuracy,
         color: '#3B82F6',
         fillColor: '#3B82F6',
@@ -166,6 +205,9 @@ export default function MapComponent({
       }
       if (publicSpotCreatorRef.current) {
         publicSpotCreatorRef.current.stopCreation()
+      }
+      if (positionUpdateTimeoutRef.current) {
+        clearTimeout(positionUpdateTimeoutRef.current)
       }
     }
   }, [loadMarkers])

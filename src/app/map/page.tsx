@@ -1,17 +1,12 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import { showToast } from '@/lib/toast'
-import { getPublicSpotMarkers, getPrivateParkingMarkers } from '@/lib/map-markers'
-import { createPublicSpotMarker, createPrivateParkingMarker } from '@/lib/map-utils'
-import { RouteManager } from '@/lib/route-utils'
-import { PublicSpotCreator } from '@/lib/public-spot-creator'
-import { CreatePublicSpotModal } from '@/components/CreatePublicSpotModal'
-import { MapMarker } from '@/types/map'
 import { Button } from '@/components/ui/button'
+import { showToast } from '@/lib/toast'
+import type L from 'leaflet'
 
-// Importação dinâmica do Leaflet
+// Importação dinâmica do MapComponent
 const MapComponent = dynamic(() => import('./components/MapComponent'), {
   ssr: false,
   loading: () => (
@@ -21,10 +16,26 @@ const MapComponent = dynamic(() => import('./components/MapComponent'), {
   )
 })
 
+// Importação dinâmica do CreatePublicSpotModal
+const CreatePublicSpotModal = dynamic(
+  () => import('@/components/CreatePublicSpotModal').then(mod => mod.default),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+        <div className="bg-white p-4 rounded-lg">
+          <div className="text-gray-600">Carregando...</div>
+        </div>
+      </div>
+    )
+  }
+)
+
 export default function MapPage() {
   const [isCreatingSpot, setIsCreatingSpot] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [currentMarkerPosition, setCurrentMarkerPosition] = useState<any>(null)
+  const [currentMarkerPosition, setCurrentMarkerPosition] = useState<L.LatLng | null>(null)
+  const [userPosition, setUserPosition] = useState<L.LatLng | null>(null)
 
   const handleCreateSpotClick = () => {
     if (isCreatingSpot) {
@@ -43,9 +54,10 @@ export default function MapPage() {
   const handleMarkerCreated = () => {
     console.log('Marcador criado - desativando modo de criação')
     setIsCreatingSpot(false)
+    setCurrentMarkerPosition(null)
   }
 
-  const handleMarkerPositionChange = (position: any) => {
+  const handleMarkerPositionChange = (position: L.LatLng | null) => {
     console.log('Posição do marcador alterada:', position)
     if (position) {
       console.log('Abrindo modal de confirmação com posição:', position)
@@ -71,6 +83,18 @@ export default function MapPage() {
     setIsCreatingSpot(true)
   }
 
+  const handleCancelCreation = () => {
+    console.log('Cancelando criação de vaga')
+    setIsCreatingSpot(false)
+    setCurrentMarkerPosition(null)
+    setIsModalOpen(false)
+  }
+
+  const handleUserPositionChange = (position: L.LatLng) => {
+    console.log('Posição do usuário atualizada:', position)
+    setUserPosition(position)
+  }
+
   // Adicionar useEffect para monitorar mudanças de estado
   useEffect(() => {
     console.log('Estado atual:', {
@@ -79,9 +103,13 @@ export default function MapPage() {
       currentMarkerPosition: currentMarkerPosition ? {
         lat: currentMarkerPosition.lat,
         lng: currentMarkerPosition.lng
+      } : null,
+      userPosition: userPosition ? {
+        lat: userPosition.lat,
+        lng: userPosition.lng
       } : null
     })
-  }, [isCreatingSpot, isModalOpen, currentMarkerPosition])
+  }, [isCreatingSpot, isModalOpen, currentMarkerPosition, userPosition])
 
   return (
     <div className="relative w-full h-screen">
@@ -89,6 +117,7 @@ export default function MapPage() {
         isCreatingSpot={isCreatingSpot}
         onMarkerPositionChange={handleMarkerPositionChange}
         onMarkerCreated={handleMarkerCreated}
+        onUserPositionChange={handleUserPositionChange}
       />
       <div className="absolute top-0 left-0 right-0 z-10 pointer-events-none">
         <div className="container mx-auto px-4 py-4">
@@ -107,13 +136,17 @@ export default function MapPage() {
         </div>
       </div>
 
-      <CreatePublicSpotModal
-        isOpen={isModalOpen}
-        onClose={handleModalClose}
-        initialPosition={currentMarkerPosition}
-        onMarkerCreated={handleMarkerCreated}
-        onEditPosition={handleEditPosition}
-      />
+      {isModalOpen && (
+        <CreatePublicSpotModal
+          isOpen={isModalOpen}
+          onClose={handleModalClose}
+          initialPosition={currentMarkerPosition}
+          onMarkerCreated={handleMarkerCreated}
+          onEditPosition={handleEditPosition}
+          onCancel={handleCancelCreation}
+          userPosition={userPosition}
+        />
+      )}
     </div>
   )
 } 
