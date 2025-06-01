@@ -6,12 +6,10 @@ import 'leaflet/dist/leaflet.css'
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css'
 import '../map-styles.css'
 import { showToast } from '@/lib/toast'
-import { getPublicSpotMarkers, getPrivateParkingMarkers } from '@/lib/map-markers'
-import { createPublicSpotMarker, createPrivateParkingMarker } from '@/lib/map-utils'
+import { getPublicSpotMarkers, getPrivateParkingMarkers, createPublicSpotMarker, createPrivateParkingMarker } from '@/app/map/components/utils'
 import { RouteManager } from '@/lib/route-utils'
-import { PublicSpotCreator } from '@/lib/public-spot-creator'
+import { PublicSpotCreator } from '@/app/map/components/creators'
 import { MapMarker } from '@/types/map'
-import { SelectionArea } from '@/lib/map-functions/selection-area'
 
 interface MapComponentProps {
   isCreatingSpot: boolean

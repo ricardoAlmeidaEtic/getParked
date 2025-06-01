@@ -18,7 +18,7 @@ const MapComponent = dynamic(() => import('./components/MapComponent'), {
 
 // Importação dinâmica do CreatePublicSpotModal
 const CreatePublicSpotModal = dynamic(
-  () => import('@/components/CreatePublicSpotModal').then(mod => mod.default),
+  () => import('@/app/map/components/modals/CreatePublicSpotModal').then(mod => mod.default),
   {
     ssr: false,
     loading: () => (
