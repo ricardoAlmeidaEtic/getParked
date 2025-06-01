@@ -38,9 +38,9 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         return
       }
 
-      // Se estiver autenticado e tentar acessar uma rota de auth, redireciona para o dashboard
+      // Se estiver autenticado e tentar acessar uma rota de auth, redireciona para o mapa
       if (user && isAuthRoute) {
-        router.push("/dashboard")
+        router.push("/map")
         return
       }
     }
