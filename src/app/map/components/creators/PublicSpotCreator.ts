@@ -17,14 +17,9 @@ export class PublicSpotCreator {
     this.onPositionChange = onPositionChange
     this.selectionArea.show()
 
-    // Garante que o zoom inicial seja aplicado
-    this.map.setView(this.selectionArea.getUserPosition(), 18, {
-      animate: true,
-      duration: 0.5
-    })
+    const userPosition = this.selectionArea.getUserPosition()
 
     // Cria o marcador inicial na posição do usuário
-    const userPosition = this.selectionArea.getUserPosition()
     this.createOrUpdateMarker(userPosition)
 
     this.map.on('click', this.handleMapClick)

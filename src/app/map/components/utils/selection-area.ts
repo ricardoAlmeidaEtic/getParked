@@ -29,10 +29,12 @@ export class SelectionArea {
       fillOpacity: 0,
       weight: 2,
       dashArray: '5, 5',
-    }).addTo(this.map);
+    });
 
-    // Ajusta o zoom para mostrar toda a área de seleção
-    this.adjustZoom();
+    // Adiciona o círculo ao mapa apenas se o mapa existir
+    if (this.map) {
+      this.selectionCircle.addTo(this.map);
+    }
   }
 
   public hide(): void {
@@ -45,14 +47,5 @@ export class SelectionArea {
   public isWithinRadius(position: L.LatLng): boolean {
     if (typeof window === 'undefined') return false;
     return this.userPosition.distanceTo(position) <= this.MAX_RADIUS;
-  }
-
-  private adjustZoom(): void {
-    if (this.selectionCircle && this.map && typeof window !== 'undefined') {
-      this.map.fitBounds(this.selectionCircle.getBounds(), {
-        padding: [50, 50],
-        maxZoom: 16
-      });
-    }
   }
 } 

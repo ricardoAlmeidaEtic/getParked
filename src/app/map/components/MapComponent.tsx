@@ -220,7 +220,7 @@ export default function MapComponent({
       const userPosition = userMarkerRef.current.getLatLng()
       console.log('MapComponent - Iniciando criação de marcador na posição do usuário:', userPosition)
       
-      // Ajusta o zoom para a posição do usuário
+      // Força o zoom in na posição do usuário
       mapRef.current.setView(userPosition, 18, {
         animate: true,
         duration: 0.5
