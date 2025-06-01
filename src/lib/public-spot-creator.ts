@@ -23,6 +23,10 @@ export class PublicSpotCreator {
       duration: 0.5
     })
 
+    // Cria o marcador inicial na posição do usuário
+    const userPosition = this.selectionArea.getUserPosition()
+    this.createOrUpdateMarker(userPosition)
+
     this.map.on('click', this.handleMapClick)
   }
 
@@ -51,20 +55,7 @@ export class PublicSpotCreator {
     })
   }
 
-  private handleMapClick = (e: L.LeafletMouseEvent): void => {
-    const position = e.latlng
-
-    if (!this.selectionArea.isWithinRadius(position)) {
-      showToast.error('A vaga deve estar dentro de 1km da sua localização atual')
-      return
-    }
-
-    // Mantém o zoom atual ao clicar
-    this.map.setView(position, this.map.getZoom(), {
-      animate: true,
-      duration: 0.2
-    })
-
+  private createOrUpdateMarker(position: L.LatLng): void {
     if (this.marker) {
       this.marker.setLatLng(position)
     } else {
@@ -89,6 +80,23 @@ export class PublicSpotCreator {
     if (this.onPositionChange) {
       this.onPositionChange(position)
     }
+  }
+
+  private handleMapClick = (e: L.LeafletMouseEvent): void => {
+    const position = e.latlng
+
+    if (!this.selectionArea.isWithinRadius(position)) {
+      showToast.error('A vaga deve estar dentro de 1km da sua localização atual')
+      return
+    }
+
+    // Mantém o zoom atual ao clicar
+    this.map.setView(position, this.map.getZoom(), {
+      animate: true,
+      duration: 0.2
+    })
+
+    this.createOrUpdateMarker(position)
   }
 
   public getCurrentPosition(): L.LatLng | null {
