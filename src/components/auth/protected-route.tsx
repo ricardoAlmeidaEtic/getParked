@@ -34,13 +34,13 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         if (pathname !== "/" && !pathname.includes("logout")) {
           showToast.error("Por favor, faça login para acessar esta página")
         }
-        router.push("/")
+        router.replace("/")
         return
       }
 
       // Se estiver autenticado e tentar acessar uma rota de auth, redireciona para o mapa
       if (user && isAuthRoute) {
-        router.push("/map")
+        router.replace("/map")
         return
       }
     }

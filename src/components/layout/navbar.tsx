@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import MobileNav from "@/components/mobile-nav"
-import { User } from "lucide-react"
+import { User, LogOut } from "lucide-react"
 import { useSupabase } from "@/providers/SupabaseProvider"
-import LogoutButton from "@/components/auth/logout-button"
+import { useLogout } from "@/hooks/useLogout"
 
 interface NavbarProps {
   items?: {
@@ -19,6 +19,8 @@ interface NavbarProps {
 export default function Navbar({ items = [] }: NavbarProps) {
   const pathname = usePathname()
   const { user, loading } = useSupabase()
+  const { handleLogout } = useLogout()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const isAuthPage = pathname?.startsWith('/auth')
   const isMapPage = pathname?.startsWith('/map')
@@ -41,6 +43,12 @@ export default function Navbar({ items = [] }: NavbarProps) {
   ]
 
   const navItems = items.length > 0 ? items : (user ? authenticatedItems : unauthenticatedItems)
+
+  const handleNavbarLogout = async () => {
+    if (isLoggingOut) return
+    setIsLoggingOut(true)
+    await handleLogout()
+  }
 
   // Renderiza null ou um placeholder enquanto carrega
   if (loading) {
@@ -87,12 +95,19 @@ export default function Navbar({ items = [] }: NavbarProps) {
                   </span>
                 </Button>
               </Link>
-              <LogoutButton
+              <Button
                 variant="ghost"
                 size="icon"
                 className="text-white hover:bg-white/10"
-                onlyIcon
-              />
+                onClick={handleNavbarLogout}
+                disabled={isLoggingOut}
+              >
+                {isLoggingOut ? (
+                  <span className="animate-spin">⏳</span>
+                ) : (
+                  <LogOut className="h-4 w-4" />
+                )}
+              </Button>
             </>
           ) : (
             <>
