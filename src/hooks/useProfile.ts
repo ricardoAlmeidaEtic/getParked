@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSupabase } from '@/providers/SupabaseProvider'
-import { Profile } from '@/lib/api/profile'
+import { Profile, UpdateProfileData } from '@/lib/api/profile'
 import { showToast } from '@/lib/toast'
 
 export function useProfile() {
@@ -41,7 +41,7 @@ export function useProfile() {
     fetchProfile()
   }, [session, supabase])
 
-  const updateProfile = async (data: { full_name?: string }) => {
+  const updateProfile = async (data: UpdateProfileData) => {
     if (!session) throw new Error('Usuário não autenticado')
 
     try {
