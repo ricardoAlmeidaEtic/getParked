@@ -15,26 +15,72 @@ interface CreatePublicSpotModalProps {
   onMarkerCreated: () => void
   onEditPosition: () => void
   userPosition: L.LatLng | null
+  onCancel: () => void
 }
 
-export function CreatePublicSpotModal({
+export default function CreatePublicSpotModal({
   isOpen,
   onClose,
   initialPosition,
   onMarkerCreated,
   onEditPosition,
-  userPosition
+  userPosition,
+  onCancel
 }: CreatePublicSpotModalProps) {
   const [position, setPosition] = useState<L.LatLng | null>(initialPosition)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isClosing, setIsClosing] = useState(false)
 
   useEffect(() => {
     setPosition(initialPosition)
   }, [initialPosition])
 
+  const handleClose = () => {
+    if (isSubmitting) return
+    
+    if (position) {
+      showToast.warning('Criação de vaga cancelada')
+      onCancel()
+    }
+    
+    onClose()
+  }
+
+  const checkUserSpotLimit = async (userId: string): Promise<boolean> => {
+    try {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('plan')
+        .eq('id', userId)
+        .single()
+
+      if (profileError) throw profileError
+
+      const maxSpots = profile.plan === 'Premium' ? 5 : 2
+
+      const { count, error: countError } = await supabase
+        .from('public_spot_markers')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('status', 'active')
+
+      if (countError) throw countError
+
+      return (count || 0) < maxSpots
+    } catch (error) {
+      console.error('Erro ao verificar limite de vagas:', error)
+      throw new Error('Erro ao verificar limite de vagas')
+    }
+  }
+
   const handleSubmit = async () => {
-    if (!position || !userPosition) {
-      showToast.error('Posição inválida')
+    if (!position) {
+      showToast.error('Selecione uma posição no mapa')
+      return
+    }
+
+    if (!userPosition) {
+      showToast.error('Não foi possível obter sua localização atual')
       return
     }
 
@@ -72,20 +118,31 @@ export function CreatePublicSpotModal({
         throw new Error('Perfil não encontrado')
       }
 
+      // Verifica limite de vagas
+      const canAddSpot = await checkUserSpotLimit(user.id)
+      if (!canAddSpot) {
+        throw new Error('Você atingiu o limite de vagas públicas. Faça upgrade para o plano Premium para criar mais vagas.')
+      }
+
+      // Prepara os dados da vaga
+      const spotData = {
+        latitude: Number(position.lat.toFixed(6)),
+        longitude: Number(position.lng.toFixed(6)),
+        created_at: new Date().toISOString(),
+        user_id: user.id,
+        type: 'public',
+        total_spots: 1,
+        available_spots: 1,
+        status: 'active',
+        name: `Vaga Pública - ${user.email?.split('@')[0] || 'Usuário'}`
+      }
+
+      console.log('Salvando vaga com dados:', spotData)
+
       // Insere o marcador
       const { error: insertError } = await supabase
         .from('public_spot_markers')
-        .insert({
-          latitude: position.lat,
-          longitude: position.lng,
-          created_at: new Date().toISOString(),
-          user_id: user.id,
-          type: 'public',
-          total_spots: 1,
-          available_spots: 1,
-          status: 'active',
-          name: `Vaga Pública - ${user.email?.split('@')[0] || 'Usuário'}`
-        })
+        .insert(spotData)
 
       if (insertError) {
         console.error('Erro ao inserir vaga:', insertError)
@@ -106,7 +163,7 @@ export function CreatePublicSpotModal({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title="Confirmar Localização da Vaga"
     >
       <div className="space-y-4">
@@ -131,7 +188,7 @@ export function CreatePublicSpotModal({
           </Button>
           <Button
             variant="outline"
-            onClick={onClose}
+            onClick={handleClose}
             disabled={isSubmitting}
           >
             Cancelar
