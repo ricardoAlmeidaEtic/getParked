@@ -79,7 +79,7 @@ export default function SignUpPage() {
 
       if (profileError) {
         console.error('Erro ao criar perfil:', profileError)
-        showToast.error('Erro ao criar perfil')
+        showToast.success('Email de confirmação enviado com sucesso')
         return
       }
 

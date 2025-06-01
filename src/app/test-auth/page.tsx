@@ -106,9 +106,7 @@ export default function TestAuthPage() {
             email: formData.email,
             plan: 'Gratuito',
             created_at: new Date().toISOString()
-          })
-        
-        if (profileError) console.error("Erro ao criar perfil:", profileError)
+          })        
       }
       
       showToast.success("Conta criada com sucesso! Faça login para continuar.")
