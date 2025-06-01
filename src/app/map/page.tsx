@@ -21,7 +21,7 @@ const MapComponent = dynamic(() => import('./components/MapComponent'), {
   )
 })
 
-export default function DashboardPage() {
+export default function MapPage() {
   const [isCreatingSpot, setIsCreatingSpot] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentMarkerPosition, setCurrentMarkerPosition] = useState<any>(null)
@@ -94,7 +94,7 @@ export default function DashboardPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-800 bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-lg">
-              GetParked - Dashboard
+              GetParked - Map
             </h1>
             <Button
               onClick={handleCreateSpotClick}
