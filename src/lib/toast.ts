@@ -7,7 +7,7 @@ interface ToastOptions {
 
 const defaultOptions: ToastOptions = {
   duration: 4000,
-  position: 'top-right'
+  position: 'bottom-right'
 }
 
 export const showToast = {
