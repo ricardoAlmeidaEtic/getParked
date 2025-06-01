@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase } from '@/lib/supabase'
 import { PublicSpotMarker, PrivateParkingMarker } from '@/types/map'
 
 export async function getPublicSpotMarkers(): Promise<PublicSpotMarker[]> {

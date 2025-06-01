@@ -24,6 +24,8 @@ import { useSupabase } from "@/providers/SupabaseProvider"
 import { useProfile } from '@/hooks/useProfile'
 import { Profile } from '@/lib/api/profile'
 import LogoutButton from "@/components/auth/logout-button"
+import { EditProfileModal } from "@/app/profile/components/EditProfileModal"
+import { AddVehicleModal } from "@/app/profile/components/AddVehicleModal"
 
 interface UserData {
   id: string
@@ -49,18 +51,7 @@ export default function ProfilePage() {
   const router = useRouter()
   const { supabase, session } = useSupabase()
   const { profile: supabaseProfile, loading: profileLoading, updateProfile } = useProfile()
-  const [isEditing, setIsEditing] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [formData, setFormData] = useState({
-    full_name: '',
-    email: '',
-    credits: 0
-  })
-  const [newVehicle, setNewVehicle] = useState<Partial<Vehicle>>({
-    plate: "",
-    model: "",
-    color: "Preto"
-  })
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [isAddingVehicle, setIsAddingVehicle] = useState(false)
   const [profileImage, setProfileImage] = useState<string>("/images/parking-map.png")
   const [loading, setLoading] = useState(true)
@@ -94,11 +85,6 @@ export default function ProfilePage() {
 
         setProfile(profileData)
         setVehicles(vehiclesData || [])
-        setFormData({
-          full_name: profileData.full_name || '',
-          email: session.user.email || '',
-          credits: profileData.credits || 0
-        })
       } catch (error) {
         console.error('Erro ao carregar dados:', error)
         showToast.error('Erro ao carregar dados')
@@ -110,116 +96,12 @@ export default function ProfilePage() {
     fetchProfileAndVehicles()
   }, [session, router, supabase])
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData({
-      ...formData,
-      [name]: value,
-    })
+  const handleProfileUpdate = (updatedProfile: Profile) => {
+    setProfile(updatedProfile)
   }
 
-  const handleVehicleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setNewVehicle({
-      ...newVehicle,
-      [name]: name === "length" || name === "width" || name === "height" ? Number.parseFloat(value) : value,
-    })
-  }
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!session) return
-
-    try {
-      // Atualizar metadata do usuário no Auth
-      const { error: authError } = await supabase.auth.updateUser({
-        data: { full_name: formData.full_name }
-      })
-
-      if (authError) throw authError
-
-      // Atualizar perfil no banco de dados
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          full_name: formData.full_name,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', session.user.id)
-
-      if (profileError) throw profileError
-
-      showToast.success('Perfil atualizado com sucesso!')
-      setIsEditing(false)
-    } catch (error) {
-      console.error('Erro ao atualizar perfil:', error)
-      showToast.error('Erro ao atualizar perfil')
-    }
-  }
-
-  const handleCancel = () => {
-    if (profile) {
-      setFormData({
-        full_name: profile.full_name,
-        email: profile.email,
-        credits: profile.credits
-      })
-    }
-    setIsEditing(false)
-  }
-
-  const handleAddVehicle = async () => {
-    if (!session || !profile) return
-    
-    // Check vehicle limit based on plan
-    const maxVehicles = profile.plan === "Premium" ? 3 : 1
-    if (vehicles.length >= maxVehicles) {
-      showToast.error(`Plano ${profile.plan} permite apenas ${maxVehicles} veículo${maxVehicles > 1 ? "s" : ""}`)
-      return
-    }
-
-    if (!newVehicle.name || !newVehicle.plate) {
-      showToast.error("Preencha todos os campos obrigatórios")
-      return
-    }
-
-    setIsSaving(true)
-    
-    try {
-      const { data: vehicle, error } = await supabase
-        .from('vehicles')
-        .insert({
-          owner_id: session.user.id,
-          plate: newVehicle.plate,
-          model: newVehicle.name,
-          color: newVehicle.type
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-
-      setVehicles([...vehicles, vehicle])
-      showToast.success("Veículo adicionado com sucesso!")
-      
-      // Limpar formulário
-      setNewVehicle({
-        id: "",
-        name: "",
-        plate: "",
-        type: "Carro",
-        length: 4.5,
-        width: 1.8,
-        height: 1.5,
-      })
-      
-      setIsAddingVehicle(false)
-    } catch (error: any) {
-      console.error("Erro ao adicionar veículo:", error)
-      showToast.error(error.message || "Ocorreu um erro ao adicionar o veículo")
-    } finally {
-      setIsSaving(false)
-    }
+  const handleVehicleAdded = (newVehicle: Vehicle) => {
+    setVehicles(prev => [...prev, newVehicle])
   }
 
   const handleDeleteVehicle = async (id: string) => {
@@ -257,7 +139,7 @@ export default function ProfilePage() {
         setProfileImage(imageUrl)
         updateProfile({
           ...profile,
-          profileImage: imageUrl,
+          profile_image: imageUrl,
         })
         showToast.success("Imagem de perfil atualizada!")
       }
@@ -323,7 +205,7 @@ export default function ProfilePage() {
                   <div className="flex justify-center mb-4">
                     <div className="relative">
                       <Avatar className="h-24 w-24">
-                        <AvatarImage src={profile.profileImage || profileImage} alt={profile.full_name} />
+                        <AvatarImage src={profile.profile_image || profileImage} alt={profile.full_name} />
                         <AvatarFallback>{profile.full_name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <label
@@ -355,7 +237,7 @@ export default function ProfilePage() {
                     <div className="flex items-center justify-center gap-2">
                       <Calendar className="h-4 w-4" />
                       <p>
-                        Membro desde: <span className="font-medium text-gray-700">{profile.joinDate}</span>
+                        Membro desde: <span className="font-medium text-gray-700">{profile.join_date}</span>
                       </p>
                     </div>
                     <div className="flex items-center justify-center gap-2">
@@ -399,10 +281,8 @@ export default function ProfilePage() {
                         </Label>
                         <Input
                           id="full_name"
-                          name="full_name"
-                          value={formData.full_name}
-                          onChange={handleInputChange}
-                          disabled={!isEditing}
+                          value={profile.full_name}
+                          disabled
                         />
                       </div>
                       <div className="space-y-2">
@@ -411,11 +291,9 @@ export default function ProfilePage() {
                         </Label>
                         <Input
                           id="email"
-                          name="email"
                           type="email"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          disabled={true} // Email não pode ser alterado - deve fazer isso via Auth
+                          value={profile.email}
+                          disabled
                         />
                       </div>
                       <div className="space-y-2">
@@ -424,37 +302,23 @@ export default function ProfilePage() {
                             variant="outline"
                             className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1"
                           >
-                            <span className="font-bold">{formData.credits}</span> créditos
+                            <span className="font-bold">{profile.credits}</span> créditos
                           </Badge>
                         </Label>
                       </div>
                     </CardContent>
-                    <CardFooter className="flex justify-between">
-                      {isEditing ? (
-                        <>
-                          <Button variant="outline" onClick={handleCancel}>
-                            Cancelar
-                          </Button>
-                          <Button onClick={handleSave} disabled={isSaving}>
-                            {isSaving ? (
-                              <>
-                                <span className="animate-spin mr-2">⏳</span> Salvando...
-                              </>
-                            ) : (
-                              <>
-                                <Save className="mr-2 h-4 w-4" /> Salvar Alterações
-                              </>
-                            )}
-                          </Button>
-                        </>
-                      ) : (
-                        <Button onClick={() => setIsEditing(true)}>Editar Perfil</Button>
-                      )}
+                    <CardFooter>
+                      <Button 
+                        onClick={() => setIsEditingProfile(true)}
+                        className="w-full"
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar Perfil
+                      </Button>
                     </CardFooter>
                   </Card>
                 </TabsContent>
                 
-                {/* Veículos tab - continuação do código original */}
                 <TabsContent value="vehicles" className="mt-4">
                   <Card>
                     <CardHeader>
@@ -524,80 +388,23 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Diálogo para adicionar veículo */}
-      <Dialog open={isAddingVehicle} onOpenChange={setIsAddingVehicle}>
-        <DialogContent className="bg-white">
-          <DialogHeader>
-            <DialogTitle>Adicionar Novo Veículo</DialogTitle>
-            <DialogDescription>
-              Preencha os detalhes do seu veículo para encontrar vagas compatíveis.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4 bg-white">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="vehicle-name" className="text-right">
-                Modelo
-              </Label>
-              <Input
-                id="vehicle-name"
-                name="name"
-                placeholder="Ex: Fiat Uno"
-                className="col-span-3"
-                value={newVehicle.name}
-                onChange={handleVehicleInputChange}
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="vehicle-plate" className="text-right">
-                Placa
-              </Label>
-              <Input
-                id="vehicle-plate"
-                name="plate"
-                placeholder="Ex: ABC1234"
-                className="col-span-3"
-                value={newVehicle.plate}
-                onChange={handleVehicleInputChange}
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="vehicle-type" className="text-right">
-                Cor
-              </Label>
-              <select
-                id="vehicle-type"
-                name="type"
-                className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                value={newVehicle.type}
-                onChange={handleVehicleInputChange}
-              >
-                <option value="Preto">Preto</option>
-                <option value="Branco">Branco</option>
-                <option value="Prata">Prata</option>
-                <option value="Cinza">Cinza</option>
-                <option value="Vermelho">Vermelho</option>
-                <option value="Azul">Azul</option>
-                <option value="Verde">Verde</option>
-                <option value="Amarelo">Amarelo</option>
-              </select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddingVehicle(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleAddVehicle} disabled={isSaving}>
-              {isSaving ? (
-                <>
-                  <span className="animate-spin mr-2">⏳</span> Salvando...
-                </>
-              ) : (
-                "Adicionar"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Modais */}
+      {profile && (
+        <EditProfileModal
+          isOpen={isEditingProfile}
+          onClose={() => setIsEditingProfile(false)}
+          profile={profile}
+          onProfileUpdate={handleProfileUpdate}
+        />
+      )}
+
+      <AddVehicleModal
+        isOpen={isAddingVehicle}
+        onClose={() => setIsAddingVehicle(false)}
+        onVehicleAdded={handleVehicleAdded}
+        currentVehiclesCount={vehicles.length}
+        maxVehicles={profile?.plan === "Premium" ? 3 : 1}
+      />
     </main>
   )
 }

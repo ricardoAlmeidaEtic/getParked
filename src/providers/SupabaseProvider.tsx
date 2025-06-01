@@ -25,13 +25,22 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
         setLoading(true)
         const {
           data: { session },
+          error: sessionError
         } = await supabase.auth.getSession()
 
+        if (sessionError) {
+          console.error('Erro ao obter sessão:', sessionError)
+          showToast.error('Erro ao verificar autenticação')
+          return
+        }
+
+        console.log('Sessão inicial:', session?.user?.id)
         setSession(session)
         setUser(session?.user ?? null)
 
         // Se houver uma sessão, verificar se o perfil existe
         if (session?.user) {
+          console.log('Verificando perfil para usuário:', session.user.id)
           const { data: profile, error } = await supabase
             .from('profiles')
             .select('*')
@@ -40,11 +49,36 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
 
           if (error) {
             console.error('Erro ao verificar perfil:', error)
-            showToast.error('Erro ao verificar perfil')
-          }
+            if (error.code === 'PGRST116') {
+              // Perfil não existe, vamos criar
+              console.log('Criando novo perfil para usuário:', session.user.id)
+              const { data: newProfile, error: createError } = await supabase
+                .from('profiles')
+                .insert({
+                  id: session.user.id,
+                  full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
+                  email: session.user.email,
+                  role: 'client',
+                  credits: 0,
+                  plan: 'Gratuito',
+                  join_date: new Date().toISOString(),
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                })
+                .select()
+                .single()
 
-          if (!profile) {
-            showToast.error('Perfil não encontrado')
+              if (createError) {
+                console.error('Erro ao criar perfil:', createError)
+                showToast.error('Erro ao criar perfil')
+              } else {
+                console.log('Perfil criado com sucesso:', newProfile)
+              }
+            } else {
+              showToast.error('Erro ao verificar perfil')
+            }
+          } else {
+            console.log('Perfil encontrado:', profile)
           }
         }
       } catch (error) {
@@ -58,7 +92,8 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
     getInitialSession()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, newSession) => {
+      async (event, newSession) => {
+        console.log('Auth state changed:', event, newSession?.user?.id)
         setSession(newSession)
         setUser(newSession?.user ?? null)
         setLoading(false)
@@ -74,11 +109,36 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
 
             if (error) {
               console.error('Erro ao verificar perfil:', error)
-              showToast.error('Erro ao verificar perfil')
-            }
+              if (error.code === 'PGRST116') {
+                // Perfil não existe, vamos criar
+                console.log('Criando novo perfil para usuário:', newSession.user.id)
+                const { data: newProfile, error: createError } = await supabase
+                  .from('profiles')
+                  .insert({
+                    id: newSession.user.id,
+                    full_name: newSession.user.user_metadata?.full_name || newSession.user.email?.split('@')[0],
+                    email: newSession.user.email,
+                    role: 'client',
+                    credits: 0,
+                    plan: 'Gratuito',
+                    join_date: new Date().toISOString(),
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                  })
+                  .select()
+                  .single()
 
-            if (!profile) {
-              showToast.error('Perfil não encontrado')
+                if (createError) {
+                  console.error('Erro ao criar perfil:', createError)
+                  showToast.error('Erro ao criar perfil')
+                } else {
+                  console.log('Perfil criado com sucesso:', newProfile)
+                }
+              } else {
+                showToast.error('Erro ao verificar perfil')
+              }
+            } else {
+              console.log('Perfil encontrado:', profile)
             }
           } catch (error) {
             console.error('Erro ao verificar perfil:', error)

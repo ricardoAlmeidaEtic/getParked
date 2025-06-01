@@ -12,10 +12,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from "next/link"
 import { User } from "lucide-react"
 import LogoutButton from "@/components/auth/logout-button"
+import { useLogout } from "@/hooks/useLogout"
 
 export default function TestAuthPage() {
   const router = useRouter()
   const { supabase, user, loading } = useSupabase()
+  const { handleLogout } = useLogout()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     email: "",
@@ -104,9 +106,7 @@ export default function TestAuthPage() {
             email: formData.email,
             plan: 'Gratuito',
             created_at: new Date().toISOString()
-          })
-        
-        if (profileError) console.error("Erro ao criar perfil:", profileError)
+          })        
       }
       
       showToast.success("Conta criada com sucesso! Faça login para continuar.")
@@ -118,23 +118,6 @@ export default function TestAuthPage() {
     }
   }
   
-  const handleLogout = async () => {
-    try {
-      setIsLoading(true)
-      const { error } = await supabase.auth.signOut()
-      
-      if (error) throw error
-      
-      showToast.success("Logout realizado com sucesso!")
-      setUserDetails(null)
-    } catch (error: any) {
-      console.error("Erro ao fazer logout:", error)
-      showToast.error(error.message || "Erro ao fazer logout")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   return (
     <div className="container flex items-center justify-center min-h-screen">
       <Card className="w-full max-w-md">

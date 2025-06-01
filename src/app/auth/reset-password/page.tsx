@@ -11,10 +11,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import FadeIn from "@/components/animations/fade-in"
 import { showToast } from "@/components/ui/toast/toast-config"
 import { useSupabase } from "@/providers/SupabaseProvider"
+import { useLogout } from "@/hooks/useLogout"
 
 export default function ResetPasswordPage() {
   const router = useRouter()
   const { supabase } = useSupabase()
+  const { handleLogout } = useLogout()
 
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -80,7 +82,7 @@ export default function ResetPasswordPage() {
       })
 
       if (updateError) {
-        await supabase.auth.signOut()
+        await handleLogout()
         router.push("/auth/reset-password")
 
         if (updateError.message.includes("same password")) {
@@ -90,7 +92,7 @@ export default function ResetPasswordPage() {
         throw updateError
       }
 
-      await supabase.auth.signOut()
+      await handleLogout()
       setIsSuccess(true)
       showToast.success("Senha alterada com sucesso!")
 
