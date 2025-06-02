@@ -127,6 +127,7 @@ export default function CreatePublicSpotModal({
         latitude: Number(position.lat.toFixed(6)),
         longitude: Number(position.lng.toFixed(6)),
         created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5 minutos a partir de agora
         user_id: user.id,
         type: 'public',
         total_spots: 1,

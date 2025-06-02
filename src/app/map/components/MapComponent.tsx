@@ -185,11 +185,23 @@ export default function MapComponent({
     if (!mapRef.current) return
 
     try {
-      const publicMarkers = await getPublicSpotMarkers()
-      publicMarkers.forEach(marker => {
-        createPublicSpotMarkerWithRoute(marker).addTo(mapRef.current!)
+      // Remove marcadores existentes
+      mapRef.current.eachLayer((layer) => {
+        if (layer instanceof L.Marker) {
+          mapRef.current?.removeLayer(layer)
+        }
       })
 
+      // Carrega marcadores públicos
+      const publicMarkers = await getPublicSpotMarkers()
+      console.log('Carregando marcadores públicos:', publicMarkers)
+      
+      publicMarkers.forEach(marker => {
+        const markerInstance = createPublicSpotMarkerWithRoute(marker)
+        markerInstance.addTo(mapRef.current!)
+      })
+
+      // Carrega marcadores privados
       const privateMarkers = await getPrivateParkingMarkers()
       privateMarkers.forEach(marker => {
         createPrivateParkingMarker(marker).addTo(mapRef.current!)
@@ -288,6 +300,17 @@ export default function MapComponent({
       }
 
       loadMarkers()
+
+      // Efeito para recarregar os marcadores periodicamente
+      const intervalId = setInterval(() => {
+        console.log('Recarregando marcadores...')
+        loadMarkers()
+      }, 30000) // Recarrega a cada 30 segundos
+
+      // Cleanup
+      return () => {
+        clearInterval(intervalId)
+      }
     })
 
     // Cleanup

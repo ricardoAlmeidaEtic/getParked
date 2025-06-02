@@ -10,6 +10,7 @@ export interface PublicSpotMarker extends MapMarker {
   type: 'public'
   total_spots: number
   available_spots: number
+  expires_at: string
 }
 
 export interface PrivateParkingMarker extends MapMarker {
