@@ -11,33 +11,33 @@ export function useProfile() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
-  useEffect(() => {
+  const fetchProfile = async () => {
     if (!session) {
       setProfile(null)
       setLoading(false)
       return
     }
 
-    const fetchProfile = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single()
 
-        if (error) throw error
+      if (error) throw error
 
-        setProfile(data)
-      } catch (err) {
-        console.error('Erro ao carregar perfil:', err)
-        setError(err instanceof Error ? err : new Error('Erro ao carregar perfil'))
-        showToast.error('Erro ao carregar perfil')
-      } finally {
-        setLoading(false)
-      }
+      setProfile(data)
+    } catch (err) {
+      console.error('Erro ao carregar perfil:', err)
+      setError(err instanceof Error ? err : new Error('Erro ao carregar perfil'))
+      showToast.error('Erro ao carregar perfil')
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchProfile()
   }, [session, supabase])
 
@@ -78,10 +78,15 @@ export function useProfile() {
     }
   }
 
+  const refreshProfile = async () => {
+    await fetchProfile()
+  }
+
   return {
     profile,
     loading,
     error,
-    updateProfile
+    updateProfile,
+    refreshProfile
   }
 } 

@@ -31,7 +31,7 @@ export default function Navbar({ items = [] }: NavbarProps) {
     { href: "/map", label: "Mapa" },
     { href: "/available-spots", label: "Vagas Disponíveis" },
     { href: "/reserved-spots", label: "Minhas Reservas" },
-    { href: "/profile", label: "Perfil" },
+    { href: "/planos", label: "Planos" },
   ]
 
   // Itens de navegação para usuários não autenticados

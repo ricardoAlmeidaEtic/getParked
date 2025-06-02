@@ -175,5 +175,28 @@ export const profileApi = {
       console.error('Erro ao verificar limite de veículos:', error)
       throw error
     }
+  },
+
+  // Verificar plano do usuário
+  async getUserPlan(userId: string): Promise<string> {
+    try {
+      console.log('Verificando plano do usuário:', userId)
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('plan')
+        .eq('id', userId)
+        .single()
+
+      if (error) {
+        console.error('Erro ao verificar plano:', error)
+        throw error
+      }
+
+      console.log('Plano encontrado:', data.plan)
+      return data.plan
+    } catch (error) {
+      console.error('Erro ao verificar plano:', error)
+      throw error
+    }
   }
 } 
