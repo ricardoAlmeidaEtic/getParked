@@ -34,8 +34,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR">
-      <body className={poppins.className}>
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body className={poppins.className} suppressHydrationWarning>
         <SupabaseProvider>
           <Toaster
             toastOptions={{
