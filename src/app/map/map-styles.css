@@ -3,6 +3,10 @@
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   z-index: 1;
   position: relative;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 /* Controles do mapa */
@@ -158,25 +162,47 @@
   }
 }
 
-/* Garante que o mapa permaneça visível */
+/* Melhorias de performance para o mapa */
+.leaflet-pane {
+  transform: translateZ(0);
+}
+
+.leaflet-tile {
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.leaflet-tile-container {
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Garante que o mapa permaneça visível em zoom alto */
 .leaflet-pane {
   z-index: 400;
+  transform: translateZ(0);
 }
 
 .leaflet-overlay-pane {
   z-index: 500;
+  transform: translateZ(0);
 }
 
 .leaflet-marker-pane {
   z-index: 600;
+  transform: translateZ(0);
 }
 
 .leaflet-tooltip-pane {
   z-index: 700;
+  transform: translateZ(0);
 }
 
 .leaflet-popup-pane {
   z-index: 800;
+  transform: translateZ(0);
 }
 
 /* Ajuste para o painel de informações da rota */

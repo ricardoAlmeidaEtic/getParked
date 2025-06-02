@@ -207,13 +207,21 @@ export default function MapComponent({
     const map = L.map(mapContainerRef.current, {
       zoomControl: false,
       minZoom: 15,
-      maxZoom: 19
+      maxZoom: 19,
+      zoomSnap: 0.5,
+      zoomDelta: 0.5,
+      wheelDebounceTime: 40,
+      preferCanvas: true
     }).setView([0, 0], 16)
     mapRef.current = map
 
-    // Adiciona o tile layer do OpenStreetMap
+    // Adiciona o tile layer do OpenStreetMap com configurações otimizadas
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+      tileSize: 256,
+      zoomOffset: 0,
+      detectRetina: true
     }).addTo(map)
 
     // Adiciona controles de zoom
