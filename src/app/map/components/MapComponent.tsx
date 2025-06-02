@@ -7,9 +7,12 @@ import 'leaflet-routing-machine/dist/leaflet-routing-machine.css'
 import '../map-styles.css'
 import { showToast } from '@/lib/toast'
 import { getPublicSpotMarkers, getPrivateParkingMarkers, createPublicSpotMarker, createPrivateParkingMarker } from '@/app/map/components/utils'
-import { RouteManager } from '@/lib/route-utils'
 import { PublicSpotCreator } from '@/app/map/components/creators'
-import { MapMarker } from '@/types/map'
+import { PublicSpotMarker } from '@/types/map'
+import { getRoute, decodePolyline } from '@/services/graphhopper'
+
+// Importa o leaflet-routing-machine
+import 'leaflet-routing-machine'
 
 interface MapComponentProps {
   isCreatingSpot: boolean
@@ -26,20 +29,17 @@ export default function MapComponent({
 }: MapComponentProps) {
   const mapRef = useRef<L.Map | null>(null)
   const mapContainerRef = useRef<HTMLDivElement>(null)
-  const routeManagerRef = useRef<RouteManager | null>(null)
   const userMarkerRef = useRef<L.CircleMarker | null>(null)
-  const publicSpotCreatorRef = useRef<PublicSpotCreator | null>(null)
+  const selectedMarkerRef = useRef<L.Marker | null>(null)
+  const routeLineRef = useRef<L.Polyline | null>(null)
+  const creatorRef = useRef<PublicSpotCreator | null>(null)
   const lastUserPositionRef = useRef<L.LatLng | null>(null)
   const positionUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Função para verificar se a posição mudou significativamente
   const hasPositionChangedSignificantly = (newPosition: L.LatLng): boolean => {
     if (!lastUserPositionRef.current) return true
-
-    // Calcula a distância entre a posição atual e a última posição registrada
     const distance = lastUserPositionRef.current.distanceTo(newPosition)
-    
-    // Se a distância for maior que 5 metros, considera que a posição mudou significativamente
     return distance > 5
   }
 
@@ -47,30 +47,149 @@ export default function MapComponent({
   const updateUserPosition = (position: L.LatLng) => {
     if (!hasPositionChangedSignificantly(position)) return
 
-    // Limpa o timeout anterior se existir
     if (positionUpdateTimeoutRef.current) {
       clearTimeout(positionUpdateTimeoutRef.current)
     }
 
-    // Define um novo timeout para atualizar a posição
     positionUpdateTimeoutRef.current = setTimeout(() => {
       lastUserPositionRef.current = position
       onUserPositionChange(position)
-    }, 1000) // Espera 1 segundo antes de atualizar
+    }, 1000)
   }
 
-  // Função para carregar os marcadores
+  const showRoute = async (start: L.LatLng, end: L.LatLng) => {
+    if (!mapRef.current) return
+
+    try {
+      // Remove rota anterior se existir
+      if (routeLineRef.current) {
+        mapRef.current.removeLayer(routeLineRef.current)
+        routeLineRef.current = null
+      }
+
+      // Mostra um indicador de carregamento
+      const loadingToast = showToast.loading('Calculando rota...')
+
+      // Cria o controle de rota usando uma abordagem mais simples
+      // @ts-ignore
+      const router = L.Routing.osrmv1({
+        serviceUrl: 'https://routing.openstreetmap.de/routed-car/route/v1',
+        timeout: 30000,
+        profile: 'driving',
+        useHints: true
+      })
+
+      // Converte os pontos para o formato esperado pelo router
+      const waypoints = [
+        { latLng: start },
+        { latLng: end }
+      ]
+
+      // @ts-ignore
+      router.route(waypoints, (err: any, routes: any) => {
+        if (err) {
+          console.error('Erro ao calcular rota:', err)
+          showToast.error('Erro ao calcular rota')
+          return
+        }
+
+        if (routes && routes.length > 0) {
+          const route = routes[0]
+          
+          // Cria uma linha poligonal para a rota
+          const routeLine = L.polyline(route.coordinates, {
+            color: '#3B82F6',
+            weight: 6,
+            opacity: 0.8
+          }).addTo(mapRef.current!)
+
+          // Ajusta o zoom para mostrar toda a rota
+          const bounds = routeLine.getBounds()
+          mapRef.current?.fitBounds(bounds, {
+            padding: [50, 50],
+            maxZoom: 16
+          })
+
+          // Mostra informações da rota
+          const distance = (route.summary.totalDistance / 1000).toFixed(1)
+          const duration = Math.round(route.summary.totalTime / 60)
+          
+          // Cria um popup com as informações da rota
+          if (mapRef.current) {
+            const popup = L.popup()
+              .setLatLng(start)
+              .setContent(`
+                <div class="p-2">
+                  <h3 class="font-bold mb-2">Rota Calculada</h3>
+                  <p>Distância: ${distance}km</p>
+                  <p>Tempo estimado: ${duration}min</p>
+                  <p class="text-sm text-gray-500 mt-2">Siga a linha azul no mapa</p>
+                </div>
+              `)
+              .openOn(mapRef.current)
+
+            showToast.info(`Distância: ${distance}km • Tempo estimado: ${duration}min`)
+          }
+
+          // Armazena a referência da linha da rota
+          routeLineRef.current = routeLine
+        }
+      })
+
+      // Remove o indicador de carregamento
+      showToast.dismiss(loadingToast)
+
+    } catch (error) {
+      console.error('Erro ao mostrar rota:', error)
+      showToast.error('Erro ao calcular rota')
+    }
+  }
+
+  const createPublicSpotMarkerWithRoute = (marker: PublicSpotMarker) => {
+    const markerInstance = createPublicSpotMarker(marker)
+    
+    markerInstance.on('click', () => {
+      if (userMarkerRef.current && mapRef.current) {
+        const userPosition = userMarkerRef.current.getLatLng()
+        const markerPosition = markerInstance.getLatLng()
+        
+        // Remove seleção anterior
+        if (selectedMarkerRef.current && markerInstance.options.icon) {
+          selectedMarkerRef.current.setIcon(markerInstance.options.icon)
+        }
+        
+        // Atualiza o ícone do marcador selecionado
+        const selectedIcon = L.divIcon({
+          className: 'custom-marker public-spot selected',
+          html: `
+            <div class="w-6 h-6 bg-blue-500 rounded-full border-2 border-blue-700 flex items-center justify-center text-xs font-bold text-white">
+              ${marker.available_spots}
+            </div>
+          `,
+          iconSize: [24, 24],
+          iconAnchor: [12, 12],
+        })
+        
+        markerInstance.setIcon(selectedIcon)
+        selectedMarkerRef.current = markerInstance
+        
+        // Calcula a rota
+        showRoute(userPosition, markerPosition)
+      }
+    })
+
+    return markerInstance
+  }
+
   const loadMarkers = useCallback(async () => {
     if (!mapRef.current) return
 
     try {
-      // Carrega marcadores públicos
       const publicMarkers = await getPublicSpotMarkers()
       publicMarkers.forEach(marker => {
-        createPublicSpotMarker(marker).addTo(mapRef.current!)
+        createPublicSpotMarkerWithRoute(marker).addTo(mapRef.current!)
       })
 
-      // Carrega marcadores privados
       const privateMarkers = await getPrivateParkingMarkers()
       privateMarkers.forEach(marker => {
         createPrivateParkingMarker(marker).addTo(mapRef.current!)
@@ -92,19 +211,14 @@ export default function MapComponent({
     }).setView([0, 0], 16)
     mapRef.current = map
 
-    // Inicializa o gerenciador de rotas
-    routeManagerRef.current = new RouteManager(map)
-
     // Adiciona o tile layer do OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map)
 
-    // Adiciona controle de zoom personalizado no canto inferior direito
+    // Adiciona controles de zoom
     L.control.zoom({
-      position: 'bottomright',
-      zoomInText: '+',
-      zoomOutText: '-'
+      position: 'bottomright'
     }).addTo(map)
 
     // Função para adicionar a localização do usuário
@@ -114,15 +228,12 @@ export default function MapComponent({
       const { latitude, longitude } = position.coords
       const userLatLng = L.latLng(latitude, longitude)
       
-      // Atualiza a posição do usuário com debounce
       updateUserPosition(userLatLng)
 
-      // Atualiza a visualização do mapa apenas se a posição mudou significativamente
       if (hasPositionChangedSignificantly(userLatLng)) {
         mapRef.current.setView(userLatLng, 16)
       }
       
-      // Adiciona um círculo azul na localização do usuário com tamanho fixo
       const accuracy = position.coords.accuracy
       const circle = L.circleMarker(userLatLng, {
         radius: 15,
@@ -134,7 +245,6 @@ export default function MapComponent({
 
       userMarkerRef.current = circle
 
-      // Adiciona um círculo menor no centro para melhor visualização
       L.circleMarker(userLatLng, {
         radius: 8,
         color: '#3B82F6',
@@ -143,7 +253,6 @@ export default function MapComponent({
         weight: 2,
       }).addTo(mapRef.current)
 
-      // Adiciona um círculo de precisão (este pode mudar de tamanho com o zoom)
       L.circle(userLatLng, {
         radius: accuracy,
         color: '#3B82F6',
@@ -153,29 +262,11 @@ export default function MapComponent({
         dashArray: '5, 5',
       }).addTo(mapRef.current)
 
-      // Adiciona um popup com informações de precisão
       circle.bindPopup(`Sua localização atual (precisão: ${Math.round(accuracy)}m)`)
     }
 
-    // Adiciona listener para cálculo de rota
-    const handleCalculateRoute = (event: CustomEvent<MapMarker>) => {
-      if (!mapRef.current || !routeManagerRef.current || !userMarkerRef.current) return
-
-      const destination = event.detail
-      const userPosition = userMarkerRef.current.getLatLng()
-
-      routeManagerRef.current.calculateRoute(
-        userPosition,
-        destination,
-        userMarkerRef.current
-      )
-    }
-
-    window.addEventListener('calculate-route', handleCalculateRoute as EventListener)
-
     // Aguarda o mapa carregar completamente
     map.whenReady(() => {
-      // Solicita a localização do usuário
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           addUserLocation,
@@ -188,7 +279,6 @@ export default function MapComponent({
         showToast.error('Seu navegador não suporta geolocalização')
       }
 
-      // Carrega os marcadores
       loadMarkers()
     })
 
@@ -196,13 +286,6 @@ export default function MapComponent({
     return () => {
       if (mapRef.current) {
         mapRef.current.remove()
-      }
-      window.removeEventListener('calculate-route', handleCalculateRoute as EventListener)
-      if (routeManagerRef.current) {
-        routeManagerRef.current.clearRoute()
-      }
-      if (publicSpotCreatorRef.current) {
-        publicSpotCreatorRef.current.stopCreation()
       }
       if (positionUpdateTimeoutRef.current) {
         clearTimeout(positionUpdateTimeoutRef.current)
@@ -214,32 +297,26 @@ export default function MapComponent({
   useEffect(() => {
     if (!mapRef.current || !userMarkerRef.current) return
 
-    console.log('MapComponent - Modo de criação:', isCreatingSpot)
-
     if (isCreatingSpot) {
       const userPosition = userMarkerRef.current.getLatLng()
-      console.log('MapComponent - Iniciando criação de marcador na posição do usuário:', userPosition)
       
-      // Força o zoom in na posição do usuário
       mapRef.current.setView(userPosition, 18, {
         animate: true,
         duration: 0.5
       })
       
-      if (!publicSpotCreatorRef.current) {
-        publicSpotCreatorRef.current = new PublicSpotCreator(mapRef.current, userPosition)
+      if (!creatorRef.current) {
+        creatorRef.current = new PublicSpotCreator(mapRef.current, userPosition)
       }
       
-      publicSpotCreatorRef.current.startCreation((position) => {
-        console.log('MapComponent - Recebendo nova posição do marcador:', position)
+      creatorRef.current.startCreation((position) => {
         if (position) {
           onMarkerPositionChange(position)
         }
       })
     } else {
-      console.log('MapComponent - Parando criação de marcador')
-      if (publicSpotCreatorRef.current) {
-        publicSpotCreatorRef.current.stopCreation()
+      if (creatorRef.current) {
+        creatorRef.current.stopCreation()
       }
       onMarkerPositionChange(null)
     }

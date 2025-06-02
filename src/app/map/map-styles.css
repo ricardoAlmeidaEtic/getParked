@@ -1,6 +1,8 @@
 /* Estilos gerais do mapa */
 .leaflet-container {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  z-index: 1;
+  position: relative;
 }
 
 /* Controles do mapa */
@@ -133,4 +135,126 @@
   to {
     stroke-dashoffset: 1000;
   }
+}
+
+/* Estilos para a linha da rota */
+.route-line {
+  z-index: 1000 !important;
+  pointer-events: none;
+  position: relative;
+}
+
+.route-line path {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: dash 1s linear forwards;
+  position: relative;
+  z-index: 1000;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Garante que o mapa permaneça visível */
+.leaflet-pane {
+  z-index: 400;
+}
+
+.leaflet-overlay-pane {
+  z-index: 500;
+}
+
+.leaflet-marker-pane {
+  z-index: 600;
+}
+
+.leaflet-tooltip-pane {
+  z-index: 700;
+}
+
+.leaflet-popup-pane {
+  z-index: 800;
+}
+
+/* Ajuste para o painel de informações da rota */
+.route-info {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  min-width: 250px;
+  max-width: 90%;
+  animation: slideUp 0.3s ease-out;
+  pointer-events: none;
+}
+
+.route-info > div {
+  pointer-events: auto;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translate(-50%, 20px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+/* Estilos para o marcador selecionado */
+.custom-marker.public-spot.selected div {
+  background-color: #3B82F6 !important;
+  border: 2px solid #2563EB !important;
+  color: white !important;
+  transform: scale(1.1);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+}
+
+/* Estilos para a rota */
+.leaflet-routing-container {
+  display: none;
+}
+
+.leaflet-routing-alternatives-container {
+  display: none;
+}
+
+.leaflet-routing-geocoders {
+  display: none;
+}
+
+.leaflet-routing-error {
+  display: none;
+}
+
+/* Ajuste para o popup da rota */
+.leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+  padding: 0 !important;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  padding: 16px !important;
+}
+
+.leaflet-popup-content h3 {
+  color: #1F2937;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.leaflet-popup-content p {
+  color: #4B5563;
+  font-size: 14px;
+  margin-bottom: 4px;
 } 

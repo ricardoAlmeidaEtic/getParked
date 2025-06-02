@@ -1,5 +1,6 @@
 import L from 'leaflet'
 import { PublicSpotMarker, PrivateParkingMarker } from '@/types/map'
+import { createPublicSpotPopupContent, createPrivateParkingPopupContent } from '../modals/popup-content'
 
 export function createPublicSpotMarker(marker: PublicSpotMarker): L.Marker {
   const icon = L.divIcon({
@@ -13,21 +14,15 @@ export function createPublicSpotMarker(marker: PublicSpotMarker): L.Marker {
     iconAnchor: [12, 12],
   })
 
-  const popupContent = `
-    <div class="p-2">
-      <h3 class="font-bold">${marker.name}</h3>
-      <p>Vagas disponíveis: ${marker.available_spots}/${marker.total_spots}</p>
-      <button 
-        class="mt-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-        onclick="window.dispatchEvent(new CustomEvent('calculate-route', { detail: ${JSON.stringify(marker)} }))"
-      >
-        Obter direções
-      </button>
-    </div>
-  `
+  const markerInstance = L.marker([marker.latitude, marker.longitude], { icon })
+    .bindPopup(createPublicSpotPopupContent(marker))
 
-  return L.marker([marker.latitude, marker.longitude], { icon })
-    .bindPopup(popupContent)
+  // Adiciona evento de clique para garantir que o popup seja aberto
+  markerInstance.on('click', () => {
+    markerInstance.openPopup()
+  })
+
+  return markerInstance
 }
 
 export function createPrivateParkingMarker(marker: PrivateParkingMarker): L.Marker {
@@ -42,20 +37,13 @@ export function createPrivateParkingMarker(marker: PrivateParkingMarker): L.Mark
     iconAnchor: [12, 12],
   })
 
-  const popupContent = `
-    <div class="p-2">
-      <h3 class="font-bold">${marker.name}</h3>
-      <p>Preço/hora: R$ ${marker.price_per_hour.toFixed(2)}</p>
-      <p>Status: ${marker.is_open ? 'Aberto' : 'Fechado'}</p>
-      <button 
-        class="mt-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-        onclick="window.dispatchEvent(new CustomEvent('calculate-route', { detail: ${JSON.stringify(marker)} }))"
-      >
-        Obter direções
-      </button>
-    </div>
-  `
+  const markerInstance = L.marker([marker.latitude, marker.longitude], { icon })
+    .bindPopup(createPrivateParkingPopupContent(marker))
 
-  return L.marker([marker.latitude, marker.longitude], { icon })
-    .bindPopup(popupContent)
+  // Adiciona evento de clique para garantir que o popup seja aberto
+  markerInstance.on('click', () => {
+    markerInstance.openPopup()
+  })
+
+  return markerInstance
 } 
