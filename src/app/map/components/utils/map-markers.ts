@@ -1,8 +1,23 @@
 import { supabase } from '@/lib/supabase'
 import { PublicSpotMarker, PrivateParkingMarker } from '@/types/map'
 
+async function updateExpiredSpots() {
+  try {
+    const { error } = await supabase.rpc('update_expired_spot_markers')
+    if (error) {
+      console.error('Erro ao atualizar vagas expiradas:', error)
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar vagas expiradas:', error)
+  }
+}
+
 export async function getPublicSpotMarkers(): Promise<PublicSpotMarker[]> {
   try {
+    // Primeiro, atualiza as vagas expiradas
+    await updateExpiredSpots()
+
+    // Depois, busca as vagas ativas
     const { data, error } = await supabase
       .from('public_spot_markers')
       .select('*')
