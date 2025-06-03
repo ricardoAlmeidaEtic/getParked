@@ -344,7 +344,7 @@ export default function MapComponent({
         if (position) {
           onMarkerPositionChange(position)
         }
-      })
+      }, isCreatingSpot)
     } else {
       if (creatorRef.current) {
         creatorRef.current.stopCreation()
