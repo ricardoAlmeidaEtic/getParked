@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css'
@@ -10,6 +10,7 @@ import { getPublicSpotMarkers, getPrivateParkingMarkers, createPublicSpotMarker,
 import { PublicSpotCreator } from '@/app/map/components/creators'
 import { PublicSpotMarker } from '@/types/map'
 import { getRoute, decodePolyline } from '@/services/graphhopper'
+import RouteInfoModal from './modals/RouteInfoModal'
 
 // Importa o leaflet-routing-machine
 import 'leaflet-routing-machine'
@@ -35,6 +36,17 @@ export default function MapComponent({
   const creatorRef = useRef<PublicSpotCreator | null>(null)
   const lastUserPositionRef = useRef<L.LatLng | null>(null)
   const positionUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [routeInfo, setRouteInfo] = useState<{
+    isOpen: boolean
+    distance: number
+    duration: number
+    destinationName: string
+  }>({
+    isOpen: false,
+    distance: 0,
+    duration: 0,
+    destinationName: ''
+  })
 
   // Função para verificar se a posição mudou significativamente
   const hasPositionChangedSignificantly = (newPosition: L.LatLng): boolean => {
@@ -57,7 +69,7 @@ export default function MapComponent({
     }, 1000)
   }
 
-  const showRoute = async (start: L.LatLng, end: L.LatLng) => {
+  const showRoute = async (start: L.LatLng, end: L.LatLng, destinationName: string) => {
     if (!mapRef.current) return
 
     try {
@@ -111,25 +123,16 @@ export default function MapComponent({
           })
 
           // Mostra informações da rota
-          const distance = (route.summary.totalDistance / 1000).toFixed(1)
+          const distance = route.summary.totalDistance / 1000
           const duration = Math.round(route.summary.totalTime / 60)
           
-          // Cria um popup com as informações da rota
-          if (mapRef.current) {
-            const popup = L.popup()
-              .setLatLng(start)
-              .setContent(`
-                <div class="p-2">
-                  <h3 class="font-bold mb-2">Rota Calculada</h3>
-                  <p>Distância: ${distance}km</p>
-                  <p>Tempo estimado: ${duration}min</p>
-                  <p class="text-sm text-gray-500 mt-2">Siga a linha azul no mapa</p>
-                </div>
-              `)
-              .openOn(mapRef.current)
-
-            showToast.info(`Distância: ${distance}km • Tempo estimado: ${duration}min`)
-          }
+          // Atualiza o estado do modal de rota
+          setRouteInfo({
+            isOpen: true,
+            distance,
+            duration,
+            destinationName
+          })
 
           // Armazena a referência da linha da rota
           routeLineRef.current = routeLine
@@ -174,7 +177,7 @@ export default function MapComponent({
         selectedMarkerRef.current = markerInstance
         
         // Calcula a rota
-        showRoute(userPosition, markerPosition)
+        showRoute(userPosition, markerPosition, marker.name)
       }
     })
 
@@ -354,9 +357,18 @@ export default function MapComponent({
   }, [isCreatingSpot, onMarkerPositionChange])
 
   return (
-    <div 
-      ref={mapContainerRef} 
-      className="absolute inset-0 w-full h-full z-0"
-    />
+    <>
+      <div 
+        ref={mapContainerRef} 
+        className="absolute inset-0 w-full h-full z-0"
+      />
+      <RouteInfoModal
+        isOpen={routeInfo.isOpen}
+        onClose={() => setRouteInfo(prev => ({ ...prev, isOpen: false }))}
+        distance={routeInfo.distance}
+        duration={routeInfo.duration}
+        destinationName={routeInfo.destinationName}
+      />
+    </>
   )
 } 
