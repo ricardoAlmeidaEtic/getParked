@@ -60,7 +60,7 @@ export default function TestimonialsSection() {
                   <p className="text-gray-700 mb-6">{testimonial.text}</p>
                   <div className="flex items-center">
                     <Image
-                      src="/placeholder.svg?height=48&width=48"
+                      src="/user-icon.svg"
                       alt="User"
                       width={48}
                       height={48}
