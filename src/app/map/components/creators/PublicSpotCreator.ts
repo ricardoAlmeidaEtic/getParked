@@ -7,20 +7,24 @@ export class PublicSpotCreator {
   private marker: L.Marker | null = null
   private selectionArea: SelectionArea
   private onPositionChange: ((position: L.LatLng | null) => void) | null = null
+  private isEditing: boolean = false
 
   constructor(map: L.Map, userPosition: L.LatLng) {
     this.map = map
     this.selectionArea = new SelectionArea(map, userPosition)
   }
 
-  public startCreation(onPositionChange: (position: L.LatLng | null) => void): void {
+  public startCreation(onPositionChange: (position: L.LatLng | null) => void, isEditing: boolean = false): void {
     this.onPositionChange = onPositionChange
+    this.isEditing = isEditing
     this.selectionArea.show()
 
     const userPosition = this.selectionArea.getUserPosition()
 
-    // Cria o marcador inicial na posição do usuário
-    this.createOrUpdateMarker(userPosition)
+    // Se não estiver editando, cria o marcador na posição do usuário
+    if (!isEditing) {
+      this.createOrUpdateMarker(userPosition)
+    }
 
     this.map.on('click', this.handleMapClick)
   }
@@ -35,6 +39,7 @@ export class PublicSpotCreator {
     if (this.onPositionChange) {
       this.onPositionChange(null)
     }
+    this.isEditing = false
   }
 
   private createMarkerIcon(): L.DivIcon {
@@ -65,7 +70,7 @@ export class PublicSpotCreator {
           if (this.selectionArea.isWithinRadius(newPosition)) {
             this.onPositionChange(newPosition)
           } else {
-            showToast.error('A vaga deve estar dentro de 1km da sua localização atual')
+            showToast.error('A vaga deve estar dentro de 200m da sua localização atual')
             this.marker?.setLatLng(position) // Volta para a posição anterior
           }
         }
@@ -81,7 +86,7 @@ export class PublicSpotCreator {
     const position = e.latlng
 
     if (!this.selectionArea.isWithinRadius(position)) {
-      showToast.error('A vaga deve estar dentro de 1km da sua localização atual')
+      showToast.error('A vaga deve estar dentro de 200m da sua localização atual')
       return
     }
 
