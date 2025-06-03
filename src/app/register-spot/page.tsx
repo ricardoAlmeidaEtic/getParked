@@ -1,4 +1,10 @@
+"use client"
+
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { useSupabase } from '@/providers/SupabaseProvider'
 import { useProfile } from '@/hooks/useProfile'
+import { Button } from '@/components/ui/button'
 
 export default function RegisterSpotPage() {
   const router = useRouter()

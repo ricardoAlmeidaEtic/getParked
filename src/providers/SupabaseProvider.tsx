@@ -5,7 +5,7 @@ import { SupabaseClient, User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { showToast } from '@/lib/toast'
 
-type SupabaseContextType = {
+export type SupabaseContextType = {
   supabase: SupabaseClient
   user: User | null
   session: Session | null
