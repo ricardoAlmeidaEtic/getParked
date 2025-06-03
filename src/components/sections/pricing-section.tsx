@@ -1,61 +1,185 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { CheckCircle2, Star } from "lucide-react"
 import FadeIn from "@/components/animations/fade-in"
+import { useSupabase } from "@/providers/SupabaseProvider"
+import { showToast } from "@/components/ui/toast/toast-config"
+
+interface Plan {
+  id: string
+  name: string
+  price: number
+  search_limit: number
+  vehicle_limit: number
+  allow_reservations: boolean
+  realtime_navigation: boolean
+  priority_support: boolean
+}
 
 export default function PricingSection() {
-  const plans = [
+  const [plans, setPlans] = useState<Plan[]>([])
+  const [loading, setLoading] = useState(true)
+  const { supabase } = useSupabase()
+
+  useEffect(() => {
+    fetchPlans()
+  }, [])
+
+  const fetchPlans = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('plans')
+        .select('*')
+        .order('price', { ascending: true })
+
+      if (error) throw error
+
+      setPlans(data || [])
+    } catch (error: any) {
+      console.error('Erro ao carregar planos:', error)
+      showToast.error('Erro ao carregar planos')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const renderPlanFeatures = (plan: Plan) => {
+    const features = [
+      {
+        text: "Busca de estacionamentos próximos",
+        included: true
+      },
+      {
+        text: "Navegação básica",
+        included: true
+      },
+      {
+        text: `Histórico limitado (últimos ${plan.search_limit} dias)`,
+        included: true
+      },
+      {
+        text: `${plan.vehicle_limit} veículo${plan.vehicle_limit > 1 ? 's' : ''} cadastrado${plan.vehicle_limit > 1 ? 's' : ''}`,
+        included: true
+      },
+      {
+        text: "Navegação avançada com rotas alternativas",
+        included: plan.realtime_navigation
+      },
+      {
+        text: "Reserva de vagas antecipada",
+        included: plan.allow_reservations
+      },
+      {
+        text: "Descontos exclusivos em estacionamentos parceiros",
+        included: plan.priority_support
+      }
+    ]
+
+    return features
+  }
+
+  const faqItems = [
     {
-      title: "Gratuito",
-      price: "€0",
-      period: "/mês",
-      description: "Ideal para uso ocasional",
-      features: [
-        "Até 3 buscas de vagas por dia",
-        "1 veículo cadastrado",
-        "Acesso a vagas públicas e privadas",
-        "Sem custo mensal"
-      ],
-      buttonText: "Começar Grátis",
-      buttonVariant: "outline",
-      popular: false,
-      delay: 100,
+      question: "Posso mudar de plano a qualquer momento?",
+      answer:
+        "Sim, você pode fazer upgrade ou downgrade do seu plano a qualquer momento. As mudanças entram em vigor imediatamente e o valor será ajustado proporcionalmente ao período restante da sua assinatura atual.",
     },
     {
-      title: "Premium",
-      price: "€12,99",
-      period: "/mês",
-      description: "Perfeito para uso regular",
-      features: [
-        "Até 50 buscas de vagas por dia",
-        "Até 3 veículos cadastrados",
-        "Reserva de vagas",
-        "Navegação em tempo real",
-        "Suporte prioritário"
-      ],
-      buttonText: "Assinar Agora",
-      buttonVariant: "default",
-      popular: true,
-      delay: 200,
+      question: "Como funciona o período de teste?",
+      answer:
+        "Oferecemos 7 dias de teste gratuito para o plano Premium. Você não será cobrado durante este período e pode cancelar a qualquer momento antes do término do teste sem nenhum custo.",
     },
     {
-      title: "Business",
-      price: "€35",
-      period: "/mês",
-      description: "Para empresas e uso intensivo",
-      features: [
-        "Buscas de vagas ilimitadas",
-        "Até 10 veículos cadastrados",
-        "Prioridade em vagas premium",
-        "Relatórios e estatísticas",
-      ],
-      buttonText: "Assinar Agora",
-      buttonVariant: "outline",
-      popular: false,
-      delay: 300,
+      question: "Qual a política de reembolso?",
+      answer:
+        "Oferecemos reembolso total nos primeiros 30 dias após a assinatura se você não estiver satisfeito com o serviço. Após este período, reembolsos são avaliados caso a caso pela nossa equipe de suporte.",
+    },
+    {
+      question: "Preciso fornecer dados de pagamento para o plano gratuito?",
+      answer:
+        "Não, o plano gratuito não requer nenhuma informação de pagamento e pode ser usado por tempo indeterminado com as funcionalidades básicas do GetParked.",
     },
   ]
+
+  if (loading) {
+    return (
+      <section id="pricing" className="py-20 px-6 bg-white scroll-mt-16">
+        <div className="container mx-auto text-center">
+          <p>Carregando planos...</p>
+        </div>
+      </section>
+    )
+  }
+
+  const renderPlanCard = (plan: Plan, isAnnual: boolean = false) => {
+    const isPopular = plan.name === "Premium"
+    const features = renderPlanFeatures(plan)
+    const price = isAnnual ? plan.price * 12 * 0.8 : plan.price
+
+    return (
+      <Card
+        className={`flex flex-col border-2 ${
+          isPopular
+            ? "border-primary relative md:scale-105 shadow-lg transform transition-all duration-300 hover:shadow-xl hover:scale-[1.07]"
+            : "border-gray-200 hover:border-primary transition-all duration-300 hover:shadow-lg"
+        }`}
+      >
+        {isPopular && (
+          <div className="absolute top-0 right-0 bg-primary text-white px-3 py-1 text-xs font-semibold rounded-bl-lg flex items-center">
+            <Star className="h-3 w-3 mr-1 fill-white" />
+            RECOMENDADO
+          </div>
+        )}
+        <CardHeader>
+          <CardTitle>{plan.name}</CardTitle>
+          <CardDescription>
+            {plan.name === "Free" ? "Para uso pessoal básico" : 
+             plan.name === "Premium" ? "Para uso frequente" : 
+             "Para empresas e uso intensivo"}
+          </CardDescription>
+          <div className="mt-4 text-3xl font-bold">
+            €{price.toFixed(2)}
+          </div>
+          <p className="text-sm text-gray-500">
+            {plan.price === 0 ? "para sempre" : isAnnual ? `por ano (€${(plan.price * 0.8).toFixed(2)}/mês)` : "por mês"}
+          </p>
+        </CardHeader>
+        <CardContent className="flex-grow">
+          <div className="space-y-2">
+            {features.map((feature, idx) => (
+              <div key={idx} className="flex items-start">
+                <CheckCircle2 
+                  className={`h-5 w-5 ${feature.included ? 'text-green-500' : 'text-gray-300'} mr-2 shrink-0 mt-0.5`}
+                />
+                <span className={feature.included ? '' : 'text-gray-400'}>{feature.text}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+        <div className="p-6 pt-0">
+          <Button
+            variant={isPopular ? "default" : "outline"}
+            className={`w-full group relative overflow-hidden ${
+              plan.name === "Free"
+                ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-800 hover:border-green-300"
+                : ""
+            }`}
+          >
+            <Link href="/auth/signup" className="flex items-center justify-center w-full">
+              {plan.name === "Free" ? "Começar Grátis" : "Assinar Agora"}
+            </Link>
+          </Button>
+        </div>
+      </Card>
+    )
+  }
 
   return (
     <section id="pricing" className="py-20 px-6 bg-white scroll-mt-16">
@@ -70,62 +194,43 @@ export default function PricingSection() {
           </div>
         </FadeIn>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {plans.map((plan, index) => (
-            <FadeIn key={index} direction="up" delay={plan.delay}>
-              <Card
-                className={`border-2 ${
-                  plan.popular
-                    ? "border-primary relative md:scale-105 shadow-lg transform transition-all duration-300 hover:shadow-xl hover:scale-[1.07]"
-                    : "border-gray-200 hover:border-primary transition-all duration-300 hover:shadow-lg"
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-bold uppercase rounded-bl-lg">
-                    Popular
-                  </div>
-                )}
-                <CardHeader className="text-center pb-4">
-                  <CardTitle className="text-2xl">{plan.title}</CardTitle>
-                  <div className="mt-2 mb-1">
-                    <span className="text-3xl font-bold">{plan.price}</span>
-                    <span className="text-gray-500">{plan.period}</span>
-                  </div>
-                  <CardDescription>{plan.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    {plan.features.map((feature, idx) => (
-                      <div key={idx} className="flex items-start">
-                        <svg
-                          className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        <span>{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-                <div className="p-6 pt-0">
-                  <Button
-                    variant={plan.buttonVariant as "outline" | "default"}
-                    className={`w-full ${
-                      plan.buttonVariant === "default"
-                        ? "bg-primary text-primary-foreground hover:bg-primary-hover transition-colors duration-300"
-                        : "transition-all duration-300 hover:bg-primary hover:text-primary-foreground"
-                    }`}
-                  >
-                    <Link href="/auth/signup">{plan.buttonText}</Link>
-                  </Button>
-                </div>
-              </Card>
-            </FadeIn>
-          ))}
+        <Tabs defaultValue="monthly" className="w-full max-w-5xl mx-auto">
+          <div className="flex justify-center mb-8">
+            <TabsList>
+              <TabsTrigger value="monthly">Mensal</TabsTrigger>
+              <TabsTrigger value="annual">Anual (20% de desconto)</TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="monthly" className="space-y-8 md:space-y-0 md:grid md:grid-cols-3 md:gap-6">
+            {plans.map((plan) => (
+              <FadeIn key={plan.id} direction="up">
+                {renderPlanCard(plan)}
+              </FadeIn>
+            ))}
+          </TabsContent>
+
+          <TabsContent value="annual" className="space-y-8 md:space-y-0 md:grid md:grid-cols-3 md:gap-6">
+            {plans.map((plan) => (
+              <FadeIn key={plan.id} direction="up">
+                {renderPlanCard(plan, true)}
+              </FadeIn>
+            ))}
+          </TabsContent>
+        </Tabs>
+
+        <div className="mt-16 max-w-3xl mx-auto">
+          <h2 className="text-2xl font-bold mb-6 text-center">Dúvidas frequentes</h2>
+          <Accordion type="single" collapsible className="w-full">
+            {faqItems.map((item, index) => (
+              <AccordionItem key={index} value={`item-${index}`}>
+                <AccordionTrigger className="text-left font-medium hover:text-primary">
+                  {item.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600">{item.answer}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
       </div>
     </section>

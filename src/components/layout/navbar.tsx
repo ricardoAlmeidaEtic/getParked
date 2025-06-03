@@ -29,8 +29,6 @@ export default function Navbar({ items = [] }: NavbarProps) {
   // Itens de navegação para usuários autenticados
   const authenticatedItems = [
     { href: "/map", label: "Mapa" },
-    { href: "/available-spots", label: "Vagas Disponíveis" },
-    { href: "/reserved-spots", label: "Minhas Reservas" },
     { href: "/planos", label: "Planos" },
   ]
 
