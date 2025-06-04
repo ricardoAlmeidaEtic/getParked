@@ -11,6 +11,7 @@ import { PublicSpotCreator } from '@/app/map/components/creators'
 import { PublicSpotMarker } from '@/types/map'
 import { getRoute, decodePolyline } from '@/services/graphhopper'
 import RouteInfoModal from './modals/RouteInfoModal'
+import { createPublicSpotPopupContent, createPrivateParkingPopupContent } from './modals/popup-content'
 
 // Importa o leaflet-routing-machine
 import 'leaflet-routing-machine'
@@ -36,6 +37,8 @@ export default function MapComponent({
   const creatorRef = useRef<PublicSpotCreator | null>(null)
   const lastUserPositionRef = useRef<L.LatLng | null>(null)
   const positionUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const initialLoadDoneRef = useRef<boolean>(false)
+  const markersRef = useRef<Map<string, L.Marker>>(new Map())
   const [routeInfo, setRouteInfo] = useState<{
     isOpen: boolean
     distance: number
@@ -70,30 +73,80 @@ export default function MapComponent({
   }
 
   const loadMarkers = useCallback(async () => {
-    if (!mapRef.current) return
+    if (!mapRef.current) {
+      console.log('Mapa ainda não inicializado')
+      return
+    }
 
     try {
-      // Remove marcadores existentes
-      mapRef.current.eachLayer((layer) => {
-        if (layer instanceof L.Marker) {
-          mapRef.current?.removeLayer(layer)
-        }
-      })
-
       // Carrega marcadores públicos
       const publicMarkers = await getPublicSpotMarkers()
       console.log('Carregando marcadores públicos:', publicMarkers)
       
-      publicMarkers.forEach(marker => {
-        const markerInstance = createPublicSpotMarkerWithRoute(marker)
-        markerInstance.addTo(mapRef.current!)
-      })
+      if (mapRef.current) {
+        // Aguarda o próximo ciclo do event loop para garantir que o DOM esteja pronto
+        await new Promise(resolve => setTimeout(resolve, 0))
+        
+        // Atualiza ou adiciona marcadores públicos
+        for (const marker of publicMarkers) {
+          try {
+            const markerId = `${marker.latitude}-${marker.longitude}`
+            const existingMarker = markersRef.current.get(markerId)
 
-      // Carrega marcadores privados
-      const privateMarkers = await getPrivateParkingMarkers()
-      privateMarkers.forEach(marker => {
-        createPrivateParkingMarker(marker).addTo(mapRef.current!)
-      })
+            if (existingMarker) {
+              // Atualiza o marcador existente
+              existingMarker.setLatLng([marker.latitude, marker.longitude])
+              existingMarker.setPopupContent(createPublicSpotPopupContent(marker))
+            } else {
+              // Cria um novo marcador
+              const markerInstance = createPublicSpotMarkerWithRoute(marker)
+              if (mapRef.current) {
+                markerInstance.addTo(mapRef.current)
+                markersRef.current.set(markerId, markerInstance)
+              }
+            }
+          } catch (error) {
+            console.error('Erro ao adicionar marcador:', error)
+          }
+        }
+
+        // Carrega marcadores privados
+        const privateMarkers = await getPrivateParkingMarkers()
+        for (const marker of privateMarkers) {
+          try {
+            const markerId = `private-${marker.latitude}-${marker.longitude}`
+            const existingMarker = markersRef.current.get(markerId)
+
+            if (existingMarker) {
+              // Atualiza o marcador existente
+              existingMarker.setLatLng([marker.latitude, marker.longitude])
+              existingMarker.setPopupContent(createPrivateParkingPopupContent(marker))
+            } else {
+              // Cria um novo marcador
+              const markerInstance = createPrivateParkingMarker(marker)
+              if (mapRef.current) {
+                markerInstance.addTo(mapRef.current)
+                markersRef.current.set(markerId, markerInstance)
+              }
+            }
+          } catch (error) {
+            console.error('Erro ao adicionar marcador privado:', error)
+          }
+        }
+
+        // Remove marcadores que não existem mais
+        const currentMarkerIds = new Set([
+          ...publicMarkers.map(m => `${m.latitude}-${m.longitude}`),
+          ...privateMarkers.map(m => `private-${m.latitude}-${m.longitude}`)
+        ])
+
+        markersRef.current.forEach((marker, id) => {
+          if (!currentMarkerIds.has(id)) {
+            marker.remove()
+            markersRef.current.delete(id)
+          }
+        })
+      }
     } catch (error) {
       console.error('Erro ao carregar marcadores:', error)
       showToast.error('Erro ao carregar os estacionamentos')
@@ -102,9 +155,11 @@ export default function MapComponent({
 
   // Efeito para recarregar os marcadores após a criação de uma nova vaga
   useEffect(() => {
+    if (!initialLoadDoneRef.current) return
+
     const timer = setTimeout(() => {
       loadMarkers()
-    }, 1000) // Recarrega após 1 segundo
+    }, 1000)
 
     return () => clearTimeout(timer)
   }, [onMarkerCreated, loadMarkers])
@@ -189,39 +244,44 @@ export default function MapComponent({
   }
 
   const createPublicSpotMarkerWithRoute = (marker: PublicSpotMarker) => {
-    const markerInstance = createPublicSpotMarker(marker)
-    
-    markerInstance.on('click', () => {
-      if (userMarkerRef.current && mapRef.current) {
-        const userPosition = userMarkerRef.current.getLatLng()
-        const markerPosition = markerInstance.getLatLng()
-        
-        // Remove seleção anterior
-        if (selectedMarkerRef.current && markerInstance.options.icon) {
-          selectedMarkerRef.current.setIcon(markerInstance.options.icon)
+    try {
+      const markerInstance = createPublicSpotMarker(marker)
+      
+      markerInstance.on('click', () => {
+        if (userMarkerRef.current && mapRef.current) {
+          const userPosition = userMarkerRef.current.getLatLng()
+          const markerPosition = markerInstance.getLatLng()
+          
+          // Remove seleção anterior
+          if (selectedMarkerRef.current && markerInstance.options.icon) {
+            selectedMarkerRef.current.setIcon(markerInstance.options.icon)
+          }
+          
+          // Atualiza o ícone do marcador selecionado
+          const selectedIcon = L.divIcon({
+            className: 'custom-marker public-spot selected',
+            html: `
+              <div class="w-6 h-6 bg-blue-500 rounded-full border-2 border-blue-700 flex items-center justify-center text-xs font-bold text-white">
+                ${marker.available_spots}
+              </div>
+            `,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+          })
+          
+          markerInstance.setIcon(selectedIcon)
+          selectedMarkerRef.current = markerInstance
+          
+          // Calcula a rota
+          showRoute(userPosition, markerPosition, marker.name)
         }
-        
-        // Atualiza o ícone do marcador selecionado
-        const selectedIcon = L.divIcon({
-          className: 'custom-marker public-spot selected',
-          html: `
-            <div class="w-6 h-6 bg-blue-500 rounded-full border-2 border-blue-700 flex items-center justify-center text-xs font-bold text-white">
-              ${marker.available_spots}
-            </div>
-          `,
-          iconSize: [24, 24],
-          iconAnchor: [12, 12],
-        })
-        
-        markerInstance.setIcon(selectedIcon)
-        selectedMarkerRef.current = markerInstance
-        
-        // Calcula a rota
-        showRoute(userPosition, markerPosition, marker.name)
-      }
-    })
+      })
 
-    return markerInstance
+      return markerInstance
+    } catch (error) {
+      console.error('Erro ao criar marcador:', error)
+      throw error
+    }
   }
 
   useEffect(() => {
@@ -252,6 +312,15 @@ export default function MapComponent({
     L.control.zoom({
       position: 'bottomright'
     }).addTo(map)
+
+    // Aguarda o mapa carregar completamente
+    map.whenReady(() => {
+      console.log('Mapa inicializado e pronto')
+      if (!initialLoadDoneRef.current) {
+        loadMarkers()
+        initialLoadDoneRef.current = true
+      }
+    })
 
     // Função para adicionar a localização do usuário
     const addUserLocation = (position: GeolocationPosition) => {
@@ -311,7 +380,11 @@ export default function MapComponent({
         showToast.error('Seu navegador não suporta geolocalização')
       }
 
-      loadMarkers()
+      // Carrega os marcadores apenas uma vez na inicialização
+      if (!initialLoadDoneRef.current) {
+        loadMarkers()
+        initialLoadDoneRef.current = true
+      }
 
       // Efeito para recarregar os marcadores periodicamente
       const intervalId = setInterval(() => {
