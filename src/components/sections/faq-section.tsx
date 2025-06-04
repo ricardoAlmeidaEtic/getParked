@@ -20,19 +20,14 @@ export default function FaqSection() {
         "Atualmente, o GetParked está disponível em 15 cidades em Portugal, incluindo Lisboa, Porto, Faro, Braga e Coimbra. Estamos constantemente expandindo nossa cobertura para novas localidades.",
     },
     {
-      question: "Como funciona o pagamento?",
-      answer:
-        "O GetParked oferece várias opções de pagamento, incluindo cartão de crédito, débito, PayPal e MB Way. Todos os pagamentos são processados de forma segura e você receberá um recibo digital por email.",
-    },
-    {
       question: "Posso usar o GetParked para estacionamento de longa duração?",
       answer:
-        "Sim, o GetParked permite reservas de longa duração, como para viagens ou estadias prolongadas. Muitos de nossos parceiros oferecem tarifas especiais para estacionamento de vários dias ou semanas.",
+        "Sim, o GetParked permite reservas de longa duração, como para viagens ou estadias prolongadas. Muitos dos nossos parceiros oferecem tarifas especiais para estacionamento de vários dias ou semanas.",
     },
     {
       question: "Como posso adicionar mais veículos à minha conta?",
       answer:
-        "Para adicionar mais veículos, acesse a seção 'Veículos' no seu perfil e clique em 'Adicionar Veículo'. O número de veículos que você pode adicionar depende do seu plano de assinatura.",
+        "Para adicionar mais veículos, acesse a secção 'Veículos' no seu perfil e clique em 'Adicionar Veículo'. O número de veículos que você pode adicionar depende do seu plano de assinatura.",
     },
     {
       question: "O que acontece se eu ultrapassar o tempo reservado?",
@@ -42,7 +37,7 @@ export default function FaqSection() {
     {
       question: "Posso compartilhar minha conta com familiares?",
       answer:
-        "Cada conta é individual, mas você pode cadastrar veículos que são utilizados por diferentes membros da família. Nos planos Premium e Business, você pode adicionar múltiplos veículos à sua conta.",
+        "Cada conta é individual, mas você pode cadastrar veículos que são utilizados por diferentes membros da família. No plano Premium, você pode adicionar múltiplos veículos à sua conta.",
     },
   ]
 
