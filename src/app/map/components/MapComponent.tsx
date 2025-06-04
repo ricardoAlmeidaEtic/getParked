@@ -44,11 +44,13 @@ export default function MapComponent({
     distance: number
     duration: number
     destinationName: string
+    destinationPosition: L.LatLng | null
   }>({
     isOpen: false,
     distance: 0,
     duration: 0,
-    destinationName: ''
+    destinationName: '',
+    destinationPosition: null
   })
 
   // Função para verificar se a posição mudou significativamente
@@ -226,7 +228,8 @@ export default function MapComponent({
             isOpen: true,
             distance,
             duration,
-            destinationName
+            destinationName,
+            destinationPosition: end
           })
 
           // Armazena a referência da linha da rota
@@ -438,17 +441,48 @@ export default function MapComponent({
     }
   }, [isCreatingSpot, onMarkerPositionChange])
 
+  const handleSpotConfirmed = () => {
+    if (selectedMarkerRef.current) {
+      const confirmedIcon = L.divIcon({
+        className: 'w-6 h-6 bg-green-500 rounded-full border-2 border-green-700 flex items-center justify-center text-xs font-bold text-white shadow-lg transform scale-110',
+        html: `
+          <div class="w-full h-full flex items-center justify-center">
+            ✓
+          </div>
+        `,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+      })
+      selectedMarkerRef.current.setIcon(confirmedIcon)
+    }
+  }
+
+  const handleSpotNotFound = () => {
+    if (selectedMarkerRef.current) {
+      const notFoundIcon = L.divIcon({
+        className: 'w-6 h-6 bg-red-500 rounded-full border-2 border-red-700 flex items-center justify-center text-xs font-bold text-white shadow-lg transform scale-110',
+        html: `
+          <div class="w-full h-full flex items-center justify-center">
+            ✕
+          </div>
+        `,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+      })
+      selectedMarkerRef.current.setIcon(notFoundIcon)
+    }
+  }
+
   const clearRoute = () => {
     if (routeLineRef.current && mapRef.current) {
       mapRef.current.removeLayer(routeLineRef.current)
       routeLineRef.current = null
     }
     if (selectedMarkerRef.current && selectedMarkerRef.current.options.icon) {
-      // Restaura o ícone original do marcador
       const originalIcon = L.divIcon({
-        className: 'custom-marker public-spot',
+        className: 'w-6 h-6 bg-yellow-400 rounded-full border-2 border-yellow-600 flex items-center justify-center text-xs font-bold shadow-lg',
         html: `
-          <div class="w-6 h-6 bg-yellow-400 rounded-full border-2 border-yellow-600 flex items-center justify-center text-xs font-bold">
+          <div class="w-full h-full flex items-center justify-center">
             P
           </div>
         `,
@@ -477,6 +511,10 @@ export default function MapComponent({
         distance={routeInfo.distance}
         duration={routeInfo.duration}
         destinationName={routeInfo.destinationName}
+        userPosition={userMarkerRef.current?.getLatLng() || null}
+        destinationPosition={routeInfo.destinationPosition || L.latLng(0, 0)}
+        onSpotConfirmed={handleSpotConfirmed}
+        onSpotNotFound={handleSpotNotFound}
       />
     </>
   )
