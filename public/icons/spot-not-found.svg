@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Círculo de fundo com gradiente -->
+  <defs>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#EF4444;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#DC2626;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Círculo externo com efeito de brilho -->
+  <circle cx="12" cy="12" r="11" fill="url(#grad2)" stroke="#B91C1C" stroke-width="0.3"/>
+  
+  <!-- Símbolo de estacionamento -->
+  <path d="M8 7H12C13.6569 7 15 8.34315 15 10C15 11.6569 13.6569 13 12 13H10V17H8V7Z" fill="white" stroke="white" stroke-width="0.3"/>
+  
+  <!-- X mark com efeito de brilho -->
+  <path d="M16 8L20 12M20 8L16 12" stroke="white" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Efeito de brilho -->
+  <circle cx="8" cy="8" r="0.8" fill="white" fill-opacity="0.3"/>
+</svg> 
