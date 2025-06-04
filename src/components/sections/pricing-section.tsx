@@ -54,32 +54,32 @@ export default function PricingSection() {
     const features = [
       {
         text: "Busca de estacionamentos próximos",
-        included: true
+        included: true,
       },
       {
         text: "Navegação básica",
-        included: true
+        included: true,
       },
       {
         text: `Histórico limitado (últimos ${plan.search_limit} dias)`,
-        included: true
+        included: true,
       },
       {
-        text: `${plan.vehicle_limit} veículo${plan.vehicle_limit > 1 ? 's' : ''} cadastrado${plan.vehicle_limit > 1 ? 's' : ''}`,
-        included: true
+        text: `${plan.vehicle_limit} veículo${plan.vehicle_limit > 1 ? "s" : ""} cadastrado${plan.vehicle_limit > 1 ? "s" : ""}`,
+        included: true,
       },
       {
         text: "Navegação avançada com rotas alternativas",
-        included: plan.realtime_navigation
+        included: plan.realtime_navigation,
       },
       {
         text: "Reserva de vagas antecipada",
-        included: plan.allow_reservations
+        included: plan.allow_reservations,
       },
       {
         text: "Descontos exclusivos em estacionamentos parceiros",
-        included: plan.priority_support
-      }
+        included: plan.priority_support,
+      },
     ]
 
     return features
@@ -127,7 +127,7 @@ export default function PricingSection() {
       <Card
         className={`flex flex-col border-2 ${
           isPopular
-            ? "border-primary relative md:scale-105 shadow-lg transform transition-all duration-300 hover:shadow-xl hover:scale-[1.07]"
+            ? "border-primary relative shadow-lg transform transition-all duration-300 hover:shadow-xl hover:scale-[1.07]"
             : "border-gray-200 hover:border-primary transition-all duration-300 hover:shadow-lg"
         }`}
       >
@@ -139,26 +139,24 @@ export default function PricingSection() {
         )}
         <CardHeader>
           <CardTitle>{plan.name}</CardTitle>
-          <CardDescription>
-            {plan.name === "Free" ? "Para uso pessoal básico" : 
-             plan.name === "Premium" ? "Para uso frequente" : 
-             "Para empresas e uso intensivo"}
-          </CardDescription>
-          <div className="mt-4 text-3xl font-bold">
-            €{price.toFixed(2)}
-          </div>
+          <CardDescription>{plan.name === "Free" ? "Para uso pessoal básico" : "Para uso frequente"}</CardDescription>
+          <div className="mt-4 text-3xl font-bold">€{price.toFixed(2)}</div>
           <p className="text-sm text-gray-500">
-            {plan.price === 0 ? "para sempre" : isAnnual ? `por ano (€${(plan.price * 0.8).toFixed(2)}/mês)` : "por mês"}
+            {plan.price === 0
+              ? "para sempre"
+              : isAnnual
+                ? `por ano (€${(plan.price * 0.8).toFixed(2)}/mês)`
+                : "por mês"}
           </p>
         </CardHeader>
         <CardContent className="flex-grow">
           <div className="space-y-2">
             {features.map((feature, idx) => (
               <div key={idx} className="flex items-start">
-                <CheckCircle2 
-                  className={`h-5 w-5 ${feature.included ? 'text-green-500' : 'text-gray-300'} mr-2 shrink-0 mt-0.5`}
+                <CheckCircle2
+                  className={`h-5 w-5 ${feature.included ? "text-green-500" : "text-gray-300"} mr-2 shrink-0 mt-0.5`}
                 />
-                <span className={feature.included ? '' : 'text-gray-400'}>{feature.text}</span>
+                <span className={feature.included ? "" : "text-gray-400"}>{feature.text}</span>
               </div>
             ))}
           </div>
@@ -168,8 +166,8 @@ export default function PricingSection() {
             variant={isPopular ? "default" : "outline"}
             className={`w-full group relative overflow-hidden ${
               plan.name === "Free"
-                ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-800 hover:border-green-300"
-                : ""
+                ? "bg-primary text-primary-foreground hover:bg-primary-hover"
+                : "bg-primary text-primary-foreground hover:bg-primary-hover"
             }`}
           >
             <Link href="/auth/signup" className="flex items-center justify-center w-full">
@@ -194,7 +192,7 @@ export default function PricingSection() {
           </div>
         </FadeIn>
 
-        <Tabs defaultValue="monthly" className="w-full max-w-5xl mx-auto">
+        <Tabs defaultValue="monthly" className="w-full max-w-4xl mx-auto">
           <div className="flex justify-center mb-8">
             <TabsList>
               <TabsTrigger value="monthly">Mensal</TabsTrigger>
@@ -202,7 +200,10 @@ export default function PricingSection() {
             </TabsList>
           </div>
 
-          <TabsContent value="monthly" className="space-y-8 md:space-y-0 md:grid md:grid-cols-3 md:gap-6">
+          <TabsContent
+            value="monthly"
+            className="space-y-8 md:space-y-0 md:grid md:grid-cols-2 md:gap-8 md:justify-items-center"
+          >
             {plans.map((plan) => (
               <FadeIn key={plan.id} direction="up">
                 {renderPlanCard(plan)}
@@ -210,7 +211,10 @@ export default function PricingSection() {
             ))}
           </TabsContent>
 
-          <TabsContent value="annual" className="space-y-8 md:space-y-0 md:grid md:grid-cols-3 md:gap-6">
+          <TabsContent
+            value="annual"
+            className="space-y-8 md:space-y-0 md:grid md:grid-cols-2 md:gap-8 md:justify-items-center"
+          >
             {plans.map((plan) => (
               <FadeIn key={plan.id} direction="up">
                 {renderPlanCard(plan, true)}
