@@ -35,21 +35,21 @@ export default function HeroSection() {
               <div className="mt-8 flex items-center">
                 <div className="flex -space-x-2">
                   <Image
-                    src="/placeholder.svg?height=40&width=40"
+                    src="/user-icon.svg"
                     alt="User"
                     width={40}
                     height={40}
                     className="rounded-full border-2 border-white"
                   />
                   <Image
-                    src="/placeholder.svg?height=40&width=40"
+                    src="/user-icon.svg"
                     alt="User"
                     width={40}
                     height={40}
                     className="rounded-full border-2 border-white"
                   />
                   <Image
-                    src="/placeholder.svg?height=40&width=40"
+                    src="/user-icon.svg"
                     alt="User"
                     width={40}
                     height={40}
@@ -75,7 +75,7 @@ export default function HeroSection() {
             <div className="relative">
               <div className="relative z-10 rounded-lg overflow-hidden shadow-2xl transform transition-transform duration-500 hover:scale-105">
                 <Image
-                  src="/placeholder.svg?height=600&width=800"
+                  src="/mapaimg.png"
                   alt="GetParked App"
                   width={800}
                   height={600}

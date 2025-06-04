@@ -45,7 +45,7 @@ export default function AppDownloadSection() {
             <div className="relative">
               <div className="relative z-10 transform transition-transform duration-500 hover:rotate-3">
                 <Image
-                  src="/placeholder.svg?height=600&width=300"
+                  src="/mapaimg.png"
                   alt="GetParked Mobile App"
                   width={300}
                   height={600}

@@ -63,7 +63,7 @@ export default function HowItWorksSection() {
           <div className="mt-16 text-center">
             <div className="relative mx-auto max-w-4xl rounded-xl overflow-hidden shadow-2xl">
               <Image
-                src="/placeholder.svg?height=600&width=1200"
+                src="/mapaimg.png"
                 alt="GetParked App Demo"
                 width={1200}
                 height={600}
