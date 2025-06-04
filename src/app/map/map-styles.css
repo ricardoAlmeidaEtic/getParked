@@ -283,4 +283,120 @@
   color: #4B5563;
   font-size: 14px;
   margin-bottom: 4px;
+}
+
+/* Estilos para o modal de rota */
+.route-info-modal {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: 100%;
+  max-width: 400px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translate(-50%, 100%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+.route-info-modal .modal-content {
+  padding: 16px;
+}
+
+.route-info-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.route-info-modal .modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.route-info-modal .modal-close {
+  background: none;
+  border: none;
+  color: #6B7280;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.route-info-modal .modal-close:hover {
+  color: #1F2937;
+}
+
+.route-info-modal .route-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.route-info-modal .route-detail {
+  background: #F3F4F6;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.route-info-modal .route-detail-label {
+  font-size: 14px;
+  color: #6B7280;
+  margin-bottom: 4px;
+}
+
+.route-info-modal .route-detail-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1F2937;
+}
+
+/* Animações para o modal de rota */
+@keyframes slideUpFade {
+  from {
+    transform: translate(-50%, 100%);
+    opacity: 0;
+    filter: blur(8px);
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes slideDownFade {
+  from {
+    transform: translate(-50%, 0);
+    opacity: 1;
+    filter: blur(0);
+  }
+  to {
+    transform: translate(-50%, 100%);
+    opacity: 0;
+    filter: blur(8px);
+  }
+}
+
+.route-info-modal-enter {
+  animation: slideUpFade 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.route-info-modal-exit {
+  animation: slideDownFade 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 } 

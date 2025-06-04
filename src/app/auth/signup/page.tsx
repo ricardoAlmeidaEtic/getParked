@@ -9,12 +9,10 @@ import { useSupabase } from "@/providers/SupabaseProvider"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Card, CardContent } from "@/components/ui/card"
 import FadeIn from "@/components/animations/fade-in"
 import AuthHeader from "@/components/auth/auth-header"
-import SocialLogin from "@/components/auth/social-login"
-import AuthTerms from "@/components/auth/auth-terms"
 import Link from "next/link"
 import { showToast } from "@/lib/toast"
 
@@ -23,6 +21,8 @@ export default function SignUpPage() {
   const { supabase } = useSupabase()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -109,96 +109,118 @@ export default function SignUpPage() {
 
         <FadeIn direction="up" duration={800} delay={200}>
           <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
-            <div className="bg-white px-6 py-8 shadow sm:rounded-lg sm:px-12">
-              {error && (
-                <Alert variant="destructive" className="mb-6 animate-shake">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+            <Card>
+              <CardContent className="p-6">
+                {error && (
+                  <Alert variant="destructive" className="mb-6 animate-shake">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
 
-              <form className="space-y-6" onSubmit={handleSubmit}>
-                <div>
-                  <Label htmlFor="name">Nome completo</Label>
-                  <div className="mt-2 relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <User className="h-5 w-5 text-gray-400" />
+                <form className="space-y-6" onSubmit={handleSubmit}>
+                  <div>
+                    <Label htmlFor="name">Nome completo</Label>
+                    <div className="mt-2 relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <User className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <Input
+                        id="name"
+                        name="name"
+                        type="text"
+                        autoComplete="name"
+                        required
+                        className="pl-10"
+                        placeholder="Seu nome completo"
+                        value={formData.name}
+                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      />
                     </div>
-                    <Input
-                      id="name"
-                      name="name"
-                      type="text"
-                      autoComplete="name"
-                      required
-                      className="pl-10"
-                      placeholder="Seu nome completo"
-                      value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    />
                   </div>
-                </div>
 
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <div className="mt-2 relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Mail className="h-5 w-5 text-gray-400" />
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <div className="mt-2 relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Mail className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        autoComplete="email"
+                        required
+                        className="pl-10"
+                        placeholder="seu@email.com"
+                        value={formData.email}
+                        onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                      />
                     </div>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      autoComplete="email"
-                      required
-                      className="pl-10"
-                      placeholder="seu@email.com"
-                      value={formData.email}
-                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    />
                   </div>
-                </div>
 
-                <div>
-                  <Label htmlFor="password">Senha</Label>
-                  <div className="mt-2 relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Lock className="h-5 w-5 text-gray-400" />
+                  <div>
+                    <Label htmlFor="password">Senha</Label>
+                    <div className="mt-2 relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Lock className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <Input
+                        id="password"
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        autoComplete="new-password"
+                        required
+                        className="pl-10 pr-10"
+                        placeholder="••••••••"
+                        value={formData.password}
+                        onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-5 w-5 text-gray-400" />
+                        ) : (
+                          <Eye className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
                     </div>
-                    <Input
-                      id="password"
-                      name="password"
-                      type="password"
-                      autoComplete="new-password"
-                      required
-                      className="pl-10 pr-10"
-                      placeholder="••••••••"
-                      value={formData.password}
-                      onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                    />
+                    <p className="mt-1 text-sm text-gray-500">Mínimo de 6 caracteres</p>
                   </div>
-                  <p className="mt-1 text-sm text-gray-500">Mínimo de 6 caracteres</p>
-                </div>
 
-                <div>
-                  <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-                  <div className="mt-2 relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Lock className="h-5 w-5 text-gray-400" />
+                  <div>
+                    <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+                    <div className="mt-2 relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Lock className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <Input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        autoComplete="new-password"
+                        required
+                        className="pl-10 pr-10"
+                        placeholder="••••••••"
+                        value={formData.confirmPassword}
+                        onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-5 w-5 text-gray-400" />
+                        ) : (
+                          <Eye className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
                     </div>
-                    <Input
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type="password"
-                      autoComplete="new-password"
-                      required
-                      className="pl-10 pr-10"
-                      placeholder="••••••••"
-                      value={formData.confirmPassword}
-                      onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    />
                   </div>
-                </div>
 
-                <div>
                   <Button
                     type="submit"
                     className="w-full"
@@ -214,13 +236,9 @@ export default function SignUpPage() {
                       </span>
                     )}
                   </Button>
-                </div>
-              </form>
-
-              {/* <SocialLogin /> */}
-            </div>
-
-            <AuthTerms />
+                </form>
+              </CardContent>
+            </Card>
           </div>
         </FadeIn>
       </div>

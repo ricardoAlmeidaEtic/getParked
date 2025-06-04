@@ -33,6 +33,13 @@ export default function CreatePublicSpotModal({
     setPosition(initialPosition)
   }, [initialPosition])
 
+  const handleEditPosition = () => {
+    if (isSubmitting) return
+    
+    // Fecha o modal e permite edição da posição
+    onEditPosition()
+  }
+
   const handleClose = () => {
     if (isSubmitting) return
     
@@ -85,7 +92,7 @@ export default function CreatePublicSpotModal({
     // Verifica se a posição está dentro do raio permitido
     const selectionArea = new SelectionArea(null as any, userPosition)
     if (!selectionArea.isWithinRadius(position)) {
-      showToast.error('A vaga deve estar dentro de 1km da sua localização atual')
+      showToast.error('A vaga deve estar dentro de 200m da sua localização atual')
       return
     }
 
@@ -196,7 +203,7 @@ export default function CreatePublicSpotModal({
         <div className="flex flex-wrap justify-end gap-4 pt-4 border-t border-gray-200">
           <Button
             variant="outline"
-            onClick={onEditPosition}
+            onClick={handleEditPosition}
             disabled={isSubmitting}
             className="flex-grow md:flex-grow-0 px-6 py-2 rounded-lg shadow-sm text-gray-700 border-gray-300 hover:bg-gray-100 transition-colors duration-200"
           >
