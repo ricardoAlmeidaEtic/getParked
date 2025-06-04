@@ -11,6 +11,7 @@ import { PublicSpotCreator } from '@/app/map/components/creators'
 import { PublicSpotMarker } from '@/types/map'
 import { getRoute, decodePolyline } from '@/services/graphhopper'
 import RouteInfoModal from './modals/RouteInfoModal'
+import { createPublicSpotPopupContent, createPrivateParkingPopupContent } from './modals/popup-content'
 
 // Importa o leaflet-routing-machine
 import 'leaflet-routing-machine'
@@ -36,16 +37,20 @@ export default function MapComponent({
   const creatorRef = useRef<PublicSpotCreator | null>(null)
   const lastUserPositionRef = useRef<L.LatLng | null>(null)
   const positionUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const initialLoadDoneRef = useRef<boolean>(false)
+  const markersRef = useRef<Map<string, L.Marker>>(new Map())
   const [routeInfo, setRouteInfo] = useState<{
     isOpen: boolean
     distance: number
     duration: number
     destinationName: string
+    destinationPosition: L.LatLng | null
   }>({
     isOpen: false,
     distance: 0,
     duration: 0,
-    destinationName: ''
+    destinationName: '',
+    destinationPosition: null
   })
 
   // Função para verificar se a posição mudou significativamente
@@ -68,6 +73,98 @@ export default function MapComponent({
       onUserPositionChange(position)
     }, 1000)
   }
+
+  const loadMarkers = useCallback(async () => {
+    if (!mapRef.current) {
+      console.log('Mapa ainda não inicializado')
+      return
+    }
+
+    try {
+      // Carrega marcadores públicos
+      const publicMarkers = await getPublicSpotMarkers()
+      console.log('Carregando marcadores públicos:', publicMarkers)
+      
+      if (mapRef.current) {
+        // Aguarda o próximo ciclo do event loop para garantir que o DOM esteja pronto
+        await new Promise(resolve => setTimeout(resolve, 0))
+        
+        // Atualiza ou adiciona marcadores públicos
+        for (const marker of publicMarkers) {
+          try {
+            const markerId = `${marker.latitude}-${marker.longitude}`
+            const existingMarker = markersRef.current.get(markerId)
+
+            if (existingMarker) {
+              // Atualiza o marcador existente
+              existingMarker.setLatLng([marker.latitude, marker.longitude])
+              existingMarker.setPopupContent(createPublicSpotPopupContent(marker))
+            } else {
+              // Cria um novo marcador
+              const markerInstance = createPublicSpotMarkerWithRoute(marker)
+              if (mapRef.current) {
+                markerInstance.addTo(mapRef.current)
+                markersRef.current.set(markerId, markerInstance)
+              }
+            }
+          } catch (error) {
+            console.error('Erro ao adicionar marcador:', error)
+          }
+        }
+
+        // Carrega marcadores privados
+        const privateMarkers = await getPrivateParkingMarkers()
+        for (const marker of privateMarkers) {
+          try {
+            const markerId = `private-${marker.latitude}-${marker.longitude}`
+            const existingMarker = markersRef.current.get(markerId)
+
+            if (existingMarker) {
+              // Atualiza o marcador existente
+              existingMarker.setLatLng([marker.latitude, marker.longitude])
+              existingMarker.setPopupContent(createPrivateParkingPopupContent(marker))
+            } else {
+              // Cria um novo marcador
+              const markerInstance = createPrivateParkingMarker(marker)
+              if (mapRef.current) {
+                markerInstance.addTo(mapRef.current)
+                markersRef.current.set(markerId, markerInstance)
+              }
+            }
+          } catch (error) {
+            console.error('Erro ao adicionar marcador privado:', error)
+          }
+        }
+
+        // Remove marcadores que não existem mais
+        const currentMarkerIds = new Set([
+          ...publicMarkers.map(m => `${m.latitude}-${m.longitude}`),
+          ...privateMarkers.map(m => `private-${m.latitude}-${m.longitude}`)
+        ])
+
+        markersRef.current.forEach((marker, id) => {
+          if (!currentMarkerIds.has(id)) {
+            marker.remove()
+            markersRef.current.delete(id)
+          }
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao carregar marcadores:', error)
+      showToast.error('Erro ao carregar os estacionamentos')
+    }
+  }, [])
+
+  // Efeito para recarregar os marcadores após a criação de uma nova vaga
+  useEffect(() => {
+    if (!initialLoadDoneRef.current) return
+
+    const timer = setTimeout(() => {
+      loadMarkers()
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [onMarkerCreated, loadMarkers])
 
   const showRoute = async (start: L.LatLng, end: L.LatLng, destinationName: string) => {
     if (!mapRef.current) return
@@ -131,7 +228,8 @@ export default function MapComponent({
             isOpen: true,
             distance,
             duration,
-            destinationName
+            destinationName,
+            destinationPosition: end
           })
 
           // Armazena a referência da linha da rota
@@ -149,71 +247,45 @@ export default function MapComponent({
   }
 
   const createPublicSpotMarkerWithRoute = (marker: PublicSpotMarker) => {
-    const markerInstance = createPublicSpotMarker(marker)
-    
-    markerInstance.on('click', () => {
-      if (userMarkerRef.current && mapRef.current) {
-        const userPosition = userMarkerRef.current.getLatLng()
-        const markerPosition = markerInstance.getLatLng()
-        
-        // Remove seleção anterior
-        if (selectedMarkerRef.current && markerInstance.options.icon) {
-          selectedMarkerRef.current.setIcon(markerInstance.options.icon)
-        }
-        
-        // Atualiza o ícone do marcador selecionado
-        const selectedIcon = L.divIcon({
-          className: 'custom-marker public-spot selected',
-          html: `
-            <div class="w-6 h-6 bg-blue-500 rounded-full border-2 border-blue-700 flex items-center justify-center text-xs font-bold text-white">
-              ${marker.available_spots}
-            </div>
-          `,
-          iconSize: [24, 24],
-          iconAnchor: [12, 12],
-        })
-        
-        markerInstance.setIcon(selectedIcon)
-        selectedMarkerRef.current = markerInstance
-        
-        // Calcula a rota
-        showRoute(userPosition, markerPosition, marker.name)
-      }
-    })
-
-    return markerInstance
-  }
-
-  const loadMarkers = useCallback(async () => {
-    if (!mapRef.current) return
-
     try {
-      // Remove marcadores existentes
-      mapRef.current.eachLayer((layer) => {
-        if (layer instanceof L.Marker) {
-          mapRef.current?.removeLayer(layer)
+      const markerInstance = createPublicSpotMarker(marker)
+      
+      markerInstance.on('click', () => {
+        if (userMarkerRef.current && mapRef.current) {
+          const userPosition = userMarkerRef.current.getLatLng()
+          const markerPosition = markerInstance.getLatLng()
+          
+          // Remove seleção anterior
+          if (selectedMarkerRef.current && markerInstance.options.icon) {
+            selectedMarkerRef.current.setIcon(markerInstance.options.icon)
+          }
+          
+          // Atualiza o ícone do marcador selecionado
+          const selectedIcon = L.divIcon({
+            className: 'custom-marker public-spot selected',
+            html: `
+              <div class="w-6 h-6 bg-blue-500 rounded-full border-2 border-blue-700 flex items-center justify-center text-xs font-bold text-white">
+                ${marker.available_spots}
+              </div>
+            `,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+          })
+          
+          markerInstance.setIcon(selectedIcon)
+          selectedMarkerRef.current = markerInstance
+          
+          // Calcula a rota
+          showRoute(userPosition, markerPosition, marker.name)
         }
       })
 
-      // Carrega marcadores públicos
-      const publicMarkers = await getPublicSpotMarkers()
-      console.log('Carregando marcadores públicos:', publicMarkers)
-      
-      publicMarkers.forEach(marker => {
-        const markerInstance = createPublicSpotMarkerWithRoute(marker)
-        markerInstance.addTo(mapRef.current!)
-      })
-
-      // Carrega marcadores privados
-      const privateMarkers = await getPrivateParkingMarkers()
-      privateMarkers.forEach(marker => {
-        createPrivateParkingMarker(marker).addTo(mapRef.current!)
-      })
+      return markerInstance
     } catch (error) {
-      console.error('Erro ao carregar marcadores:', error)
-      showToast.error('Erro ao carregar os estacionamentos')
+      console.error('Erro ao criar marcador:', error)
+      throw error
     }
-  }, [])
+  }
 
   useEffect(() => {
     if (!mapContainerRef.current) return
@@ -243,6 +315,15 @@ export default function MapComponent({
     L.control.zoom({
       position: 'bottomright'
     }).addTo(map)
+
+    // Aguarda o mapa carregar completamente
+    map.whenReady(() => {
+      console.log('Mapa inicializado e pronto')
+      if (!initialLoadDoneRef.current) {
+        loadMarkers()
+        initialLoadDoneRef.current = true
+      }
+    })
 
     // Função para adicionar a localização do usuário
     const addUserLocation = (position: GeolocationPosition) => {
@@ -302,7 +383,11 @@ export default function MapComponent({
         showToast.error('Seu navegador não suporta geolocalização')
       }
 
-      loadMarkers()
+      // Carrega os marcadores apenas uma vez na inicialização
+      if (!initialLoadDoneRef.current) {
+        loadMarkers()
+        initialLoadDoneRef.current = true
+      }
 
       // Efeito para recarregar os marcadores periodicamente
       const intervalId = setInterval(() => {
@@ -356,6 +441,64 @@ export default function MapComponent({
     }
   }, [isCreatingSpot, onMarkerPositionChange])
 
+  const handleSpotConfirmed = () => {
+    if (selectedMarkerRef.current) {
+      const confirmedIcon = L.divIcon({
+        className: 'w-6 h-6 bg-green-500 rounded-full border-2 border-green-700 flex items-center justify-center text-xs font-bold text-white shadow-lg transform scale-110',
+        html: `
+          <div class="w-full h-full flex items-center justify-center">
+            ✓
+          </div>
+        `,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+      })
+      selectedMarkerRef.current.setIcon(confirmedIcon)
+    }
+  }
+
+  const handleSpotNotFound = () => {
+    if (selectedMarkerRef.current) {
+      const notFoundIcon = L.divIcon({
+        className: 'w-6 h-6 bg-red-500 rounded-full border-2 border-red-700 flex items-center justify-center text-xs font-bold text-white shadow-lg transform scale-110',
+        html: `
+          <div class="w-full h-full flex items-center justify-center">
+            ✕
+          </div>
+        `,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+      })
+      selectedMarkerRef.current.setIcon(notFoundIcon)
+    }
+  }
+
+  const clearRoute = () => {
+    if (routeLineRef.current && mapRef.current) {
+      mapRef.current.removeLayer(routeLineRef.current)
+      routeLineRef.current = null
+    }
+    if (selectedMarkerRef.current && selectedMarkerRef.current.options.icon) {
+      const originalIcon = L.divIcon({
+        className: 'w-6 h-6 bg-yellow-400 rounded-full border-2 border-yellow-600 flex items-center justify-center text-xs font-bold shadow-lg',
+        html: `
+          <div class="w-full h-full flex items-center justify-center">
+            P
+          </div>
+        `,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+      })
+      selectedMarkerRef.current.setIcon(originalIcon)
+      selectedMarkerRef.current = null
+    }
+  }
+
+  const handleRouteModalClose = () => {
+    setRouteInfo(prev => ({ ...prev, isOpen: false }))
+    clearRoute()
+  }
+
   return (
     <>
       <div 
@@ -364,10 +507,14 @@ export default function MapComponent({
       />
       <RouteInfoModal
         isOpen={routeInfo.isOpen}
-        onClose={() => setRouteInfo(prev => ({ ...prev, isOpen: false }))}
+        onClose={handleRouteModalClose}
         distance={routeInfo.distance}
         duration={routeInfo.duration}
         destinationName={routeInfo.destinationName}
+        userPosition={userMarkerRef.current?.getLatLng() || null}
+        destinationPosition={routeInfo.destinationPosition || L.latLng(0, 0)}
+        onSpotConfirmed={handleSpotConfirmed}
+        onSpotNotFound={handleSpotNotFound}
       />
     </>
   )

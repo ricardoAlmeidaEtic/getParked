@@ -242,6 +242,24 @@
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
 }
 
+/* Estilos para o marcador confirmado */
+.custom-marker.public-spot.confirmed div {
+  background-color: #10B981 !important;
+  border: 2px solid #059669 !important;
+  color: white !important;
+  transform: scale(1.1);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.3);
+}
+
+/* Estilos para o marcador não encontrado */
+.custom-marker.public-spot.not-found div {
+  background-color: #EF4444 !important;
+  border: 2px solid #DC2626 !important;
+  color: white !important;
+  transform: scale(1.1);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.3);
+}
+
 /* Estilos para a rota */
 .leaflet-routing-container {
   display: none;
@@ -257,32 +275,6 @@
 
 .leaflet-routing-error {
   display: none;
-}
-
-/* Ajuste para o popup da rota */
-.leaflet-popup-content-wrapper {
-  border-radius: 12px !important;
-  padding: 0 !important;
-  overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
-}
-
-.leaflet-popup-content {
-  margin: 0 !important;
-  padding: 16px !important;
-}
-
-.leaflet-popup-content h3 {
-  color: #1F2937;
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.leaflet-popup-content p {
-  color: #4B5563;
-  font-size: 14px;
-  margin-bottom: 4px;
 }
 
 /* Estilos para o modal de rota */
