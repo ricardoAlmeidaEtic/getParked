@@ -25,6 +25,12 @@ export default function Navbar({ items = [] }: NavbarProps) {
   const isAuthPage = pathname?.startsWith('/auth')
   const isMapPage = pathname?.startsWith('/map')
   const isProfilePage = pathname?.startsWith('/profile')
+  const isAdminRoute = pathname?.startsWith('/admin')
+
+  // Don't render navbar on admin routes
+  if (isAdminRoute) {
+    return null;
+  }
 
   // Itens de navegação para usuários autenticados
   const authenticatedItems = [

@@ -1,33 +1,61 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSupabase } from '@/providers/SupabaseProvider';
+import { createClient } from '@supabase/supabase-js';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { supabase } = useSupabase();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const adminSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          storageKey: 'admin-sb-token',
+          storage: window.localStorage
+        }
+      }
+    );
+
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await adminSupabase.auth.getSession();
       if (!session) {
         router.replace('/admin/login');
-      } else {
-        setLoading(false);
+        return;
       }
+
+      // Check if user has admin role
+      const { data: { user } } = await adminSupabase.auth.getUser();
+      if (!user || user.user_metadata?.role !== 'owner') {
+        router.replace('/admin/login');
+        return;
+      }
+
+      setLoading(false);
     };
+
     checkSession();
+
     // Listen for sign out/login events
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = adminSupabase.auth.onAuthStateChange(async (_event, session) => {
       if (!session) {
+        router.replace('/admin/login');
+        return;
+      }
+
+      // Check admin role on auth state change
+      const { data: { user } } = await adminSupabase.auth.getUser();
+      if (!user || user.user_metadata?.role !== 'owner') {
         router.replace('/admin/login');
       }
     });
+
     return () => {
       listener.subscription.unsubscribe();
     };
-  }, [supabase, router]);
+  }, [router]);
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;

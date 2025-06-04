@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 export default function AdminRegister() {
   const router = useRouter();
@@ -19,14 +19,26 @@ export default function AdminRegister() {
     setLoading(true);
   
     try {
-      // First, sign up the user
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      // Create a new Supabase client for admin session
+      const adminSupabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          auth: {
+            storageKey: 'admin-sb-token',
+            storage: window.localStorage
+          }
+        }
+      );
+
+      // First, sign up the user with owner role in metadata
+      const { data: authData, error: signUpError } = await adminSupabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             name: name,
-            role: 'admin',
+            role: 'owner',
             is_admin: true
           }
         }
@@ -34,11 +46,29 @@ export default function AdminRegister() {
   
       if (signUpError) throw signUpError;
   
-      if (authData.user) {
-        // Show success message and redirect
-        alert('Registration successful! Please check your email to verify your account.');
-        router.push('/admin/login');
+      if (!authData.user) {
+        throw new Error('Failed to create user account');
       }
+
+      // Create profile with owner role
+      const { error: profileError } = await adminSupabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          role: 'owner',
+          full_name: name,
+          credits: 0,
+          created_at: new Date().toISOString()
+        });
+
+      if (profileError) {
+        console.error('Error creating profile:', profileError);
+        throw new Error('Failed to create user profile');
+      }
+  
+      // Show success message and redirect
+      alert('Registration successful! Please check your email to verify your account.');
+      router.push('/admin/login');
     } catch (err: any) {
       console.error('Registration error:', err);
       setError(err.message || 'An error occurred during registration');

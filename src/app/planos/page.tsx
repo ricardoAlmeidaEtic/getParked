@@ -150,11 +150,6 @@ export default function PlanosPage() {
         "Sim, você pode fazer upgrade ou downgrade do seu plano a qualquer momento. As mudanças entram em vigor imediatamente e o valor será ajustado proporcionalmente ao período restante da sua assinatura atual.",
     },
     {
-      question: "Como funciona o período de teste?",
-      answer:
-        "Oferecemos 7 dias de teste gratuito para o plano Premium. Você não será cobrado durante este período e pode cancelar a qualquer momento antes do término do teste sem nenhum custo.",
-    },
-    {
       question: "Qual a política de reembolso?",
       answer:
         "Oferecemos reembolso total nos primeiros 30 dias após a assinatura se você não estiver satisfeito com o serviço. Após este período, reembolsos são avaliados caso a caso pela nossa equipe de suporte.",
