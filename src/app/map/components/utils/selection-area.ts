@@ -4,7 +4,7 @@ export class SelectionArea {
   private map: L.Map | null;
   private userPosition: L.LatLng;
   private selectionCircle: L.Circle | null = null;
-  private readonly MAX_RADIUS = 1000; // 1km em metros
+  private readonly MAX_RADIUS = 200; // 200m em metros
 
   constructor(map: L.Map | null, userPosition: L.LatLng) {
     this.map = map;
