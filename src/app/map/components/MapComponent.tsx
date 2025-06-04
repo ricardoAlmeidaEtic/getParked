@@ -69,6 +69,46 @@ export default function MapComponent({
     }, 1000)
   }
 
+  const loadMarkers = useCallback(async () => {
+    if (!mapRef.current) return
+
+    try {
+      // Remove marcadores existentes
+      mapRef.current.eachLayer((layer) => {
+        if (layer instanceof L.Marker) {
+          mapRef.current?.removeLayer(layer)
+        }
+      })
+
+      // Carrega marcadores públicos
+      const publicMarkers = await getPublicSpotMarkers()
+      console.log('Carregando marcadores públicos:', publicMarkers)
+      
+      publicMarkers.forEach(marker => {
+        const markerInstance = createPublicSpotMarkerWithRoute(marker)
+        markerInstance.addTo(mapRef.current!)
+      })
+
+      // Carrega marcadores privados
+      const privateMarkers = await getPrivateParkingMarkers()
+      privateMarkers.forEach(marker => {
+        createPrivateParkingMarker(marker).addTo(mapRef.current!)
+      })
+    } catch (error) {
+      console.error('Erro ao carregar marcadores:', error)
+      showToast.error('Erro ao carregar os estacionamentos')
+    }
+  }, [])
+
+  // Efeito para recarregar os marcadores após a criação de uma nova vaga
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadMarkers()
+    }, 1000) // Recarrega após 1 segundo
+
+    return () => clearTimeout(timer)
+  }, [onMarkerCreated, loadMarkers])
+
   const showRoute = async (start: L.LatLng, end: L.LatLng, destinationName: string) => {
     if (!mapRef.current) return
 
@@ -183,37 +223,6 @@ export default function MapComponent({
 
     return markerInstance
   }
-
-  const loadMarkers = useCallback(async () => {
-    if (!mapRef.current) return
-
-    try {
-      // Remove marcadores existentes
-      mapRef.current.eachLayer((layer) => {
-        if (layer instanceof L.Marker) {
-          mapRef.current?.removeLayer(layer)
-        }
-      })
-
-      // Carrega marcadores públicos
-      const publicMarkers = await getPublicSpotMarkers()
-      console.log('Carregando marcadores públicos:', publicMarkers)
-      
-      publicMarkers.forEach(marker => {
-        const markerInstance = createPublicSpotMarkerWithRoute(marker)
-        markerInstance.addTo(mapRef.current!)
-      })
-
-      // Carrega marcadores privados
-      const privateMarkers = await getPrivateParkingMarkers()
-      privateMarkers.forEach(marker => {
-        createPrivateParkingMarker(marker).addTo(mapRef.current!)
-      })
-    } catch (error) {
-      console.error('Erro ao carregar marcadores:', error)
-      showToast.error('Erro ao carregar os estacionamentos')
-    }
-  }, [])
 
   useEffect(() => {
     if (!mapContainerRef.current) return
