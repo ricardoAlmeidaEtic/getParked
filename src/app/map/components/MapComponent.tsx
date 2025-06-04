@@ -356,6 +356,33 @@ export default function MapComponent({
     }
   }, [isCreatingSpot, onMarkerPositionChange])
 
+  const clearRoute = () => {
+    if (routeLineRef.current && mapRef.current) {
+      mapRef.current.removeLayer(routeLineRef.current)
+      routeLineRef.current = null
+    }
+    if (selectedMarkerRef.current && selectedMarkerRef.current.options.icon) {
+      // Restaura o ícone original do marcador
+      const originalIcon = L.divIcon({
+        className: 'custom-marker public-spot',
+        html: `
+          <div class="w-6 h-6 bg-yellow-400 rounded-full border-2 border-yellow-600 flex items-center justify-center text-xs font-bold">
+            P
+          </div>
+        `,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+      })
+      selectedMarkerRef.current.setIcon(originalIcon)
+      selectedMarkerRef.current = null
+    }
+  }
+
+  const handleRouteModalClose = () => {
+    setRouteInfo(prev => ({ ...prev, isOpen: false }))
+    clearRoute()
+  }
+
   return (
     <>
       <div 
@@ -364,7 +391,7 @@ export default function MapComponent({
       />
       <RouteInfoModal
         isOpen={routeInfo.isOpen}
-        onClose={() => setRouteInfo(prev => ({ ...prev, isOpen: false }))}
+        onClose={handleRouteModalClose}
         distance={routeInfo.distance}
         duration={routeInfo.duration}
         destinationName={routeInfo.destinationName}
