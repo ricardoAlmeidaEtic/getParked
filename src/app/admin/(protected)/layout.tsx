@@ -1,78 +1,89 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
+import { useAdminSupabase } from '@/providers/AdminSupabaseProvider';
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminProtectedLayout({ children }: { children: React.ReactNode }) {
+  const { user, loading, signOut, supabase } = useAdminSupabase();
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const adminSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        auth: {
-          storageKey: 'admin-sb-token',
-          storage: window.localStorage
+    const checkUserAndParking = async () => {
+      if (!loading && !user) {
+        console.log('No admin user found, redirecting to login');
+        router.replace('/admin/login');
+        return;
+      }
+
+      if (!loading && user) {
+        // Check if owner has parking (skip for admins)
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (profile?.role === 'owner') {
+          const { data: parking } = await supabase
+            .from('parkings')
+            .select('*')
+            .eq('owner_id', user.id)
+            .single();
+
+          if (!parking) {
+            console.log('Owner has no parking registered, redirecting to register_park');
+            router.replace('/admin/register_park');
+            return;
+          }
         }
       }
-    );
-
-    const checkSession = async () => {
-      const { data: { session } } = await adminSupabase.auth.getSession();
-      if (!session) {
-        router.replace('/admin/login');
-        return;
-      }
-
-      // Check if user has admin role
-      const { data: { user } } = await adminSupabase.auth.getUser();
-      if (!user || user.user_metadata?.role !== 'owner') {
-        router.replace('/admin/login');
-        return;
-      }
-
-      setLoading(false);
     };
 
-    checkSession();
-
-    // Listen for sign out/login events
-    const { data: listener } = adminSupabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!session) {
-        router.replace('/admin/login');
-        return;
-      }
-
-      // Check admin role on auth state change
-      const { data: { user } } = await adminSupabase.auth.getUser();
-      if (!user || user.user_metadata?.role !== 'owner') {
-        router.replace('/admin/login');
-      }
-    });
-
-    return () => {
-      listener.subscription.unsubscribe();
-    };
-  }, [router]);
+    checkUserAndParking();
+  }, [user, loading, router, supabase]);
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold mb-2">Verificando autenticação admin...</h2>
+          <p className="text-gray-600">Por favor, aguarde.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
   }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar navigation for admin */}
       <aside className="w-64 bg-white shadow h-screen flex flex-col p-6">
-        <span className="text-2xl font-bold text-blue-700 mb-10">GetParked Admin</span>
-        <nav className="flex flex-col gap-4">
-          <a href="/admin/dashboard" className="text-gray-700 hover:text-blue-700 font-medium">Dashboard</a>
-          <a href="/admin/parking" className="text-gray-700 hover:text-blue-700 font-medium">Vagas</a>
-          <a href="/admin/clients" className="text-gray-700 hover:text-blue-700 font-medium">Clientes</a>
-          <a href="/admin/reservations" className="text-gray-700 hover:text-blue-700 font-medium">Reservas</a>
-          <a href="/admin/settings" className="text-gray-700 hover:text-blue-700 font-medium">Configurações</a>
+        <span className="text-2xl font-bold text-primary mb-10">GetParked Admin</span>
+        <nav className="flex flex-col gap-4 flex-1">
+          <a href="/admin/dashboard" className="text-gray-700 hover:text-primary font-medium">Dashboard</a>
+          <a href="/admin/parking" className="text-gray-700 hover:text-primary font-medium">Vagas</a>
+          <a href="/admin/reservations" className="text-gray-700 hover:text-primary font-medium">Reservas</a>
+          <a href="/admin/settings" className="text-gray-700 hover:text-primary font-medium">Configurações</a>
+          
+          {/* Admin Section */}
+          <div className="mt-8 pt-4 border-t border-gray-200">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Administração</h3>
+            <a href="/admin/owners" className="text-gray-700 hover:text-primary font-medium block">Gerenciar Proprietários</a>
+          </div>
         </nav>
+        <div className="mt-auto pt-4 border-t">
+          <div className="text-sm text-gray-600 mb-2">Logado como: {user.email}</div>
+          <button 
+            onClick={signOut}
+            className="w-full text-left text-red-600 hover:text-red-800 font-medium"
+          >
+            Sair
+          </button>
+        </div>
       </aside>
       <main className="flex-1 container mx-auto px-8 py-8">
         {children}

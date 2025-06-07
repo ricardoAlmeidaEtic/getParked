@@ -43,6 +43,30 @@ export default function SignInPage() {
 
       if (signInError) throw signInError
 
+      if (!data.user) {
+        throw new Error('Usuário não encontrado')
+      }
+
+      // Check user role BEFORE showing success
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single()
+
+      if (profileError) {
+        console.error('Erro ao verificar perfil:', profileError)
+        await supabase.auth.signOut()
+        throw new Error('Erro ao verificar permissões')
+      }
+
+      if (!profile || profile.role !== 'client') {
+        console.log('User does not have client role:', profile?.role)
+        await supabase.auth.signOut()
+        throw new Error('Acesso restrito a clientes. Use /admin/login para administradores.')
+      }
+
+      // Only show success if role check passes
       showToast.success('Login realizado com sucesso!')
       router.push('/map')
     } catch (error) {

@@ -16,6 +16,8 @@ const publicRoutes = [
   "/auth/signup",
   "/auth/forgot-password",
   "/auth/reset-password",
+  "/admin/login",
+  "/admin/register"
 ]
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
@@ -27,6 +29,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     if (!loading) {
       const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith(route + "/"))
       const isAuthRoute = pathname.startsWith("/auth")
+      const isAdminRoute = pathname.startsWith("/admin")
 
       // Se não estiver em uma rota pública e não estiver autenticado
       if (!isPublicRoute && !user) {
@@ -34,7 +37,13 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         if (pathname !== "/" && !pathname.includes("logout")) {
           showToast.error("Por favor, faça login para acessar esta página")
         }
-        router.replace("/")
+        
+        // Se for uma rota admin, redireciona para login admin
+        if (isAdminRoute) {
+          router.replace("/admin/login")
+        } else {
+          router.replace("/")
+        }
         return
       }
 
