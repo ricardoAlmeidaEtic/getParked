@@ -35,52 +35,29 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
         }
 
         console.log('Sessão inicial:', session?.user?.id)
-        setSession(session)
-        setUser(session?.user ?? null)
-
-        // Se houver uma sessão, verificar se o perfil existe
+        
+        // Check if session has owner/admin role - if so, sign them out from frontend
         if (session?.user) {
-          console.log('Verificando perfil para usuário:', session.user.id)
+          console.log('Checking session role for frontend access:', session.user.id)
           const { data: profile, error } = await supabase
             .from('profiles')
-            .select('*')
+            .select('role')
             .eq('id', session.user.id)
             .single()
 
-          if (error) {
-            console.error('Erro ao verificar perfil:', error)
-            if (error.code === 'PGRST116') {
-              // Perfil não existe, vamos criar
-              console.log('Criando novo perfil para usuário:', session.user.id)
-              const { data: newProfile, error: createError } = await supabase
-                .from('profiles')
-                .insert({
-                  id: session.user.id,
-                  full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
-                  email: session.user.email,
-                  role: 'client',
-                  credits: 0,
-                  plan: 'Gratuito',
-                  join_date: new Date().toISOString(),
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString()
-                })
-                .select()
-                .single()
-
-              if (createError) {
-                console.error('Erro ao criar perfil:', createError)
-                showToast.error('Erro ao criar perfil')
-              } else {
-                console.log('Perfil criado com sucesso:', newProfile)
-              }
-            } else {
-              showToast.error('Erro ao verificar perfil')
-            }
-          } else {
-            console.log('Perfil encontrado:', profile)
+          if (!error && profile && (profile.role === 'owner' || profile.role === 'admin')) {
+            console.log('Owner/admin detected on frontend, signing out:', profile.role)
+            showToast.error('Sessão de administrador detectada. Use /admin/login para acessar área administrativa.')
+            await supabase.auth.signOut()
+            setSession(null)
+            setUser(null)
+            return
           }
         }
+
+        // Set session state for clients only
+        setSession(session)
+        setUser(session?.user ?? null)
       } catch (error) {
         console.error('Erro ao buscar sessão:', error)
         showToast.error('Erro ao verificar autenticação')
@@ -94,57 +71,32 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         console.log('Auth state changed:', event, newSession?.user?.id)
-        setSession(newSession)
-        setUser(newSession?.user ?? null)
-        setLoading(false)
-
-        // Se houver uma nova sessão, verificar se o perfil existe
+        
+        // Check if session has owner/admin role - if so, sign them out from frontend
         if (newSession?.user) {
-          try {
-            const { data: profile, error } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', newSession.user.id)
-              .single()
+          console.log('Checking new session role for frontend access:', newSession.user.id)
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', newSession.user.id)
+            .single()
 
-            if (error) {
-              console.error('Erro ao verificar perfil:', error)
-              if (error.code === 'PGRST116') {
-                // Perfil não existe, vamos criar
-                console.log('Criando novo perfil para usuário:', newSession.user.id)
-                const { data: newProfile, error: createError } = await supabase
-                  .from('profiles')
-                  .insert({
-                    id: newSession.user.id,
-                    full_name: newSession.user.user_metadata?.full_name || newSession.user.email?.split('@')[0],
-                    email: newSession.user.email,
-                    role: 'client',
-                    credits: 0,
-                    plan: 'Gratuito',
-                    join_date: new Date().toISOString(),
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                  })
-                  .select()
-                  .single()
-
-                if (createError) {
-                  console.error('Erro ao criar perfil:', createError)
-                  showToast.error('Erro ao criar perfil')
-                } else {
-                  console.log('Perfil criado com sucesso:', newProfile)
-                }
-              } else {
-                showToast.error('Erro ao verificar perfil')
-              }
-            } else {
-              console.log('Perfil encontrado:', profile)
-            }
-          } catch (error) {
-            console.error('Erro ao verificar perfil:', error)
-            showToast.error('Erro ao verificar perfil')
+          if (!error && profile && (profile.role === 'owner' || profile.role === 'admin')) {
+            console.log('Owner/admin detected on frontend, signing out:', profile.role)
+            showToast.error('Sessão de administrador detectada. Use /admin/login para acessar área administrativa.')
+            await supabase.auth.signOut()
+            setSession(null)
+            setUser(null)
+            setLoading(false)
+            return
           }
         }
+
+        // Set session state for clients only
+        setSession(newSession)
+        setUser(newSession?.user ?? null)
+        
+        setLoading(false)
       },
     )
 

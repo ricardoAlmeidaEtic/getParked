@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 export default function AdminRegister() {
   const router = useRouter();
@@ -19,14 +19,26 @@ export default function AdminRegister() {
     setLoading(true);
   
     try {
-      // First, sign up the user
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      // Create a new Supabase client for admin session
+      const adminSupabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          auth: {
+            storageKey: 'admin-sb-token',
+            storage: window.localStorage
+          }
+        }
+      );
+
+      // Sign up the user with owner role in metadata
+      const { data: authData, error: signUpError } = await adminSupabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            name: name,
-            role: 'admin',
+            full_name: name,
+            role: 'owner',
             is_admin: true
           }
         }
@@ -34,11 +46,13 @@ export default function AdminRegister() {
   
       if (signUpError) throw signUpError;
   
-      if (authData.user) {
-        // Show success message and redirect
-        alert('Registration successful! Please check your email to verify your account.');
-        router.push('/admin/login');
+      if (!authData.user) {
+        throw new Error('Failed to create user account');
       }
+  
+      // Show success message and redirect
+      alert('Registration successful! Please check your email to verify your account.');
+      router.push('/admin/login');
     } catch (err: any) {
       console.error('Registration error:', err);
       setError(err.message || 'An error occurred during registration');
@@ -74,7 +88,7 @@ export default function AdminRegister() {
                 name="name"
                 type="text"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                 placeholder="Full Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -90,7 +104,7 @@ export default function AdminRegister() {
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -106,7 +120,7 @@ export default function AdminRegister() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                 placeholder="Password (minimum 6 characters)"
                 minLength={6}
                 value={password}
@@ -119,7 +133,7 @@ export default function AdminRegister() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:bg-primary/50"
             >
               {loading ? 'Registering...' : 'Register as Admin'}
             </button>
@@ -128,7 +142,7 @@ export default function AdminRegister() {
         <div className="mt-4 text-center">
           <p className="text-sm text-gray-600">
             Already have an account?{' '}
-            <Link href="/admin/login" className="text-indigo-600 hover:text-indigo-800 font-medium">
+            <Link href="/admin/login" className="text-primary hover:text-primary-hover font-medium">
               Login here
             </Link>
           </p>

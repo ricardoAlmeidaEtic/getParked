@@ -2,50 +2,92 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAdminSupabase } from '@/providers/AdminSupabaseProvider';
 
 type Parking = {
   id: string;
   name: string;
-  total_spots: number;
-  occupied_spots: number;
-  unavailable_spots: number;
+  address: string;
+  latitude: number;
+  longitude: number;
+  hourly_rate: number;
+  created_at: string;
+  updated_at: string;
+};
+
+type ParkingMarker = {
+  id: string;
+  parking_id: string;
+  parking_name: string;
+  latitude: number;
+  longitude: number;
+  available_spots: number;
+  opening_time: string;
+  closing_time: string;
+  phone: string;
 };
 
 export default function ParkingManagement() {
+  const { user } = useAdminSupabase();
   const [parking, setParking] = useState<Parking | null>(null);
+  const [marker, setMarker] = useState<ParkingMarker | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
-    occupied_spots: 0,
-    unavailable_spots: 0
+    available_spots: 1,
+    opening_time: '08:00',
+    closing_time: '22:00',
+    phone: ''
   });
 
   useEffect(() => {
-    fetchParking();
-  }, []);
+    fetchParkingData();
+  }, [user]);
 
-  const fetchParking = async () => {
+  const fetchParkingData = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data, error } = await supabase
+      // Fetch parking data
+      const { data: parkingData, error: parkingError } = await supabase
         .from('parkings')
         .select('*')
         .eq('owner_id', user.id)
         .single();
 
-      if (error) throw error;
-      if (!data) throw new Error('No parking found');
+      if (parkingError) throw parkingError;
+      if (!parkingData) throw new Error('No parking found');
 
-      setParking(data);
-      setFormData({
-        occupied_spots: data.occupied_spots || 0,
-        unavailable_spots: data.unavailable_spots || 0
-      });
+      setParking(parkingData);
+
+      // Fetch marker data
+      const { data: markerData, error: markerError } = await supabase
+        .from('private_parking_markers')
+        .select('*')
+        .eq('parking_id', parkingData.id)
+        .single();
+
+      if (markerError) {
+        console.log('No marker found, using defaults');
+        setMarker(null);
+        setFormData({
+          available_spots: 1,
+          opening_time: '08:00',
+          closing_time: '22:00',
+          phone: ''
+        });
+      } else {
+        setMarker(markerData);
+        setFormData({
+          available_spots: markerData.available_spots || 1,
+          opening_time: markerData.opening_time || '08:00',
+          closing_time: markerData.closing_time || '22:00',
+          phone: markerData.phone || ''
+        });
+      }
     } catch (err: any) {
-      console.error('Error fetching parking:', err);
+      console.error('Error fetching parking data:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -57,48 +99,39 @@ export default function ParkingManagement() {
     if (!parking) return;
 
     try {
+      // Update or insert marker data
       const { error } = await supabase
-        .from('parkings')
-        .update({
-          occupied_spots: formData.occupied_spots,
-          unavailable_spots: formData.unavailable_spots,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', parking.id);
+        .from('private_parking_markers')
+        .upsert({
+          parking_id: parking.id,
+          parking_name: parking.name,
+          latitude: parking.latitude,
+          longitude: parking.longitude,
+          available_spots: formData.available_spots,
+          opening_time: formData.opening_time,
+          closing_time: formData.closing_time,
+          phone: formData.phone
+        }, {
+          onConflict: 'parking_id'
+        });
 
       if (error) throw error;
 
-      setParking({
-        ...parking,
-        occupied_spots: formData.occupied_spots,
-        unavailable_spots: formData.unavailable_spots
-      });
+      // Refresh data
+      await fetchParkingData();
       setEditing(false);
     } catch (err: any) {
-      console.error('Error updating parking:', err);
+      console.error('Error updating parking data:', err);
       setError(err.message);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    const numValue = parseInt(value) || 0;
     
-    // Ensure the sum doesn't exceed total_spots
-    if (parking && name === 'occupied_spots') {
-      if (numValue + formData.unavailable_spots > parking.total_spots) {
-        return;
-      }
-    }
-    if (parking && name === 'unavailable_spots') {
-      if (numValue + formData.occupied_spots > parking.total_spots) {
-        return;
-      }
-    }
-
     setFormData(prev => ({
       ...prev,
-      [name]: numValue
+      [name]: name === 'available_spots' ? parseInt(value) || 1 : value
     }));
   };
 
@@ -106,7 +139,7 @@ export default function ParkingManagement() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-gray-600">Carregando...</p>
         </div>
       </div>
@@ -118,6 +151,12 @@ export default function ParkingManagement() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600">Erro: {error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary-hover"
+          >
+            Tentar Novamente
+          </button>
         </div>
       </div>
     );
@@ -128,75 +167,108 @@ export default function ParkingManagement() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600">Nenhum estacionamento encontrado</p>
+          <a 
+            href="/admin/register_park" 
+            className="mt-4 inline-block px-4 py-2 bg-primary text-white rounded hover:bg-primary-hover"
+          >
+            Registrar Estacionamento
+          </a>
         </div>
       </div>
     );
   }
 
-  const availableSpots = parking.total_spots - (parking.occupied_spots + parking.unavailable_spots);
-
   return (
     <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Gerenciar Vagas</h1>
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">Gerenciar Estacionamento</h1>
         
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow p-6 border border-gray-100 mb-6">
           <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4">{parking.name}</h2>
-            <div className="grid grid-cols-3 gap-4 mb-4">
+            <h2 className="text-xl font-semibold mb-4 text-gray-900">{parking.name}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500">Total de Vagas</p>
-                <p className="text-2xl font-semibold">{parking.total_spots}</p>
+                <p className="text-sm text-gray-500">Endereço</p>
+                <p className="text-sm font-medium text-gray-900">{parking.address}</p>
               </div>
               <div className="bg-green-50 p-4 rounded-lg">
-                <p className="text-sm text-green-600">Vagas Disponíveis</p>
-                <p className="text-2xl font-semibold text-green-600">{availableSpots}</p>
+                <p className="text-sm text-green-600">Taxa por Hora</p>
+                <p className="text-2xl font-semibold text-green-700">€{parking.hourly_rate}</p>
               </div>
               <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-sm text-blue-600">Vagas Ocupadas</p>
-                <p className="text-2xl font-semibold text-blue-600">{parking.occupied_spots}</p>
+                <p className="text-sm text-blue-600">Vagas Disponíveis</p>
+                <p className="text-2xl font-semibold text-blue-700">
+                  {marker?.available_spots || formData.available_spots}
+                </p>
               </div>
             </div>
           </div>
 
           {editing ? (
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Vagas Ocupadas
-                </label>
-                <input
-                  type="number"
-                  name="occupied_spots"
-                  value={formData.occupied_spots}
-                  onChange={handleChange}
-                  min="0"
-                  max={parking.total_spots - formData.unavailable_spots}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Vagas Disponíveis
+                  </label>
+                  <input
+                    type="number"
+                    name="available_spots"
+                    value={formData.available_spots}
+                    onChange={handleChange}
+                    min="1"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Telefone
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="+351 123 456 789"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Horário de Abertura
+                  </label>
+                  <input
+                    type="time"
+                    name="opening_time"
+                    value={formData.opening_time}
+                    onChange={handleChange}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Horário de Fechamento
+                  </label>
+                  <input
+                    type="time"
+                    name="closing_time"
+                    value={formData.closing_time}
+                    onChange={handleChange}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Vagas Indisponíveis
-                </label>
-                <input
-                  type="number"
-                  name="unavailable_spots"
-                  value={formData.unavailable_spots}
-                  onChange={handleChange}
-                  min="0"
-                  max={parking.total_spots - formData.occupied_spots}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
+              
               <div className="flex justify-end space-x-3">
                 <button
                   type="button"
                   onClick={() => {
                     setEditing(false);
                     setFormData({
-                      occupied_spots: parking.occupied_spots,
-                      unavailable_spots: parking.unavailable_spots
+                      available_spots: marker?.available_spots || 1,
+                      opening_time: marker?.opening_time || '08:00',
+                      closing_time: marker?.closing_time || '22:00',
+                      phone: marker?.phone || ''
                     });
                   }}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
@@ -205,7 +277,7 @@ export default function ParkingManagement() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                  className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary-hover transition-colors"
                 >
                   Salvar
                 </button>
@@ -213,24 +285,70 @@ export default function ParkingManagement() {
             </form>
           ) : (
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm text-gray-500">Vagas Ocupadas</p>
-                  <p className="text-lg font-semibold">{parking.occupied_spots}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                  <span className="text-sm text-gray-500">Vagas Disponíveis:</span>
+                  <span className="font-semibold text-gray-900">
+                    {marker?.available_spots || 'Não definido'}
+                  </span>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Vagas Indisponíveis</p>
-                  <p className="text-lg font-semibold">{parking.unavailable_spots}</p>
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                  <span className="text-sm text-gray-500">Telefone:</span>
+                  <span className="font-semibold text-gray-900">
+                    {marker?.phone || 'Não definido'}
+                  </span>
                 </div>
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                  <span className="text-sm text-gray-500">Abertura:</span>
+                  <span className="font-semibold text-gray-900">
+                    {marker?.opening_time || 'Não definido'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                  <span className="text-sm text-gray-500">Fechamento:</span>
+                  <span className="font-semibold text-gray-900">
+                    {marker?.closing_time || 'Não definido'}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex justify-end">
                 <button
                   onClick={() => setEditing(true)}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                  className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary-hover transition-colors"
                 >
-                  Editar Vagas
+                  Editar Informações
                 </button>
               </div>
             </div>
           )}
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
+          <h3 className="text-lg font-semibold mb-4 text-gray-900">Ações Rápidas</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a 
+              href="/admin/settings" 
+              className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-center"
+            >
+              <h4 className="font-medium text-gray-900">Configurações</h4>
+              <p className="text-sm text-gray-500 mt-1">Editar nome, endereço e localização</p>
+            </a>
+            <a 
+              href="/admin/dashboard" 
+              className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-center"
+            >
+              <h4 className="font-medium text-gray-900">Dashboard</h4>
+              <p className="text-sm text-gray-500 mt-1">Ver estatísticas e reservas</p>
+            </a>
+            <a 
+              href="/admin/reservations" 
+              className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-center"
+            >
+              <h4 className="font-medium text-gray-900">Reservas</h4>
+              <p className="text-sm text-gray-500 mt-1">Gerenciar reservas ativas</p>
+            </a>
+          </div>
         </div>
       </div>
     </div>

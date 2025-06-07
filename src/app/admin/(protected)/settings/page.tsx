@@ -1,45 +1,64 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useAdminSupabase } from '@/providers/AdminSupabaseProvider';
+import dynamic from 'next/dynamic';
+import L from 'leaflet';
+
+// Use custom SettingsMapComponent with no limitations
+const SettingsMapComponent = dynamic(() => import('./components/SettingsMapComponent'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[400px] flex items-center justify-center bg-gray-100">
+      <div className="text-gray-600">Loading map...</div>
+    </div>
+  )
+});
 
 type ParkingSettings = {
   name: string;
-  description: string;
+  address: string;
   latitude: string;
   longitude: string;
-  total_spots: string;
-  phone: string;
+  hourly_rate: string;
   opening_time: string;
   closing_time: string;
+  phone: string;
 };
 
 export default function Settings() {
-  const router = useRouter();
+  const { user, supabase } = useAdminSupabase();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isCreatingSpot, setIsCreatingSpot] = useState(true); // Set to true to enable marker interaction
+  const [userPosition, setUserPosition] = useState<L.LatLng | null>(null);
   const [settings, setSettings] = useState<ParkingSettings>({
     name: '',
-    description: '',
+    address: '',
     latitude: '',
     longitude: '',
-    total_spots: '',
-    phone: '',
+    hourly_rate: '',
     opening_time: '',
-    closing_time: ''
+    closing_time: '',
+    phone: ''
   });
 
   useEffect(() => {
     fetchParkingSettings();
   }, []);
 
+  // Set initial marker position when settings are loaded
+  useEffect(() => {
+    if (settings.latitude && settings.longitude) {
+      const position = L.latLng(parseFloat(settings.latitude), parseFloat(settings.longitude));
+      handleMarkerPositionChange(position);
+    }
+  }, [settings.latitude, settings.longitude]);
+
   const fetchParkingSettings = async () => {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
       if (!user) throw new Error('User not found');
 
       const { data: parking, error: parkingError } = await supabase
@@ -51,15 +70,24 @@ export default function Settings() {
       if (parkingError) throw parkingError;
       if (!parking) throw new Error('No parking found for this user');
 
+      // Also fetch from private_parking_markers table
+      const { data: marker, error: markerError } = await supabase
+        .from('private_parking_markers')
+        .select('*')
+        .eq('parking_id', parking.id)
+        .single();
+
+      // Note: markerError is not thrown as it might not exist yet (for old parkings)
+
       setSettings({
         name: parking.name || '',
-        description: parking.description || '',
+        address: parking.address || '',
         latitude: parking.latitude?.toString() || '',
         longitude: parking.longitude?.toString() || '',
-        total_spots: parking.total_spots?.toString() || '',
-        phone: parking.phone || '',
-        opening_time: parking.opening_time || '',
-        closing_time: parking.closing_time || ''
+        hourly_rate: parking.hourly_rate?.toString() || '',
+        opening_time: marker?.opening_time || '08:00',
+        closing_time: marker?.closing_time || '22:00',
+        phone: marker?.phone || ''
       });
     } catch (err: any) {
       console.error('Error fetching parking settings:', err);
@@ -76,27 +104,55 @@ export default function Settings() {
     setSuccess(null);
 
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
       if (!user) throw new Error('User not found');
 
+      // First get the parking ID
+      const { data: parking, error: fetchError } = await supabase
+        .from('parkings')
+        .select('id')
+        .eq('owner_id', user.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (!parking) throw new Error('No parking found for this user');
+
+      // Update parkings table
       const { error: updateError } = await supabase
         .from('parkings')
         .update({
           name: settings.name,
-          description: settings.description,
+          address: settings.address,
           latitude: parseFloat(settings.latitude),
           longitude: parseFloat(settings.longitude),
-          total_spots: parseInt(settings.total_spots),
-          phone: settings.phone,
-          opening_time: settings.opening_time,
-          closing_time: settings.closing_time
+          hourly_rate: parseFloat(settings.hourly_rate)
         })
         .eq('owner_id', user.id);
 
       if (updateError) throw updateError;
 
+      // Update or insert into private_parking_markers table
+      const { error: markerError } = await supabase
+        .from('private_parking_markers')
+        .upsert({
+          parking_id: parking.id,
+          parking_name: settings.name,
+          latitude: parseFloat(settings.latitude),
+          longitude: parseFloat(settings.longitude),
+          opening_time: settings.opening_time,
+          closing_time: settings.closing_time,
+          phone: settings.phone
+        }, {
+          onConflict: 'parking_id'
+        });
+
+      if (markerError) throw markerError;
+
       setSuccess('Configurações atualizadas com sucesso!');
+      
+      // Refresh the page after 2 seconds to show updated data
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
     } catch (err: any) {
       console.error('Error updating parking settings:', err);
       setError(err.message);
@@ -113,11 +169,33 @@ export default function Settings() {
     }));
   };
 
+  // Handle marker position changes from MapComponent
+  const handleMarkerPositionChange = (position: L.LatLng | null) => {
+    console.log('SETTINGS: handleMarkerPositionChange called with:', position);
+    if (position) {
+      console.log('SETTINGS: Updating settings with lat:', position.lat, 'lng:', position.lng);
+      setSettings(prev => ({
+        ...prev,
+        latitude: position.lat.toString(),
+        longitude: position.lng.toString()
+      }));
+    }
+  };
+
+  // Dummy handlers to satisfy MapComponent interface
+  const handleMarkerCreated = () => {
+    // Do nothing for settings use case
+  };
+
+  const handleUserPositionChange = (position: L.LatLng) => {
+    setUserPosition(position);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-gray-600">Carregando configurações...</p>
         </div>
       </div>
@@ -129,7 +207,7 @@ export default function Settings() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Configurações do Estacionamento</h1>
         
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
@@ -154,86 +232,29 @@ export default function Settings() {
                   name="name"
                   value={settings.name}
                   onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border border-black shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none focus:ring-2"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                  Telefone
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={settings.phone}
-                  onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border border-black shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none focus:ring-2"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                  Descrição
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={settings.description}
-                  onChange={handleChange}
-                  rows={3}
-                  className="mt-1 block w-full rounded-md border border-black shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none focus:ring-2"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="latitude" className="block text-sm font-medium text-gray-700">
-                  Latitude
+                <label htmlFor="hourly_rate" className="block text-sm font-medium text-gray-700">
+                  Taxa por Hora (€)
                 </label>
                 <input
                   type="number"
-                  step="any"
-                  id="latitude"
-                  name="latitude"
-                  value={settings.latitude}
+                  id="hourly_rate"
+                  name="hourly_rate"
+                  value={settings.hourly_rate}
                   onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border border-black shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none focus:ring-2"
-                  required
-                />
-              </div>
-
-              <div>
-                <label htmlFor="longitude" className="block text-sm font-medium text-gray-700">
-                  Longitude
-                </label>
-                <input
-                  type="number"
-                  step="any"
-                  id="longitude"
-                  name="longitude"
-                  value={settings.longitude}
-                  onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border border-black shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none focus:ring-2"
-                  required
-                />
-              </div>
-
-              <div>
-                <label htmlFor="total_spots" className="block text-sm font-medium text-gray-700">
-                  Total de Vagas
-                </label>
-                <input
-                  type="number"
-                  id="total_spots"
-                  name="total_spots"
-                  value={settings.total_spots}
-                  onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border border-black shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none focus:ring-2"
-                  required
                   min="0"
+                  step="0.01"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                  required
                 />
               </div>
+
+
 
               <div>
                 <label htmlFor="opening_time" className="block text-sm font-medium text-gray-700">
@@ -245,7 +266,8 @@ export default function Settings() {
                   name="opening_time"
                   value={settings.opening_time}
                   onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border border-black shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none focus:ring-2"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                  required
                 />
               </div>
 
@@ -259,18 +281,75 @@ export default function Settings() {
                   name="closing_time"
                   value={settings.closing_time}
                   onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border border-black shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none focus:ring-2"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                  required
                 />
               </div>
+
+              <div className="md:col-span-2">
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                  Telefone
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={settings.phone}
+                  onChange={handleChange}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                  placeholder="+351 123 456 789"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+                  Endereço
+                </label>
+                <textarea
+                  id="address"
+                  name="address"
+                  value={settings.address}
+                  onChange={handleChange}
+                  rows={3}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Localização
+                </label>
+                <div className="mt-2">
+                  <div className="h-[400px] rounded-md overflow-hidden border border-gray-300">
+                    <SettingsMapComponent 
+                      isCreatingSpot={isCreatingSpot}
+                      onMarkerPositionChange={handleMarkerPositionChange}
+                      onMarkerCreated={handleMarkerCreated}
+                      onUserPositionChange={handleUserPositionChange}
+                      initialPosition={
+                        settings.latitude && settings.longitude 
+                          ? { lat: parseFloat(settings.latitude), lng: parseFloat(settings.longitude) }
+                          : undefined
+                      }
+                    />
+                  </div>
+                  <p className="mt-2 text-sm text-gray-500">
+                    Clique no mapa para ajustar a localização do estacionamento
+                  </p>
+                </div>
+              </div>
+
+
             </div>
 
             <div className="flex justify-end">
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400"
+                className="bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50"
               >
-                {saving ? 'Salvando...' : 'Salvar Alterações'}
+                {saving ? 'Salvando...' : 'Salvar Configurações'}
               </button>
             </div>
           </form>
