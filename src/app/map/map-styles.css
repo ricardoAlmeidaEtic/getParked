@@ -7,6 +7,10 @@
   backface-visibility: hidden;
   transform: translateZ(0);
   will-change: transform;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  transition: transform 0.3s ease-out;
 }
 
 /* Controles do mapa */
@@ -164,45 +168,85 @@
 
 /* Melhorias de performance para o mapa */
 .leaflet-pane {
+  z-index: 400;
   transform: translateZ(0);
+  will-change: transform;
+  transition: transform 0.3s ease-out;
 }
 
 .leaflet-tile {
   will-change: transform;
-  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
   backface-visibility: hidden;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  transition: opacity 0.2s ease;
 }
 
 .leaflet-tile-container {
   will-change: transform;
-  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
   backface-visibility: hidden;
+  transition: transform 0.3s ease-out;
+}
+
+/* Melhorias para carregamento de tiles */
+.leaflet-tile-pane {
+  opacity: 1 !important;
+  transition: opacity 0.3s ease-out;
+}
+
+.leaflet-tile-loaded {
+  opacity: 1 !important;
+  transition: opacity 0.3s ease-out;
+}
+
+.leaflet-tile-loading {
+  opacity: 0.5 !important;
+  transition: opacity 0.3s ease-out;
+}
+
+.leaflet-tile-error {
+  opacity: 0.5 !important;
+  background-color: #f3f4f6 !important;
+  transition: opacity 0.3s ease-out;
 }
 
 /* Garante que o mapa permaneça visível em zoom alto */
 .leaflet-pane {
   z-index: 400;
   transform: translateZ(0);
+  will-change: transform;
+  transition: transform 0.3s ease-out;
 }
 
 .leaflet-overlay-pane {
   z-index: 500;
   transform: translateZ(0);
+  will-change: transform;
+  transition: transform 0.3s ease-out;
 }
 
 .leaflet-marker-pane {
   z-index: 600;
   transform: translateZ(0);
+  will-change: transform;
+  transition: transform 0.3s ease-out;
 }
 
 .leaflet-tooltip-pane {
   z-index: 700;
   transform: translateZ(0);
+  will-change: transform;
+  transition: transform 0.3s ease-out;
 }
 
 .leaflet-popup-pane {
   z-index: 800;
   transform: translateZ(0);
+  will-change: transform;
+  transition: transform 0.3s ease-out;
 }
 
 /* Ajuste para o painel de informações da rota */

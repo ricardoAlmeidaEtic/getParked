@@ -202,6 +202,27 @@ export default function MapComponent({
 
     const timer = setTimeout(() => {
       loadMarkers()
+      
+      // Recarrega o mapa após criar uma vaga
+      if (mapRef.current) {
+        const currentCenter = mapRef.current.getCenter()
+        const currentZoom = mapRef.current.getZoom()
+        
+        // Força um redraw do mapa
+        mapRef.current.invalidateSize()
+        
+        // Recarrega os tiles
+        mapRef.current.eachLayer((layer) => {
+          if (layer instanceof L.TileLayer) {
+            layer.redraw()
+          }
+        })
+        
+        // Restaura a posição e zoom
+        mapRef.current.setView(currentCenter, currentZoom, {
+          animate: false
+        })
+      }
     }, 1000)
 
     return () => clearTimeout(timer)
@@ -225,12 +246,24 @@ export default function MapComponent({
       // Mostra um indicador de carregamento
       const loadingToast = showToast.loading('Calculando rota...')
 
+      // Primeiro, ajusta o zoom suavemente para a área da rota
+      const bounds = L.latLngBounds([start, end])
+      mapRef.current.fitBounds(bounds, {
+        padding: [50, 50],
+        maxZoom: 16,
+        animate: true,
+        duration: 1
+      })
+
+      // Aguarda o zoom terminar
+      await new Promise(resolve => setTimeout(resolve, 500))
+
       // Cria o controle de rota com instruções
       routeControlRef.current = L.Routing.control({
         waypoints: [start, end],
         routeWhileDragging: false,
         showAlternatives: false,
-        fitSelectedRoutes: 'smart',
+        fitSelectedRoutes: false, // Desativa o ajuste automático
         lineOptions: {
           styles: [{ color: '#3B82F6', weight: 6, opacity: 0.8 }],
           extendToWaypoints: true,
@@ -257,23 +290,38 @@ export default function MapComponent({
           const route = routes[0]
           
           // Extrai as instruções da rota
-          const instructions = route.instructions.map((instruction: any) => ({
-            distance: Math.round(instruction.distance),
-            time: Math.round(instruction.time / 60),
-            text: instruction.text,
-            type: instruction.type,
-            coordinates: instruction.coords || instruction.coordinates || [instruction.lat, instruction.lng]
-          }))
+          const instructions = route.instructions.map((instruction: any) => {
+            let coordinates: [number, number] | null = null;
+            
+            // Tenta obter as coordenadas de diferentes formatos possíveis
+            if (Array.isArray(instruction.coords) && instruction.coords.length >= 2) {
+              coordinates = [instruction.coords[0], instruction.coords[1]];
+            } else if (Array.isArray(instruction.coordinates) && instruction.coordinates.length >= 2) {
+              coordinates = [instruction.coordinates[0], instruction.coordinates[1]];
+            } else if (typeof instruction.lat === 'number' && typeof instruction.lng === 'number') {
+              coordinates = [instruction.lat, instruction.lng];
+            }
+
+            return {
+              distance: Math.round(instruction.distance),
+              time: Math.round(instruction.time / 60),
+              text: instruction.text,
+              type: instruction.type,
+              coordinates: coordinates
+            };
+          }).filter(instruction => instruction.coordinates !== null);
           
-          setRouteInstructions(instructions)
-          setCompletedInstructions([])
-          setCurrentInstructionIndex(0)
+          setRouteInstructions(instructions);
+          setCompletedInstructions([]);
+          setCurrentInstructionIndex(0);
           
-          // Ajusta o zoom para mostrar toda a rota
-          const bounds = L.latLngBounds(route.coordinates)
-          mapRef.current?.fitBounds(bounds, {
+          // Ajusta o zoom novamente com a rota completa
+          const routeBounds = L.latLngBounds(route.coordinates)
+          mapRef.current?.fitBounds(routeBounds, {
             padding: [50, 50],
-            maxZoom: 16
+            maxZoom: 16,
+            animate: true,
+            duration: 1
           })
 
           // Mostra informações da rota
@@ -304,42 +352,56 @@ export default function MapComponent({
 
   const startDestinationMonitoring = (destination: L.LatLng) => {
     const checkDistance = () => {
-      if (!userMarkerRef.current) return
+      if (!userMarkerRef.current || !destination) return;
 
-      const userPosition = userMarkerRef.current.getLatLng()
-      const distance = userPosition.distanceTo(destination)
+      try {
+        const userPosition = userMarkerRef.current.getLatLng();
+        if (!userPosition) return;
 
-      // Verifica se o usuário está próximo de algum ponto de instrução
-      routeInstructions.forEach((instruction, index) => {
-        if (!completedInstructions.includes(index) && instruction.coordinates) {
-          const instructionPoint = L.latLng(
-            instruction.coordinates[0],
-            instruction.coordinates[1]
-          )
-          const distanceToInstruction = userPosition.distanceTo(instructionPoint)
-          
-          if (distanceToInstruction <= 50) { // 50 metros de tolerância
-            setCompletedInstructions(prev => [...prev, index])
-            setCurrentInstructionIndex(index + 1)
-          }
+        const distance = userPosition.distanceTo(destination);
+
+        // Verifica se o usuário está próximo de algum ponto de instrução
+        if (Array.isArray(routeInstructions)) {
+          routeInstructions.forEach((instruction, index) => {
+            if (!instruction?.coordinates) return;
+            
+            if (!completedInstructions.includes(index)) {
+              try {
+                const [lat, lng] = instruction.coordinates;
+                if (typeof lat !== 'number' || typeof lng !== 'number') return;
+
+                const instructionPoint = L.latLng(lat, lng);
+                const distanceToInstruction = userPosition.distanceTo(instructionPoint);
+                
+                if (distanceToInstruction <= 50) { // 50 metros de tolerância
+                  setCompletedInstructions(prev => [...prev, index]);
+                  setCurrentInstructionIndex(index + 1);
+                }
+              } catch (error) {
+                console.error('Erro ao processar instrução:', error);
+              }
+            }
+          });
         }
-      })
 
-      // Se estiver a menos de 100 metros do destino
-      if (distance <= 100) {
-        setShowRouteModal(true)
-      } else {
-        setShowRouteModal(false)
+        // Se estiver a menos de 100 metros do destino
+        if (distance <= 100) {
+          setShowRouteModal(true);
+        } else {
+          setShowRouteModal(false);
+        }
+      } catch (error) {
+        console.error('Erro ao verificar distância:', error);
       }
-    }
+    };
 
     // Verifica a distância a cada segundo
-    const interval = setInterval(checkDistance, 1000)
-    checkDistance() // Verifica imediatamente
+    const interval = setInterval(checkDistance, 1000);
+    checkDistance(); // Verifica imediatamente
 
     // Limpa o intervalo quando o componente for desmontado
-    return () => clearInterval(interval)
-  }
+    return () => clearInterval(interval);
+  };
 
   const createPublicSpotMarkerWithRoute = (marker: PublicSpotMarker) => {
     try {
@@ -394,22 +456,48 @@ export default function MapComponent({
     const map = L.map(mapContainerRef.current, {
       zoomControl: false,
       minZoom: 15,
-      maxZoom: 19,
+      maxZoom: 20,
       zoomSnap: 0.5,
       zoomDelta: 0.5,
       wheelDebounceTime: 40,
-      preferCanvas: true
+      preferCanvas: true,
+      updateWhenIdle: true,
+      updateWhenZooming: false,
+      keepBuffer: 2,
+      maxBoundsViscosity: 1.0
     }).setView([0, 0], 16)
     mapRef.current = map
 
     // Adiciona o tile layer do OpenStreetMap com configurações otimizadas
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19,
+      maxZoom: 20,
       tileSize: 256,
       zoomOffset: 0,
-      detectRetina: true
+      detectRetina: true,
+      updateWhenIdle: true,
+      updateWhenZooming: false,
+      keepBuffer: 2,
+      crossOrigin: true,
+      errorTileUrl: 'https://tile.openstreetmap.org/0/0/0.png'
     }).addTo(map)
+
+    // Adiciona tratamento de erros para o tile layer
+    tileLayer.on('tileerror', (e) => {
+      console.error('Erro ao carregar tile:', e);
+      // Tenta recarregar o tile
+      const tile = e.tile;
+      if (tile) {
+        tile.src = tile.src;
+      }
+    });
+
+    // Adiciona evento para recarregar tiles quando necessário
+    map.on('zoomend', () => {
+      if (map.getZoom() >= 19) {
+        tileLayer.redraw();
+      }
+    });
 
     // Adiciona controles de zoom
     L.control.zoom({
@@ -587,17 +675,18 @@ export default function MapComponent({
   }
 
   const startNavigation = () => {
-    if (!routeInfo.destinationPosition || !userMarkerRef.current) return
+    if (!routeInfo.destinationPosition || !userMarkerRef.current) return;
 
-    setRouteInfo(prev => ({ ...prev, isNavigating: true }))
-    startDestinationMonitoring(routeInfo.destinationPosition)
-  }
+    setRouteInfo(prev => ({ ...prev, isNavigating: true }));
+    setShowRouteModal(true); // Garante que o modal de direções seja exibido
+    startDestinationMonitoring(routeInfo.destinationPosition);
+  };
 
   const handleRouteModalClose = () => {
-    setRouteInfo(prev => ({ ...prev, isOpen: false, isNavigating: false }))
-    setShowRouteModal(false)
-    clearRoute()
-  }
+    setRouteInfo(prev => ({ ...prev, isOpen: false, isNavigating: false }));
+    setShowRouteModal(false);
+    clearRoute();
+  };
 
   const clearRoute = () => {
     if (routeLineRef.current && mapRef.current) {
@@ -631,9 +720,20 @@ export default function MapComponent({
         ref={mapContainerRef} 
         className="absolute inset-0 w-full h-full z-0"
       />
-      {routeInstructions.length > 0 && routeInfo.isNavigating && (
+      {routeInstructions.length > 0 && routeInfo.isNavigating && showRouteModal && (
         <div className="absolute bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-sm w-full z-10">
-          <h3 className="text-lg font-semibold mb-2">Instruções de Navegação</h3>
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-semibold">Instruções de Navegação</h3>
+            <button
+              onClick={handleRouteModalClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1.5 hover:bg-gray-100 rounded-full"
+              aria-label="Fechar"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {routeInstructions.map((instruction, index) => (
               <div 
