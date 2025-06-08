@@ -1,6 +1,5 @@
 import L from 'leaflet'
 import { PublicSpotMarker, PrivateParkingMarker } from '@/types/map'
-import { createPublicSpotPopupContent, createPrivateParkingPopupContent } from '../modals/popup-content'
 
 export function createPublicSpotMarker(marker: PublicSpotMarker): L.Marker {
   try {
@@ -20,15 +19,6 @@ export function createPublicSpotMarker(marker: PublicSpotMarker): L.Marker {
       title: marker.name,
       alt: marker.name,
       riseOnHover: true
-    }).bindPopup(createPublicSpotPopupContent(marker))
-
-    // Adiciona evento de clique para garantir que o popup seja aberto
-    markerInstance.on('click', () => {
-      try {
-        markerInstance.openPopup()
-      } catch (error) {
-        console.error('Erro ao abrir popup:', error)
-      }
     })
 
     return markerInstance
@@ -71,15 +61,6 @@ export function createPrivateParkingMarker(marker: PrivateParkingMarker): L.Mark
       title: marker.parking_name,
       alt: marker.parking_name,
       riseOnHover: true
-    }).bindPopup(createPrivateParkingPopupContent(marker))
-
-    // Adiciona evento de clique para garantir que o popup seja aberto
-    markerInstance.on('click', () => {
-      try {
-        markerInstance.openPopup()
-      } catch (error) {
-        console.error('Erro ao abrir popup:', error)
-      }
     })
 
     return markerInstance
