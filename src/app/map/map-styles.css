@@ -391,4 +391,129 @@
 
 .route-info-modal-exit {
   animation: slideDownFade 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Estilos para o painel de instruções de navegação */
+.navigation-panel {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 16px;
+  max-width: 400px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.navigation-panel h3 {
+  color: #1F2937;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #E5E7EB;
+}
+
+.instruction-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.instruction-item:hover {
+  background-color: #F3F4F6;
+}
+
+.instruction-number {
+  width: 32px;
+  height: 32px;
+  background-color: #EFF6FF;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: #3B82F6;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.instruction-content {
+  flex: 1;
+}
+
+.instruction-text {
+  color: #1F2937;
+  font-size: 14px;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.instruction-details {
+  color: #6B7280;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.instruction-distance {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.instruction-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Estilo para a instrução atual */
+.instruction-item.current {
+  background-color: #EFF6FF;
+}
+
+.instruction-item.current .instruction-number {
+  background-color: #3B82F6;
+  color: white;
+}
+
+/* Animações para o painel de instruções */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.navigation-panel {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Estilos para scrollbar personalizada */
+.navigation-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.navigation-panel::-webkit-scrollbar-track {
+  background: #F3F4F6;
+  border-radius: 3px;
+}
+
+.navigation-panel::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 3px;
+}
+
+.navigation-panel::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
 } 
