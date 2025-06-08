@@ -1,4 +1,4 @@
-import { PublicSpotMarker, PrivateParkingMarker } from '@/types/map'
+import { PublicSpotMarker, PrivateParkingMarker } from '../../../../types/map'
 
 const formatExpirationTime = (expiresAt: string) => {
   const expirationDate = new Date(expiresAt)
