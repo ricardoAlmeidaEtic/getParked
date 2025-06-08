@@ -31,7 +31,7 @@ export default function AdminMapComponent({
     // Inicializa o mapa - same config as working MapComponent
     const map = L.map(mapContainerRef.current, {
       zoomControl: false,
-      minZoom: 15,
+      minZoom: 0,
       maxZoom: 19,
       zoomSnap: 0.5,
       zoomDelta: 0.5,

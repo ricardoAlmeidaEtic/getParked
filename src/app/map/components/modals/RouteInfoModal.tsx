@@ -15,6 +15,19 @@ interface RouteInfoModalProps {
   destinationPosition: L.LatLng
   onSpotConfirmed: () => void
   onSpotNotFound: () => void
+  onStartNavigation: () => void
+  isNavigating: boolean
+  spotDetails?: {
+    type: 'public' | 'private'
+    availableSpots?: number
+    totalSpots?: number
+    pricePerHour?: number
+    status?: string
+    expiresAt?: string
+    openingTime?: string
+    closingTime?: string
+    phone?: string
+  }
 }
 
 export default function RouteInfoModal({
@@ -26,7 +39,10 @@ export default function RouteInfoModal({
   userPosition,
   destinationPosition,
   onSpotConfirmed,
-  onSpotNotFound
+  onSpotNotFound,
+  onStartNavigation,
+  isNavigating,
+  spotDetails
 }: RouteInfoModalProps) {
   const [isVisible, setIsVisible] = useState(false)
   const [shouldRender, setShouldRender] = useState(false)
@@ -99,6 +115,28 @@ export default function RouteInfoModal({
     }
   }
 
+  const handleStartNavigation = () => {
+    onStartNavigation()
+    onClose()
+  }
+
+  const formatTime = (time: string | undefined) => {
+    if (!time) return 'Não especificado'
+    return time
+  }
+
+  const formatExpirationTime = (expiresAt: string | undefined) => {
+    if (!expiresAt) return 'Não especificado'
+    const expirationDate = new Date(expiresAt)
+    const now = new Date()
+    const diffInMinutes = Math.floor((expirationDate.getTime() - now.getTime()) / (1000 * 60))
+    
+    if (diffInMinutes < 0) return 'Expirado'
+    if (diffInMinutes < 60) return `${diffInMinutes} minutos`
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} horas`
+    return `${Math.floor(diffInMinutes / 1440)} dias`
+  }
+
   if (!shouldRender) return null
 
   return (
@@ -117,7 +155,7 @@ export default function RouteInfoModal({
               <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                 <span className="text-lg">🚗</span>
               </div>
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900">Rota para Vaga</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">Informações da Vaga</h2>
             </div>
             <button
               onClick={onClose}
@@ -132,12 +170,65 @@ export default function RouteInfoModal({
 
           {/* Content */}
           <div className="space-y-4">
-            {/* Route Info */}
+            {/* Spot Info */}
             <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 p-3 sm:p-4 rounded-lg border border-blue-200/50">
               <h3 className="text-sm sm:text-base font-medium text-gray-900 mb-3 flex items-center">
                 <span className="mr-1.5">🎯</span>
                 {destinationName}
               </h3>
+              
+              {/* Spot Details */}
+              <div className="bg-white/80 p-3 rounded-lg shadow-sm mb-3">
+                <div className="space-y-2">
+                  <p className="flex items-center text-sm">
+                    <span className="font-medium mr-2">Tipo:</span>
+                    <span className="text-gray-700">
+                      {spotDetails?.type === 'public' ? 'Vaga Pública' : 'Estacionamento Privado'}
+                    </span>
+                  </p>
+                  
+                  {spotDetails?.type === 'public' ? (
+                    <>
+                      <p className="flex items-center text-sm">
+                        <span className="font-medium mr-2">Vagas disponíveis:</span>
+                        <span className="text-gray-700">
+                          {spotDetails.availableSpots}/{spotDetails.totalSpots}
+                        </span>
+                      </p>
+                      <p className="flex items-center text-sm">
+                        <span className="font-medium mr-2">Expira em:</span>
+                        <span className="text-gray-700">
+                          {formatExpirationTime(spotDetails.expiresAt)}
+                        </span>
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="flex items-center text-sm">
+                        <span className="font-medium mr-2">Horário:</span>
+                        <span className="text-gray-700">
+                          {formatTime(spotDetails?.openingTime)} - {formatTime(spotDetails?.closingTime)}
+                        </span>
+                      </p>
+                      {spotDetails?.phone && (
+                        <p className="flex items-center text-sm">
+                          <span className="font-medium mr-2">Telefone:</span>
+                          <span className="text-gray-700">{spotDetails.phone}</span>
+                        </p>
+                      )}
+                    </>
+                  )}
+                  
+                  {spotDetails?.pricePerHour && (
+                    <p className="flex items-center text-sm">
+                      <span className="font-medium mr-2">Preço/hora:</span>
+                      <span className="text-gray-700">R$ {spotDetails.pricePerHour.toFixed(2)}</span>
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Route Info */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white/80 p-2 sm:p-3 rounded-lg shadow-sm">
                   <div className="flex items-center space-x-1.5 mb-1">
@@ -155,6 +246,19 @@ export default function RouteInfoModal({
                 </div>
               </div>
             </div>
+
+            {/* Navigation Button */}
+            {!isNavigating && !isNearDestination && (
+              <Button
+                onClick={handleStartNavigation}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 py-4 shadow-lg hover:shadow-xl active:scale-95 flex items-center justify-center group"
+              >
+                <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+                Iniciar Navegação
+              </Button>
+            )}
 
             {/* Confirmation Buttons */}
             {isNearDestination && (

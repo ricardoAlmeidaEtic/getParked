@@ -11,12 +11,20 @@ export interface PublicSpotMarker extends MapMarker {
   total_spots: number
   available_spots: number
   expires_at: string
+  status: string
+  price_per_hour: number
+  address: string
 }
 
 export interface PrivateParkingMarker extends MapMarker {
   type: 'private'
-  price_per_hour: number
-  is_open: boolean
+  parking_id: string
+  parking_name: string
+  available_spots: number
+  opening_time: string | null
+  closing_time: string | null
+  phone: string | null
+  created_at: string
 }
 
 export interface RouteInfo {
