@@ -58,7 +58,7 @@ export function createPrivateParkingPopupContent(marker: PrivateParkingMarker): 
         ` : ''}
       </div>
       <button 
-        onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${marker.latitude},${marker.longitude}', '_blank')"
+        onclick="window.dispatchEvent(new CustomEvent('startNavigation', { detail: { lat: ${marker.latitude}, lng: ${marker.longitude}, name: '${marker.parking_name}' } }))"
         class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
       >
         Navegar até aqui
@@ -81,7 +81,10 @@ export const createPublicSpotPopupContent = (marker: PublicSpotMarker) => {
         <p><strong>Endereço:</strong> ${marker.address}</p>
       </div>
       <div class="popup-footer">
-        <button class="navigate-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${marker.latitude},${marker.longitude}', '_blank')">
+        <button 
+          onclick="window.dispatchEvent(new CustomEvent('startNavigation', { detail: { lat: ${marker.latitude}, lng: ${marker.longitude}, name: '${marker.name}' } }))"
+          class="navigate-btn"
+        >
           Navegar até aqui
         </button>
       </div>
