@@ -155,7 +155,7 @@ export default function RouteInfoModal({
               <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                 <span className="text-lg">🚗</span>
               </div>
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900">Rota para Vaga</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">Informações da Vaga</h2>
             </div>
             <button
               onClick={onClose}
