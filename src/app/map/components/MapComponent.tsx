@@ -23,6 +23,14 @@ interface MapComponentProps {
   onUserPositionChange: (position: L.LatLng) => void
 }
 
+interface RouteInstruction {
+  distance: number;
+  time: number;
+  text: string;
+  type: string;
+  coordinates: [number, number] | null;
+}
+
 export default function MapComponent({
   isCreatingSpot,
   onMarkerPositionChange,
@@ -65,7 +73,7 @@ export default function MapComponent({
     destinationPosition: null,
     isNavigating: false
   })
-  const [routeInstructions, setRouteInstructions] = useState<any[]>([])
+  const [routeInstructions, setRouteInstructions] = useState<RouteInstruction[]>([])
   const [completedInstructions, setCompletedInstructions] = useState<number[]>([])
   const [currentInstructionIndex, setCurrentInstructionIndex] = useState<number>(0)
   const [showRouteModal, setShowRouteModal] = useState(false)
@@ -246,10 +254,10 @@ export default function MapComponent({
       // Mostra um indicador de carregamento
       const loadingToast = showToast.loading('Calculando rota...')
 
-      // Primeiro, ajusta o zoom suavemente para a área da rota
+      // Ajusta o zoom para uma visualização inicial adequada
       const bounds = L.latLngBounds([start, end])
       mapRef.current.fitBounds(bounds, {
-        padding: [50, 50],
+        padding: [100, 100],
         maxZoom: 16,
         animate: true,
         duration: 1
@@ -261,26 +269,15 @@ export default function MapComponent({
       // Cria o controle de rota com instruções
       routeControlRef.current = L.Routing.control({
         waypoints: [start, end],
-        routeWhileDragging: false,
-        showAlternatives: false,
+        routeWhileDragging: true,
+        show: false,
+        addWaypoints: false,
         fitSelectedRoutes: false, // Desativa o ajuste automático
         lineOptions: {
-          styles: [{ color: '#3B82F6', weight: 6, opacity: 0.8 }],
+          styles: [{ color: '#3B82F6', weight: 4 }],
           extendToWaypoints: true,
           missingRouteTolerance: 0
-        },
-        createMarker: () => null,
-        addWaypoints: false,
-        draggableWaypoints: false,
-        routeDragInterval: 200,
-        useZoomParameter: true,
-        show: false,
-        router: L.Routing.osrmv1({
-          serviceUrl: 'https://routing.openstreetmap.de/routed-car/route/v1',
-          timeout: 30000,
-          profile: 'driving',
-          useHints: true
-        })
+        }
       }).addTo(mapRef.current)
 
       // Adiciona evento para quando a rota for calculada
@@ -293,7 +290,6 @@ export default function MapComponent({
           const instructions = route.instructions.map((instruction: any) => {
             let coordinates: [number, number] | null = null;
             
-            // Tenta obter as coordenadas de diferentes formatos possíveis
             if (Array.isArray(instruction.coords) && instruction.coords.length >= 2) {
               coordinates = [instruction.coords[0], instruction.coords[1]];
             } else if (Array.isArray(instruction.coordinates) && instruction.coordinates.length >= 2) {
@@ -309,16 +305,16 @@ export default function MapComponent({
               type: instruction.type,
               coordinates: coordinates
             };
-          }).filter(instruction => instruction.coordinates !== null);
+          }).filter((instruction: RouteInstruction) => instruction.coordinates !== null);
           
           setRouteInstructions(instructions);
           setCompletedInstructions([]);
           setCurrentInstructionIndex(0);
           
-          // Ajusta o zoom novamente com a rota completa
+          // Ajusta o zoom para mostrar toda a rota com margem adequada
           const routeBounds = L.latLngBounds(route.coordinates)
           mapRef.current?.fitBounds(routeBounds, {
-            padding: [50, 50],
+            padding: [100, 100],
             maxZoom: 16,
             animate: true,
             duration: 1
@@ -455,15 +451,12 @@ export default function MapComponent({
     // Inicializa o mapa
     const map = L.map(mapContainerRef.current, {
       zoomControl: false,
-      minZoom: 15,
-      maxZoom: 20,
+      minZoom: 0,
+      maxZoom: 19,
       zoomSnap: 0.5,
       zoomDelta: 0.5,
       wheelDebounceTime: 40,
       preferCanvas: true,
-      updateWhenIdle: true,
-      updateWhenZooming: false,
-      keepBuffer: 2,
       maxBoundsViscosity: 1.0
     }).setView([0, 0], 16)
     mapRef.current = map
@@ -471,13 +464,11 @@ export default function MapComponent({
     // Adiciona o tile layer do OpenStreetMap com configurações otimizadas
     const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 20,
+      maxZoom: 19,
+      minZoom: 0,
       tileSize: 256,
       zoomOffset: 0,
       detectRetina: true,
-      updateWhenIdle: true,
-      updateWhenZooming: false,
-      keepBuffer: 2,
       crossOrigin: true,
       errorTileUrl: 'https://tile.openstreetmap.org/0/0/0.png'
     }).addTo(map)
