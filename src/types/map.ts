@@ -11,6 +11,9 @@ export interface PublicSpotMarker extends MapMarker {
   total_spots: number
   available_spots: number
   expires_at: string
+  status: string
+  price_per_hour: number
+  address: string
 }
 
 export interface PrivateParkingMarker extends MapMarker {
