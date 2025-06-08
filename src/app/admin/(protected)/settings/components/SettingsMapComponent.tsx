@@ -52,8 +52,8 @@ export default function AdminMapComponent({
       
     const map = L.map(mapContainerRef.current, {
       zoomControl: false,
-      minZoom: 15,
-      maxZoom: 20,
+      minZoom: 0,
+      maxZoom: 19,
       zoomSnap: 0.5,
       zoomDelta: 0.5,
       wheelDebounceTime: 40,
@@ -67,7 +67,7 @@ export default function AdminMapComponent({
     // Adiciona o tile layer do OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 20,
+      maxZoom: 19,
       tileSize: 256,
       zoomOffset: 0,
       detectRetina: true,
