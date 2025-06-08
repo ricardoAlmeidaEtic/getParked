@@ -52,6 +52,9 @@ export default function MapComponent({
     destinationName: '',
     destinationPosition: null
   })
+  const [routeInstructions, setRouteInstructions] = useState<any[]>([])
+  const [showRouteModal, setShowRouteModal] = useState(false)
+  const routeControlRef = useRef<L.Routing.Control | null>(null)
 
   // Função para verificar se a posição mudou significativamente
   const hasPositionChangedSignificantly = (newPosition: L.LatLng): boolean => {
@@ -152,44 +155,57 @@ export default function MapComponent({
         routeLineRef.current = null
       }
 
+      if (routeControlRef.current) {
+        mapRef.current.removeControl(routeControlRef.current)
+        routeControlRef.current = null
+      }
+
       // Mostra um indicador de carregamento
       const loadingToast = showToast.loading('Calculando rota...')
 
-      // Cria o controle de rota usando uma abordagem mais simples
-      // @ts-ignore
-      const router = L.Routing.osrmv1({
-        serviceUrl: 'https://routing.openstreetmap.de/routed-car/route/v1',
-        timeout: 30000,
-        profile: 'driving',
-        useHints: true
-      })
+      // Cria o controle de rota com instruções
+      routeControlRef.current = L.Routing.control({
+        waypoints: [start, end],
+        routeWhileDragging: false,
+        showAlternatives: false,
+        fitSelectedRoutes: 'smart',
+        lineOptions: {
+          styles: [{ color: '#3B82F6', weight: 6, opacity: 0.8 }],
+          extendToWaypoints: true,
+          missingRouteTolerance: 0
+        },
+        createMarker: () => null, // Remove os marcadores padrão
+        addWaypoints: false, // Desabilita adição de waypoints
+        draggableWaypoints: false, // Desabilita arrastar waypoints
+        routeDragInterval: 200,
+        useZoomParameter: true,
+        show: false, // Esconde o painel de instruções padrão
+        router: L.Routing.osrmv1({
+          serviceUrl: 'https://routing.openstreetmap.de/routed-car/route/v1',
+          timeout: 30000,
+          profile: 'driving',
+          useHints: true
+        })
+      }).addTo(mapRef.current)
 
-      // Converte os pontos para o formato esperado pelo router
-      const waypoints = [
-        { latLng: start },
-        { latLng: end }
-      ]
-
-      // @ts-ignore
-      router.route(waypoints, (err: any, routes: any) => {
-        if (err) {
-          console.error('Erro ao calcular rota:', err)
-          showToast.error('Erro ao calcular rota')
-          return
-        }
-
+      // Adiciona evento para quando a rota for calculada
+      routeControlRef.current.on('routesfound', (e: any) => {
+        const routes = e.routes
         if (routes && routes.length > 0) {
           const route = routes[0]
           
-          // Cria uma linha poligonal para a rota
-          const routeLine = L.polyline(route.coordinates, {
-            color: '#3B82F6',
-            weight: 6,
-            opacity: 0.8
-          }).addTo(mapRef.current!)
-
+          // Extrai as instruções da rota
+          const instructions = route.instructions.map((instruction: any) => ({
+            distance: Math.round(instruction.distance),
+            time: Math.round(instruction.time / 60),
+            text: instruction.text,
+            type: instruction.type
+          }))
+          
+          setRouteInstructions(instructions)
+          
           // Ajusta o zoom para mostrar toda a rota
-          const bounds = routeLine.getBounds()
+          const bounds = L.latLngBounds(route.coordinates)
           mapRef.current?.fitBounds(bounds, {
             padding: [50, 50],
             maxZoom: 16
@@ -208,8 +224,8 @@ export default function MapComponent({
             destinationPosition: end
           })
 
-          // Armazena a referência da linha da rota
-          routeLineRef.current = routeLine
+          // Inicia o monitoramento da distância até o destino
+          startDestinationMonitoring(end)
         }
       })
 
@@ -220,6 +236,29 @@ export default function MapComponent({
       console.error('Erro ao mostrar rota:', error)
       showToast.error('Erro ao calcular rota')
     }
+  }
+
+  const startDestinationMonitoring = (destination: L.LatLng) => {
+    const checkDistance = () => {
+      if (!userMarkerRef.current) return
+
+      const userPosition = userMarkerRef.current.getLatLng()
+      const distance = userPosition.distanceTo(destination)
+
+      // Se estiver a menos de 100 metros do destino
+      if (distance <= 100) {
+        setShowRouteModal(true)
+      } else {
+        setShowRouteModal(false)
+      }
+    }
+
+    // Verifica a distância a cada segundo
+    const interval = setInterval(checkDistance, 1000)
+    checkDistance() // Verifica imediatamente
+
+    // Limpa o intervalo quando o componente for desmontado
+    return () => clearInterval(interval)
   }
 
   const createPublicSpotMarkerWithRoute = (marker: PublicSpotMarker) => {
@@ -291,6 +330,18 @@ export default function MapComponent({
     L.control.zoom({
       position: 'bottomright'
     }).addTo(map)
+
+    // Adiciona listener para o evento de navegação
+    const handleNavigation = (event: CustomEvent) => {
+      const { lat, lng, name } = event.detail
+      if (userMarkerRef.current && mapRef.current) {
+        const userPosition = userMarkerRef.current.getLatLng()
+        const destinationPosition = L.latLng(lat, lng)
+        showRoute(userPosition, destinationPosition, name)
+      }
+    }
+
+    window.addEventListener('startNavigation', handleNavigation as EventListener)
 
     // Aguarda o mapa carregar completamente
     map.whenReady(() => {
@@ -385,6 +436,7 @@ export default function MapComponent({
       if (positionUpdateTimeoutRef.current) {
         clearTimeout(positionUpdateTimeoutRef.current)
       }
+      window.removeEventListener('startNavigation', handleNavigation as EventListener)
     }
   }, [loadMarkers])
 
@@ -449,11 +501,22 @@ export default function MapComponent({
     }
   }
 
+  const handleRouteModalClose = () => {
+    setRouteInfo(prev => ({ ...prev, isOpen: false }))
+    setShowRouteModal(false)
+    clearRoute()
+  }
+
   const clearRoute = () => {
     if (routeLineRef.current && mapRef.current) {
       mapRef.current.removeLayer(routeLineRef.current)
       routeLineRef.current = null
     }
+    if (routeControlRef.current && mapRef.current) {
+      mapRef.current.removeControl(routeControlRef.current)
+      routeControlRef.current = null
+    }
+    setRouteInstructions([])
     if (selectedMarkerRef.current && selectedMarkerRef.current.options.icon) {
       const originalIcon = L.divIcon({
         className: 'w-6 h-6 bg-yellow-400 rounded-full border-2 border-yellow-600 flex items-center justify-center text-xs font-bold shadow-lg',
@@ -470,19 +533,34 @@ export default function MapComponent({
     }
   }
 
-  const handleRouteModalClose = () => {
-    setRouteInfo(prev => ({ ...prev, isOpen: false }))
-    clearRoute()
-  }
-
   return (
     <>
       <div 
         ref={mapContainerRef} 
         className="absolute inset-0 w-full h-full z-0"
       />
+      {routeInstructions.length > 0 && (
+        <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-sm w-full z-10">
+          <h3 className="text-lg font-semibold mb-2">Instruções de Navegação</h3>
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {routeInstructions.map((instruction, index) => (
+              <div key={index} className="flex items-start space-x-2 p-2 hover:bg-gray-50 rounded">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  {index + 1}
+                </div>
+                <div>
+                  <p className="text-sm text-gray-900">{instruction.text}</p>
+                  <p className="text-xs text-gray-500">
+                    {instruction.distance}m • {instruction.time}min
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <RouteInfoModal
-        isOpen={routeInfo.isOpen}
+        isOpen={routeInfo.isOpen && showRouteModal}
         onClose={handleRouteModalClose}
         distance={routeInfo.distance}
         duration={routeInfo.duration}
