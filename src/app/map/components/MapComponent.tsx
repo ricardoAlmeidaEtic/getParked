@@ -85,69 +85,45 @@ export default function MapComponent({
       const publicMarkers = await getPublicSpotMarkers()
       console.log('Carregando marcadores públicos:', publicMarkers)
       
+      // Carrega marcadores privados
+      const privateMarkers = await getPrivateParkingMarkers()
+      console.log('Carregando marcadores privados:', privateMarkers)
+      
       if (mapRef.current) {
         // Aguarda o próximo ciclo do event loop para garantir que o DOM esteja pronto
         await new Promise(resolve => setTimeout(resolve, 0))
         
-        // Atualiza ou adiciona marcadores públicos
+        // Remove todos os marcadores existentes
+        markersRef.current.forEach(marker => {
+          marker.remove()
+        })
+        markersRef.current.clear()
+        
+        // Adiciona os marcadores públicos
         for (const marker of publicMarkers) {
           try {
-            const markerId = `${marker.latitude}-${marker.longitude}`
-            const existingMarker = markersRef.current.get(markerId)
-
-            if (existingMarker) {
-              // Atualiza o marcador existente
-              existingMarker.setLatLng([marker.latitude, marker.longitude])
-              existingMarker.setPopupContent(createPublicSpotPopupContent(marker))
-            } else {
-              // Cria um novo marcador
-              const markerInstance = createPublicSpotMarkerWithRoute(marker)
-              if (mapRef.current) {
-                markerInstance.addTo(mapRef.current)
-                markersRef.current.set(markerId, markerInstance)
-              }
+            const markerInstance = createPublicSpotMarkerWithRoute(marker)
+            if (mapRef.current) {
+              markerInstance.addTo(mapRef.current)
+              markersRef.current.set(`${marker.latitude}-${marker.longitude}`, markerInstance)
             }
           } catch (error) {
-            console.error('Erro ao adicionar marcador:', error)
+            console.error('Erro ao adicionar marcador público:', error)
           }
         }
 
-        // Carrega marcadores privados
-        const privateMarkers = await getPrivateParkingMarkers()
+        // Adiciona os marcadores privados
         for (const marker of privateMarkers) {
           try {
-            const markerId = `private-${marker.latitude}-${marker.longitude}`
-            const existingMarker = markersRef.current.get(markerId)
-
-            if (existingMarker) {
-              // Atualiza o marcador existente
-              existingMarker.setLatLng([marker.latitude, marker.longitude])
-              existingMarker.setPopupContent(createPrivateParkingPopupContent(marker))
-            } else {
-              // Cria um novo marcador
-              const markerInstance = createPrivateParkingMarker(marker)
-              if (mapRef.current) {
-                markerInstance.addTo(mapRef.current)
-                markersRef.current.set(markerId, markerInstance)
-              }
+            const markerInstance = createPrivateParkingMarker(marker)
+            if (mapRef.current) {
+              markerInstance.addTo(mapRef.current)
+              markersRef.current.set(`private-${marker.latitude}-${marker.longitude}`, markerInstance)
             }
           } catch (error) {
             console.error('Erro ao adicionar marcador privado:', error)
           }
         }
-
-        // Remove marcadores que não existem mais
-        const currentMarkerIds = new Set([
-          ...publicMarkers.map(m => `${m.latitude}-${m.longitude}`),
-          ...privateMarkers.map(m => `private-${m.latitude}-${m.longitude}`)
-        ])
-
-        markersRef.current.forEach((marker, id) => {
-          if (!currentMarkerIds.has(id)) {
-            marker.remove()
-            markersRef.current.delete(id)
-          }
-        })
       }
     } catch (error) {
       console.error('Erro ao carregar marcadores:', error)
