@@ -73,13 +73,16 @@ export default function HeroSection() {
         <div>
           <FadeIn direction="right" duration={800} delay={200}>
             <div className="relative">
-              <div className="relative z-10 rounded-lg overflow-hidden shadow-2xl transform transition-transform duration-500 hover:scale-105">
-                <Image
-                  src="/mapaimg.png"
-                  alt="GetParked App"
-                  width={800}
-                  height={600}
-                  className="w-full h-auto"
+
+              <div className="relative z-10 rounded-lg overflow-hidden shadow-2xl transform transition-transform duration-500 hover:scale-105 aspect-video">
+                <video
+                  src="/mapa-video.mp4"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-cover"
+                  poster="/mapaimg.png"
                 />
               </div>
               <div className="absolute -bottom-6 -right-6 w-48 h-48 bg-primary rounded-full z-0 animate-pulse"></div>
