@@ -13,7 +13,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card"
 import FadeIn from "@/components/animations/fade-in"
 import AuthHeader from "@/components/auth/auth-header"
-import SocialLogin from "@/components/auth/social-login"
 import Link from "next/link"
 import { showToast } from "@/lib/toast"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -47,7 +46,7 @@ export default function SignInPage() {
         throw new Error('Usuário não encontrado')
       }
 
-      // Check user role BEFORE showing success
+      // Check user role and validate client access only
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role')
@@ -60,13 +59,11 @@ export default function SignInPage() {
         throw new Error('Erro ao verificar permissões')
       }
 
-      if (!profile || profile.role !== 'client') {
-        console.log('User does not have client role:', profile?.role)
+      if (profile?.role !== 'client' && profile?.role) {
         await supabase.auth.signOut()
-        throw new Error('Acesso restrito a clientes. Use /admin/login para administradores.')
+        throw new Error('Tipo de conta não reconhecido.')
       }
 
-      // Only show success if role check passes
       showToast.success('Login realizado com sucesso!')
       router.push('/map')
     } catch (error) {

@@ -12,35 +12,12 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Redirect if already logged in - check for parking first
+  // Redirect if already logged in (AdminSupabaseProvider handles all validation)
   useEffect(() => {
-    const checkUserAndParking = async () => {
-      if (user && !authLoading) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-
-        if (profile?.role === 'owner') {
-          const { data: parking } = await supabase
-            .from('parkings')
-            .select('*')
-            .eq('owner_id', user.id)
-            .single();
-
-          if (!parking) {
-            router.push('/admin/register_park');
-            return;
-          }
-        }
-
-        router.push('/admin/dashboard');
-      }
-    };
-
-    checkUserAndParking();
-  }, [user, authLoading, router, supabase]);
+    if (user && !authLoading) {
+      router.push('/admin/dashboard');
+    }
+  }, [user, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

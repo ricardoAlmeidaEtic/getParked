@@ -40,7 +40,8 @@ export default function AdminRegister() {
             full_name: name,
             role: 'owner',
             is_admin: true
-          }
+          },
+          emailRedirectTo: `${window.location.origin}/admin/login`
         }
       });
   
