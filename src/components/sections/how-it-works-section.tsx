@@ -62,25 +62,17 @@ export default function HowItWorksSection() {
         <FadeIn direction="up" delay={400}>
           <div className="mt-16 text-center">
             <div className="relative mx-auto max-w-4xl rounded-xl overflow-hidden shadow-2xl">
-              <Image
-                src="/mapaimg.png"
-                alt="GetParked App Demo"
-                width={1200}
-                height={600}
-                className="w-full h-auto"
+              <video
+                src="/mapa-video.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-auto rounded-xl shadow-2xl"
+                poster="/mapaimg.png"
               />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Button
-                  size="lg"
-                  className="rounded-full w-16 h-16 flex items-center justify-center transition-transform duration-300 hover:scale-110"
-                >
-                  <svg className="h-8 w-8" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                </Button>
-              </div>
             </div>
-          </div>
+            </div>
         </FadeIn>
       </div>
     </section>
