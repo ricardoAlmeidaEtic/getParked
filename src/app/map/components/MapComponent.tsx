@@ -272,7 +272,7 @@ export default function MapComponent({
         routeWhileDragging: true,
         show: false,
         addWaypoints: false,
-        fitSelectedRoutes: false, // Desativa o ajuste automático
+        fitSelectedRoutes: false,
         lineOptions: {
           styles: [{ color: '#3B82F6', weight: 4 }],
           extendToWaypoints: true,
@@ -668,42 +668,125 @@ export default function MapComponent({
   const startNavigation = () => {
     if (!routeInfo.destinationPosition || !userMarkerRef.current) return;
 
-    setRouteInfo(prev => ({ ...prev, isNavigating: true }));
-    setShowRouteModal(true); // Garante que o modal de direções seja exibido
-    startDestinationMonitoring(routeInfo.destinationPosition);
+    try {
+      // Atualiza o estado para iniciar navegação
+      setRouteInfo(prev => ({ ...prev, isNavigating: true }));
+      setShowRouteModal(true);
+      
+      // Garante que a rota está visível
+      if (mapRef.current) {
+        // Ajusta o zoom para uma visualização adequada da rota
+        const bounds = L.latLngBounds([
+          userMarkerRef.current.getLatLng(),
+          routeInfo.destinationPosition
+        ]);
+        
+        mapRef.current.fitBounds(bounds, {
+          padding: [100, 100],
+          maxZoom: 16,
+          animate: true,
+          duration: 1
+        });
+
+        // Remove o controle de rota anterior se existir
+        if (routeControlRef.current) {
+          try {
+            mapRef.current.removeControl(routeControlRef.current);
+          } catch (error) {
+            console.warn('Erro ao remover controle de rota anterior:', error);
+          }
+          routeControlRef.current = null;
+        }
+
+        // Aguarda um momento antes de criar o novo controle
+        setTimeout(() => {
+          if (!mapRef.current) return;
+
+          // Cria um novo controle de rota
+          const routingControl = L.Routing.control({
+            waypoints: [
+              userMarkerRef.current!.getLatLng(),
+              routeInfo.destinationPosition
+            ],
+            routeWhileDragging: false,
+            show: false,
+            addWaypoints: false,
+            fitSelectedRoutes: false,
+            lineOptions: {
+              styles: [{ color: '#3B82F6', weight: 4 }],
+              extendToWaypoints: true,
+              missingRouteTolerance: 0
+            },
+            createMarker: () => null // Desativa a criação de marcadores
+          });
+
+          // Adiciona o controle ao mapa
+          routingControl.addTo(mapRef.current);
+          routeControlRef.current = routingControl;
+
+          // Adiciona evento para quando a rota for calculada
+          routingControl.on('routesfound', (e: any) => {
+            const routes = e.routes;
+            if (routes && routes.length > 0) {
+              const route = routes[0];
+              
+              // Extrai as instruções da rota
+              const instructions = route.instructions.map((instruction: any) => {
+                let coordinates: [number, number] | null = null;
+                
+                if (Array.isArray(instruction.coords) && instruction.coords.length >= 2) {
+                  coordinates = [instruction.coords[0], instruction.coords[1]];
+                } else if (Array.isArray(instruction.coordinates) && instruction.coordinates.length >= 2) {
+                  coordinates = [instruction.coordinates[0], instruction.coordinates[1]];
+                } else if (typeof instruction.lat === 'number' && typeof instruction.lng === 'number') {
+                  coordinates = [instruction.lat, instruction.lng];
+                }
+
+                return {
+                  distance: Math.round(instruction.distance),
+                  time: Math.round(instruction.time / 60),
+                  text: instruction.text,
+                  type: instruction.type,
+                  coordinates: coordinates
+                };
+              }).filter((instruction: RouteInstruction) => instruction.coordinates !== null);
+              
+              setRouteInstructions(instructions);
+              setCompletedInstructions([]);
+              setCurrentInstructionIndex(0);
+            }
+          });
+        }, 100);
+      }
+      
+      // Inicia o monitoramento do destino
+      startDestinationMonitoring(routeInfo.destinationPosition);
+      
+    } catch (error) {
+      console.error('Erro ao iniciar navegação:', error);
+      showToast.error('Erro ao iniciar navegação');
+    }
   };
 
   const handleRouteModalClose = () => {
     setRouteInfo(prev => ({ ...prev, isOpen: false, isNavigating: false }));
     setShowRouteModal(false);
-    clearRoute();
-  };
-
-  const clearRoute = () => {
-    if (routeLineRef.current && mapRef.current) {
-      mapRef.current.removeLayer(routeLineRef.current)
-      routeLineRef.current = null
-    }
+    
+    // Remove o controle de rota
     if (routeControlRef.current && mapRef.current) {
-      mapRef.current.removeControl(routeControlRef.current)
-      routeControlRef.current = null
+      try {
+        mapRef.current.removeControl(routeControlRef.current);
+      } catch (error) {
+        console.warn('Erro ao remover controle de rota:', error);
+      }
+      routeControlRef.current = null;
     }
-    setRouteInstructions([])
-    if (selectedMarkerRef.current && selectedMarkerRef.current.options.icon) {
-      const originalIcon = L.divIcon({
-        className: 'w-6 h-6 bg-yellow-400 rounded-full border-2 border-yellow-600 flex items-center justify-center text-xs font-bold shadow-lg',
-        html: `
-          <div class="w-full h-full flex items-center justify-center">
-            P
-          </div>
-        `,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12],
-      })
-      selectedMarkerRef.current.setIcon(originalIcon)
-      selectedMarkerRef.current = null
-    }
-  }
+    
+    // Limpa as instruções
+    setRouteInstructions([]);
+    setCompletedInstructions([]);
+    setCurrentInstructionIndex(0);
+  };
 
   return (
     <>
@@ -711,10 +794,10 @@ export default function MapComponent({
         ref={mapContainerRef} 
         className="absolute inset-0 w-full h-full z-0"
       />
-      {routeInstructions.length > 0 && routeInfo.isNavigating && showRouteModal && (
-        <div className="absolute bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-sm w-full z-10">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-lg font-semibold">Instruções de Navegação</h3>
+      {routeInfo.isNavigating && showRouteModal && (
+        <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-sm w-[calc(100%-2rem)] z-[1000]">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Instruções de Navegação</h3>
             <button
               onClick={handleRouteModalClose}
               className="text-gray-400 hover:text-gray-600 transition-colors p-1.5 hover:bg-gray-100 rounded-full"
@@ -725,7 +808,7 @@ export default function MapComponent({
               </svg>
             </button>
           </div>
-          <div className="space-y-2 max-h-96 overflow-y-auto">
+          <div className="space-y-2 max-h-[60vh] overflow-y-auto">
             {routeInstructions.map((instruction, index) => (
               <div 
                 key={index} 
@@ -733,7 +816,7 @@ export default function MapComponent({
                   completedInstructions.includes(index) 
                     ? 'bg-green-50' 
                     : index === currentInstructionIndex 
-                      ? 'bg-blue-50' 
+                      ? 'bg-blue-50 border-l-4 border-blue-500' 
                       : 'hover:bg-gray-50'
                 }`}
               >
