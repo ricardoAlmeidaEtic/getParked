@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -37,6 +37,17 @@ export function ReservationModal({
     end_time: '',
     vehicle_id: ''
   })
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        start_time: '',
+        end_time: '',
+        vehicle_id: ''
+      })
+    }
+  }, [isOpen])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -157,6 +168,7 @@ export function ReservationModal({
                 value={formData.start_time}
                 onChange={handleInputChange}
                 required
+                min={new Date().toISOString().slice(0, 16)}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -171,6 +183,7 @@ export function ReservationModal({
                 value={formData.end_time}
                 onChange={handleInputChange}
                 required
+                min={formData.start_time || new Date().toISOString().slice(0, 16)}
               />
             </div>
           </div>
