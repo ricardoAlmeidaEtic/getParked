@@ -5,6 +5,7 @@ import '@/styles/globals.css'
 import { SupabaseProvider } from '@/providers/SupabaseProvider'
 import ProtectedRoute from '@/components/auth/protected-route'
 import Navbar from '@/components/layout/navbar'
+import { CookieConsent } from "@/components/ui/cookie-consent"
 
 const poppins = Poppins({ 
   weight: ['400', '500', '600', '700'],
@@ -54,6 +55,7 @@ export default function RootLayout({
               {children}
             </AppLayout>
           </ProtectedRoute>
+          <CookieConsent />
         </SupabaseProvider>
       </body>
     </html>
