@@ -15,7 +15,11 @@ const publicRoutes = [
   "/auth/signin",
   "/auth/signup", 
   "/auth/forgot-password",
-  "/auth/reset-password"
+  "/auth/reset-password",
+  // Páginas de políticas (acesso público)
+  "/politica-de-cookies",
+  "/politica-de-privacidade",
+  "/termos-de-uso",
 ]
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
