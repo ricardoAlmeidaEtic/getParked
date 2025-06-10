@@ -1,6 +1,5 @@
 import L from 'leaflet'
 import { PublicSpotMarker, PrivateParkingMarker } from '@/types/map'
-import { createPublicSpotPopupContent, createPrivateParkingPopupContent } from '../modals/popup-content'
 
 export function createPublicSpotMarker(marker: PublicSpotMarker): L.Marker {
   const icon = L.divIcon({
@@ -16,9 +15,13 @@ export function createPublicSpotMarker(marker: PublicSpotMarker): L.Marker {
 
   const markerInstance = L.marker([marker.latitude, marker.longitude], { icon })
   
-  markerInstance.bindPopup(createPublicSpotPopupContent(marker), {
-    maxWidth: 300,
-    className: 'custom-popup'
+  markerInstance.on('click', () => {
+    window.dispatchEvent(new CustomEvent('showRouteInfo', {
+      detail: {
+        type: 'public',
+        marker: marker
+      }
+    }))
   })
 
   return markerInstance
@@ -43,11 +46,16 @@ export function createPrivateParkingMarker(marker: PrivateParkingMarker, isPremi
   const markerInstance = L.marker([marker.latitude, marker.longitude], { icon })
   console.log('Instância do marcador criada:', markerInstance)
   
-  markerInstance.bindPopup(createPrivateParkingPopupContent(marker, isPremium), {
-    maxWidth: 300,
-    className: 'custom-popup'
+  markerInstance.on('click', () => {
+    window.dispatchEvent(new CustomEvent('showRouteInfo', {
+      detail: {
+        type: 'private',
+        marker: marker,
+        isPremium: isPremium
+      }
+    }))
   })
 
-  console.log('Popup vinculado ao marcador')
+  console.log('Evento de clique vinculado ao marcador')
   return markerInstance
 } 
