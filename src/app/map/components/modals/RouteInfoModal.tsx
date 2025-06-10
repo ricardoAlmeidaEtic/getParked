@@ -31,6 +31,7 @@ interface RouteInfoModalProps {
     closingTime?: string
     phone?: string
     parkingId?: string
+    parking_id?: string
   }
 }
 
@@ -144,10 +145,29 @@ export default function RouteInfoModal({
   }
 
   const handleOpenReservationModal = () => {
-    if (!profile || profile.plan !== 'Premium') {
+    console.log('Tentando abrir modal de reserva:', {
+      profile,
+      spotDetails,
+      parkingId: spotDetails?.parkingId,
+      parking_id: spotDetails?.parking_id
+    })
+
+    if (!profile) {
+      showToast.error('Você precisa estar logado para fazer reservas')
+      return
+    }
+
+    if (profile.plan !== 'Premium') {
       showToast.error('Você precisa ter o plano Premium para fazer reservas')
       return
     }
+
+    if (!spotDetails?.parkingId && !spotDetails?.parking_id) {
+      console.error('Erro: parkingId não encontrado em spotDetails:', spotDetails)
+      showToast.error('Erro ao identificar o estacionamento')
+      return
+    }
+
     setIsReservationModalOpen(true)
   }
 
@@ -329,11 +349,11 @@ export default function RouteInfoModal({
       </div>
 
       {/* Reservation Modal */}
-      {isReservationModalOpen && spotDetails?.parkingId && (
+      {isReservationModalOpen && (spotDetails?.parkingId || spotDetails?.parking_id) && (
         <ReservationModal
           isOpen={isReservationModalOpen}
           onClose={() => setIsReservationModalOpen(false)}
-          parkingId={spotDetails.parkingId}
+          parkingId={spotDetails?.parkingId || spotDetails?.parking_id || ''}
           parkingName={destinationName}
           onReservationComplete={() => {
             setIsReservationModalOpen(false)
