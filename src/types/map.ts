@@ -30,20 +30,29 @@ export interface PublicSpotMarker {
 }
 
 export interface PrivateParkingMarker {
-  id: string
   parking_id: string
   parking_name: string
   latitude: number
   longitude: number
   available_spots: number
-  opening_time: string | null
-  closing_time: string | null
-  phone: string | null
-  created_at: string
+  total_spots: number
+  price_per_hour: number
+  is_open: boolean
+  opening_time?: string
+  closing_time?: string
+  phone?: string
 }
 
 export interface RouteInfo {
   duration: number // em minutos
   distance: number // em quilômetros
   waypoints: [number, number][] // array de [latitude, longitude]
+}
+
+export interface RouteInstruction {
+  distance: number
+  time: number
+  text: string
+  type: string
+  coordinates: [number, number] | null
 } 
