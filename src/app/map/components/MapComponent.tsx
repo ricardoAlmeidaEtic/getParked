@@ -11,7 +11,6 @@ import { PublicSpotCreator } from '@/app/map/components/creators'
 import { PublicSpotMarker, PrivateParkingMarker } from '@/types/map'
 import { getRoute, decodePolyline } from '@/services/graphhopper'
 import RouteInfoModal from './modals/RouteInfoModal'
-import { createPublicSpotPopupContent, createPrivateParkingPopupContent } from './modals/popup-content'
 import { ReservationModal } from './modals/ReservationModal'
 import { useProfile } from '@/hooks/useProfile'
 
