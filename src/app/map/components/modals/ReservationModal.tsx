@@ -84,47 +84,54 @@ export function ReservationModal({
         .eq('parking_id', parkingId)
         .single()
 
-      if (parkingError) throw parkingError
-      if (!parking || parking.available_spots <= 0) {
+      if (parkingError) {
+        console.error('Erro ao buscar estacionamento:', parkingError)
+        throw parkingError
+      }
+
+      console.log('Dados do estacionamento:', parking)
+
+      if (!parking) {
+        showToast.error('Estacionamento não encontrado')
+        return
+      }
+
+      if (parking.available_spots <= 0) {
         showToast.error('Não há vagas disponíveis neste momento')
         return
       }
 
-      // Busca uma vaga disponível e a marca como ocupada
-      const { data: spot, error: spotError } = await supabase
-        .from('private_spots')
+      // Cria uma nova vaga
+      const { data: newSpot, error: createSpotError } = await supabase
+        .from('spots')
+        .insert({
+          parking_id: parkingId,
+          is_available: false,
+          is_reserved: true
+        })
         .select('id')
-        .eq('parking_id', parkingId)
-        .eq('is_occupied', false)
-        .limit(1)
         .single()
 
-      if (spotError) throw spotError
-      if (!spot) {
-        showToast.error('Não foi possível encontrar uma vaga disponível')
-        return
+      if (createSpotError) {
+        console.error('Erro ao criar vaga:', createSpotError)
+        throw createSpotError
       }
-
-      // Atualiza o status da vaga para ocupada
-      const { error: updateSpotError } = await supabase
-        .from('private_spots')
-        .update({ is_occupied: true })
-        .eq('id', spot.id)
-
-      if (updateSpotError) throw updateSpotError
 
       // Cria a reserva
       const { error: reservationError } = await supabase
         .from('reservations')
         .insert({
           client_id: user.id,
-          private_spot_id: spot.id,
+          spot_id: newSpot.id,
           start_time: formData.start_time,
           end_time: formData.end_time,
           status: 'confirmed'
         })
 
-      if (reservationError) throw reservationError
+      if (reservationError) {
+        console.error('Erro ao criar reserva:', reservationError)
+        throw reservationError
+      }
 
       // Atualiza o número de vagas disponíveis
       const { error: updateError } = await supabase
@@ -132,7 +139,10 @@ export function ReservationModal({
         .update({ available_spots: parking.available_spots - 1 })
         .eq('parking_id', parkingId)
 
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error('Erro ao atualizar vagas disponíveis:', updateError)
+        throw updateError
+      }
 
       showToast.success('Reserva realizada com sucesso!')
       onReservationComplete()
