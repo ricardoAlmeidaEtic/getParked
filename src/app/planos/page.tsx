@@ -306,30 +306,28 @@ export default function PlanosPage() {
                     {renderPlanFeatures(plan)}
                   </CardContent>
                   <CardFooter>
-                    <Button
-                      variant={plan.name === "Free" ? "outline" : "default"}
-                      className={`w-full ${
-                        plan.name === "Free"
-                          ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-800 hover:border-green-300"
-                          : "group relative overflow-hidden"
-                      }`}
-                      onClick={() => handleSubscribe(plan.name, "Mensal", plan.price)}
-                      disabled={profile?.plan === plan.name}
-                    >
-                      {profile?.plan === plan.name ? (
-                        <>
-                          <CheckCircle2 className="mr-2 h-4 w-4" />
-                          Plano Atual
-                        </>
-                      ) : (
-                        <>
-                          <span className="flex items-center transition-transform duration-300 group-hover:-translate-x-2">
-                            Assinar Agora
-                          </span>
-                          <ArrowRight className="absolute right-4 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:right-6" />
-                        </>
-                      )}
-                    </Button>
+                    {(plan.name !== "Free" && plan.name !== "Gratuito") && (
+                      <Button
+                        variant={plan.name === "Premium" ? "default" : "outline"}
+                        className="w-full group relative overflow-hidden"
+                        onClick={() => handleSubscribe(plan.name, "Mensal", plan.price)}
+                        disabled={profile?.plan === plan.name}
+                      >
+                        {profile?.plan === plan.name ? (
+                          <>
+                            <CheckCircle2 className="mr-2 h-4 w-4" />
+                            Plano Atual
+                          </>
+                        ) : (
+                          <>
+                            <span className="flex items-center transition-transform duration-300 group-hover:-translate-x-2">
+                              Assinar Agora
+                            </span>
+                            <ArrowRight className="absolute right-4 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:right-6" />
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </CardFooter>
                 </Card>
               ))}
@@ -365,30 +363,28 @@ export default function PlanosPage() {
                     {renderPlanFeatures(plan)}
                   </CardContent>
                   <CardFooter>
-                    <Button
-                      variant={plan.name === "Free" ? "outline" : "default"}
-                      className={`w-full ${
-                        plan.name === "Free"
-                          ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-800 hover:border-green-300"
-                          : "group relative overflow-hidden"
-                      }`}
-                      onClick={() => handleSubscribe(plan.name, "Anual", plan.price)}
-                      disabled={profile?.plan === plan.name}
-                    >
-                      {profile?.plan === plan.name ? (
-                        <>
-                          <CheckCircle2 className="mr-2 h-4 w-4" />
-                          Plano Atual
-                        </>
-                      ) : (
-                        <>
-                          <span className="flex items-center transition-transform duration-300 group-hover:-translate-x-2">
-                            Assinar Agora
-                          </span>
-                          <ArrowRight className="absolute right-4 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:right-6" />
-                        </>
-                      )}
-                    </Button>
+                    {(plan.name !== "Free" && plan.name !== "Gratuito") && (
+                      <Button
+                        variant={plan.name === "Premium" ? "default" : "outline"}
+                        className="w-full group relative overflow-hidden"
+                        onClick={() => handleSubscribe(plan.name, "Anual", plan.price)}
+                        disabled={profile?.plan === plan.name}
+                      >
+                        {profile?.plan === plan.name ? (
+                          <>
+                            <CheckCircle2 className="mr-2 h-4 w-4" />
+                            Plano Atual
+                          </>
+                        ) : (
+                          <>
+                            <span className="flex items-center transition-transform duration-300 group-hover:-translate-x-2">
+                              Assinar Agora
+                            </span>
+                            <ArrowRight className="absolute right-4 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:right-6" />
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </CardFooter>
                 </Card>
               ))}
@@ -412,7 +408,7 @@ export default function PlanosPage() {
         </div>
       </div>
 
-      {selectedPlanData && (
+      {selectedPlanData && showPaymentModal && (
         <PaymentModal
           isOpen={showPaymentModal}
           onClose={() => setShowPaymentModal(false)}

@@ -157,18 +157,20 @@ export default function PricingSection() {
           </div>
         </CardContent>
         <div className="p-6 pt-0">
-          <Button
-            variant={isPopular ? "default" : "outline"}
-            className={`w-full group relative overflow-hidden ${
-              plan.name === "Free"
-                ? "bg-primary text-primary-foreground hover:bg-primary-hover"
-                : "bg-primary text-primary-foreground hover:bg-primary-hover"
-            }`}
-          >
-            <Link href="/auth/signup" className="flex items-center justify-center w-full">
-              {plan.name === "Free" ? "Começar Grátis" : "Assinar Agora"}
-            </Link>
-          </Button>
+          {(plan.name !== "Free" && plan.name !== "Gratuito") && (
+            <Button
+              variant={isPopular ? "default" : "outline"}
+              className={`w-full group relative overflow-hidden ${
+                isPopular
+                  ? "bg-primary text-primary-foreground hover:bg-primary-hover"
+                  : "bg-primary text-primary-foreground hover:bg-primary-hover"
+              }`}
+            >
+              <Link href="/auth/signup" className="flex items-center justify-center w-full">
+                Assinar Agora
+              </Link>
+            </Button>
+          )}
         </div>
       </Card>
     )
