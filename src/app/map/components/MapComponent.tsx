@@ -66,6 +66,7 @@ export default function MapComponent({
       openingTime?: string
       closingTime?: string
       phone?: string
+      parkingId?: string
     }
   }>({
     isOpen: false,
@@ -116,6 +117,12 @@ export default function MapComponent({
         const userPosition = userMarkerRef.current.getLatLng()
         const markerPosition = markerInstance.getLatLng()
         
+        console.log('Marcador privado clicado:', {
+          marker,
+          parking_id: marker.parking_id,
+          position: markerPosition
+        })
+        
         // Remove seleção anterior
         if (selectedMarkerRef.current && markerInstance.options.icon) {
           selectedMarkerRef.current.setIcon(markerInstance.options.icon)
@@ -142,7 +149,8 @@ export default function MapComponent({
           availableSpots: marker.available_spots,
           openingTime: marker.opening_time,
           closingTime: marker.closing_time,
-          phone: marker.phone
+          phone: marker.phone,
+          parking_id: marker.parking_id
         })
       }
     })
@@ -239,8 +247,10 @@ export default function MapComponent({
     return () => clearTimeout(timer)
   }, [onMarkerCreated, loadMarkers])
 
-  const showRoute = async (start: L.LatLng, end: L.LatLng, destinationName: string, spotDetails?: any) => {
+  const showRoute = async (userPosition: L.LatLng, markerPosition: L.LatLng, destinationName: string, spotDetails?: any) => {
     if (!mapRef.current) return
+
+    console.log('Iniciando showRoute com spotDetails:', spotDetails)
 
     try {
       // Remove rota anterior se existir
@@ -258,7 +268,7 @@ export default function MapComponent({
       const loadingToast = showToast.loading('Calculando rota...')
 
       // Ajusta o zoom para uma visualização inicial adequada
-      const bounds = L.latLngBounds([start, end])
+      const bounds = L.latLngBounds([userPosition, markerPosition])
       mapRef.current.fitBounds(bounds, {
         padding: [100, 100],
         maxZoom: 16,
@@ -271,7 +281,7 @@ export default function MapComponent({
 
       // Cria o controle de rota com instruções
       routeControlRef.current = L.Routing.control({
-        waypoints: [start, end],
+        waypoints: [userPosition, markerPosition],
         routeWhileDragging: true,
         show: false,
         addWaypoints: false,
@@ -328,21 +338,31 @@ export default function MapComponent({
           const duration = Math.round(route.summary.totalTime / 60)
           
           // Atualiza o estado do modal de rota
+          const updatedSpotDetails = {
+            ...spotDetails,
+            parkingId: spotDetails?.type === 'private' ? spotDetails.parking_id : undefined
+          }
+
+          console.log('Atualizando RouteInfo com spotDetails:', {
+            original: spotDetails,
+            updated: updatedSpotDetails,
+            parkingId: updatedSpotDetails.parkingId
+          })
+
           setRouteInfo({
             isOpen: true,
             distance,
             duration,
             destinationName,
-            destinationPosition: end,
+            destinationPosition: markerPosition,
             isNavigating: false,
-            spotDetails
+            spotDetails: updatedSpotDetails
           })
 
           // Remove o indicador de carregamento
           showToast.dismiss(loadingToast)
         }
       })
-
     } catch (error) {
       console.error('Erro ao mostrar rota:', error)
       showToast.error('Erro ao calcular rota')
