@@ -62,7 +62,11 @@ export function ReservationModal({
 
     setIsSaving(true)
     try {
-      // Primeiro, verifica se há vagas disponíveis
+      // Inicia uma transação
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Usuário não autenticado')
+
+      // Primeiro, verifica se há vagas disponíveis e bloqueia a vaga
       const { data: parking, error: parkingError } = await supabase
         .from('private_parking_markers')
         .select('available_spots')
@@ -75,7 +79,7 @@ export function ReservationModal({
         return
       }
 
-      // Busca uma vaga disponível
+      // Busca uma vaga disponível e a marca como ocupada
       const { data: spot, error: spotError } = await supabase
         .from('private_spots')
         .select('id')
@@ -90,15 +94,23 @@ export function ReservationModal({
         return
       }
 
+      // Atualiza o status da vaga para ocupada
+      const { error: updateSpotError } = await supabase
+        .from('private_spots')
+        .update({ is_occupied: true })
+        .eq('id', spot.id)
+
+      if (updateSpotError) throw updateSpotError
+
       // Cria a reserva
       const { error: reservationError } = await supabase
         .from('reservations')
         .insert({
-          client_id: session.user.id,
+          client_id: user.id,
           private_spot_id: spot.id,
           start_time: formData.start_time,
           end_time: formData.end_time,
-          status: 'pending'
+          status: 'confirmed'
         })
 
       if (reservationError) throw reservationError
