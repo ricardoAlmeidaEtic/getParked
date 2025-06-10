@@ -11,58 +11,67 @@ const formatExpirationTime = (expiresAt: string) => {
   return `${Math.floor(diffInMinutes / 1440)} dias`
 }
 
-export function createPrivateParkingPopupContent(marker: PrivateParkingMarker): string {
-  // Verifica se o estacionamento está aberto baseado no horário atual
+const formatTime = (time: string | null) => {
+  if (!time) return 'Não especificado'
+  return time
+}
+
+const isParkingOpen = (openingTime: string | null, closingTime: string | null) => {
   const now = new Date()
   const currentTime = now.getHours() * 60 + now.getMinutes()
   
-  const openingMinutes = marker.opening_time 
-    ? parseInt(marker.opening_time.split(':')[0]) * 60 + parseInt(marker.opening_time.split(':')[1])
+  const openingMinutes = openingTime 
+    ? parseInt(openingTime.split(':')[0]) * 60 + parseInt(openingTime.split(':')[1])
     : null
-  const closingMinutes = marker.closing_time
-    ? parseInt(marker.closing_time.split(':')[0]) * 60 + parseInt(marker.closing_time.split(':')[1])
+  const closingMinutes = closingTime
+    ? parseInt(closingTime.split(':')[0]) * 60 + parseInt(closingTime.split(':')[1])
     : null
   
-  const isOpen = openingMinutes !== null && closingMinutes !== null
+  return openingMinutes !== null && closingMinutes !== null
     ? currentTime >= openingMinutes && currentTime <= closingMinutes
     : true
+}
 
-  const formatTime = (time: string | null) => {
-    if (!time) return 'Não especificado'
-    return time
-  }
+export function createPrivateParkingPopupContent(marker: PrivateParkingMarker, isPremium: boolean = false) {
+  const isOpen = isParkingOpen(marker.opening_time, marker.closing_time)
+  const status = isOpen ? 'Aberto' : 'Fechado'
+  const statusColor = isOpen ? 'text-green-500' : 'text-red-500'
 
   return `
     <div class="p-4">
       <h3 class="text-lg font-semibold mb-2">${marker.parking_name}</h3>
-      <div class="space-y-2">
-        <p class="flex items-center text-sm">
-          <span class="font-medium mr-2">Status:</span>
-          <span class="${isOpen ? 'text-green-600' : 'text-red-600'} font-medium">
-            ${isOpen ? 'Aberto' : 'Fechado'}
-          </span>
-        </p>
-        <p class="flex items-center text-sm">
-          <span class="font-medium mr-2">Vagas disponíveis:</span>
-          <span class="text-gray-700">${marker.available_spots}</span>
-        </p>
-        <p class="flex items-center text-sm">
-          <span class="font-medium mr-2">Horário de funcionamento:</span>
-          <span class="text-gray-700">${formatTime(marker.opening_time)} - ${formatTime(marker.closing_time)}</span>
-        </p>
-        ${marker.phone ? `
-          <p class="flex items-center text-sm">
-            <span class="font-medium mr-2">Telefone:</span>
-            <span class="text-gray-700">${marker.phone}</span>
+      <p class="mb-2">
+        <span class="font-medium">Status:</span>
+        <span class="${statusColor}">${status}</span>
+      </p>
+      <p class="mb-2">
+        <span class="font-medium">Vagas disponíveis:</span>
+        <span>${marker.available_spots}</span>
+      </p>
+      <p class="mb-4">
+        <span class="font-medium">Horário de funcionamento:</span>
+        <span>${marker.opening_time || '24h'} - ${marker.closing_time || '24h'}</span>
+      </p>
+      <div class="flex flex-col gap-2">
+        <button
+          class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+          onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${marker.latitude},${marker.longitude}', '_blank')"
+        >
+          Navegar até aqui
+        </button>
+        ${isPremium && marker.available_spots > 0 ? `
+          <button
+            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
+            onclick="window.dispatchEvent(new CustomEvent('openReservationModal', { detail: { parkingId: '${marker.parking_id}', parkingName: '${marker.parking_name}' } }))"
+          >
+            Reservar vaga
+          </button>
+        ` : !isPremium ? `
+          <p class="text-sm text-gray-500">
+            Faça upgrade para o plano Premium para reservar vagas
           </p>
         ` : ''}
       </div>
-      <button 
-        onclick="window.dispatchEvent(new CustomEvent('startNavigation', { detail: { lat: ${marker.latitude}, lng: ${marker.longitude}, name: '${marker.parking_name}' } }))"
-        class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
-      >
-        Navegar até aqui
-      </button>
     </div>
   `
 }

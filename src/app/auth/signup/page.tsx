@@ -49,6 +49,8 @@ export default function SignUpPage() {
         throw new Error('A senha deve ter pelo menos 6 caracteres')
       }
 
+      console.log('Iniciando criação de usuário:', formData.email)
+
       // Cria o usuário
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
@@ -60,27 +62,29 @@ export default function SignUpPage() {
         }
       })
 
-      if (signUpError) throw signUpError
+      if (signUpError) {
+        console.error('Erro no signup:', signUpError)
+        throw signUpError
+      }
 
       if (!data.user) {
+        console.error('Usuário não criado:', data)
         throw new Error('Erro ao criar usuário')
       }
 
-      // Cria o perfil do usuário
-      const { error: profileError } = await supabase
+      console.log('Usuário criado com sucesso:', data.user.id)
+
+      // Verifica se o perfil foi criado
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .insert({
-          id: data.user.id,
-          role: 'client',
-          full_name: formData.name,
-          credits: 0,
-          created_at: new Date().toISOString()
-        })
+        .select('*')
+        .eq('id', data.user.id)
+        .single()
 
       if (profileError) {
-        console.error('Erro ao criar perfil:', profileError)
-        showToast.success('Email de confirmação enviado com sucesso')
-        return
+        console.error('Erro ao verificar perfil:', profileError)
+      } else {
+        console.log('Perfil criado:', profile)
       }
 
       showToast.success('Conta criada com sucesso! Por favor, verifique seu email.')

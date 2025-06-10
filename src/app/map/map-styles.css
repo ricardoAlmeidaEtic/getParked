@@ -82,11 +82,18 @@
 
 /* Estilos específicos para o pin privado */
 .custom-marker.private-parking div {
-  background-color: #9CA3AF !important;
-  border: 2px solid #6B7280 !important;
-  color: #1F2937 !important;
+  background-color: #3B82F6 !important;
+  border: 2px solid #1D4ED8 !important;
+  color: #FFFFFF !important;
   width: 32px !important;
   height: 32px !important;
+}
+
+.custom-marker.private-parking.selected div {
+  background-color: #2563EB !important;
+  border: 2px solid #1E40AF !important;
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
 }
 
 /* Estilos para popups */

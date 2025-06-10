@@ -5,39 +5,44 @@ import { useSupabase } from '@/providers/SupabaseProvider'
 import { Profile, UpdateProfileData } from '@/lib/api/profile'
 import { showToast } from '@/lib/toast'
 
+export interface Profile {
+  id: string
+  user_id: string
+  plan: 'Free' | 'Premium'
+  created_at: string
+  updated_at: string
+}
+
 export function useProfile() {
   const { supabase, session } = useSupabase()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
-  const fetchProfile = async () => {
-    if (!session) {
+  useEffect(() => {
+    if (!session?.user) {
       setProfile(null)
       setLoading(false)
       return
     }
 
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single()
+    async function fetchProfile() {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single()
 
-      if (error) throw error
-
-      setProfile(data)
-    } catch (err) {
-      console.error('Erro ao carregar perfil:', err)
-      setError(err instanceof Error ? err : new Error('Erro ao carregar perfil'))
-      showToast.error('Erro ao carregar perfil')
-    } finally {
-      setLoading(false)
+        if (error) throw error
+        setProfile(data)
+      } catch (err) {
+        setError(err as Error)
+      } finally {
+        setLoading(false)
+      }
     }
-  }
 
-  useEffect(() => {
     fetchProfile()
   }, [session, supabase])
 

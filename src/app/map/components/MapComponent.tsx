@@ -12,6 +12,8 @@ import { PublicSpotMarker, PrivateParkingMarker } from '@/types/map'
 import { getRoute, decodePolyline } from '@/services/graphhopper'
 import RouteInfoModal from './modals/RouteInfoModal'
 import { createPublicSpotPopupContent, createPrivateParkingPopupContent } from './modals/popup-content'
+import { ReservationModal } from './modals/ReservationModal'
+import { useProfile } from '@/hooks/useProfile'
 
 // Importa o leaflet-routing-machine
 import 'leaflet-routing-machine'
@@ -78,6 +80,9 @@ export default function MapComponent({
   const [currentInstructionIndex, setCurrentInstructionIndex] = useState<number>(0)
   const [showRouteModal, setShowRouteModal] = useState(false)
   const routeControlRef = useRef<L.Routing.Control | null>(null)
+  const [isReservationModalOpen, setIsReservationModalOpen] = useState(false)
+  const [selectedParking, setSelectedParking] = useState<{ id: string; name: string } | null>(null)
+  const { profile } = useProfile()
 
   // Função para verificar se a posição mudou significativamente
   const hasPositionChangedSignificantly = (newPosition: L.LatLng): boolean => {
@@ -101,50 +106,48 @@ export default function MapComponent({
   }
 
   const createPrivateParkingMarkerWithRoute = (marker: PrivateParkingMarker) => {
-    try {
-      const markerInstance = createPrivateParkingMarker(marker)
-      
-      markerInstance.on('click', () => {
-        if (userMarkerRef.current && mapRef.current) {
-          const userPosition = userMarkerRef.current.getLatLng()
-          const markerPosition = markerInstance.getLatLng()
-          
-          // Remove seleção anterior
-          if (selectedMarkerRef.current && markerInstance.options.icon) {
-            selectedMarkerRef.current.setIcon(markerInstance.options.icon)
-          }
-          
-          // Atualiza o ícone do marcador selecionado
-          const selectedIcon = L.divIcon({
-            className: 'custom-marker private-parking selected',
-            html: `
-              <div class="w-6 h-6 bg-blue-500 rounded-full border-2 border-blue-700 flex items-center justify-center text-xs font-bold text-white">
-                ${marker.available_spots}
-              </div>
-            `,
-            iconSize: [24, 24],
-            iconAnchor: [12, 12],
-          })
-          
-          markerInstance.setIcon(selectedIcon)
-          selectedMarkerRef.current = markerInstance
-          
-          // Calcula a rota com os detalhes da vaga
-          showRoute(userPosition, markerPosition, marker.parking_name, {
-            type: 'private',
-            availableSpots: marker.available_spots,
-            openingTime: marker.opening_time,
-            closingTime: marker.closing_time,
-            phone: marker.phone
-          })
+    console.log('Criando marcador privado:', marker)
+    
+    const isPremium = profile?.plan === 'Premium'
+    const markerInstance = createPrivateParkingMarker(marker, isPremium)
+    
+    markerInstance.on('click', () => {
+      if (userMarkerRef.current && mapRef.current) {
+        const userPosition = userMarkerRef.current.getLatLng()
+        const markerPosition = markerInstance.getLatLng()
+        
+        // Remove seleção anterior
+        if (selectedMarkerRef.current && markerInstance.options.icon) {
+          selectedMarkerRef.current.setIcon(markerInstance.options.icon)
         }
-      })
+        
+        // Atualiza o ícone do marcador selecionado
+        const selectedIcon = L.divIcon({
+          className: 'custom-marker private-parking selected',
+          html: `
+            <div class="w-6 h-6 bg-blue-500 rounded-full border-2 border-blue-700 flex items-center justify-center text-xs font-bold text-white">
+              ${marker.available_spots}
+            </div>
+          `,
+          iconSize: [24, 24],
+          iconAnchor: [12, 12],
+        })
+        
+        markerInstance.setIcon(selectedIcon)
+        selectedMarkerRef.current = markerInstance
+        
+        // Calcula a rota com os detalhes da vaga
+        showRoute(userPosition, markerPosition, marker.parking_name, {
+          type: 'private',
+          availableSpots: marker.available_spots,
+          openingTime: marker.opening_time,
+          closingTime: marker.closing_time,
+          phone: marker.phone
+        })
+      }
+    })
 
-      return markerInstance
-    } catch (error) {
-      console.error('Erro ao criar marcador:', error)
-      throw error
-    }
+    return markerInstance
   }
 
   const loadMarkers = useCallback(async () => {
@@ -592,6 +595,15 @@ export default function MapComponent({
       }
     })
 
+    // Adiciona o listener para o evento de abrir o modal de reserva
+    const handleOpenReservationModal = (event: CustomEvent) => {
+      const { parkingId, parkingName } = event.detail
+      setSelectedParking({ id: parkingId, name: parkingName })
+      setIsReservationModalOpen(true)
+    }
+
+    window.addEventListener('openReservationModal', handleOpenReservationModal as EventListener)
+
     // Cleanup
     return () => {
       if (mapRef.current) {
@@ -601,6 +613,7 @@ export default function MapComponent({
         clearTimeout(positionUpdateTimeoutRef.current)
       }
       window.removeEventListener('startNavigation', handleNavigation as EventListener)
+      window.removeEventListener('openReservationModal', handleOpenReservationModal as EventListener)
     }
   }, [loadMarkers])
 
@@ -705,8 +718,8 @@ export default function MapComponent({
           // Cria um novo controle de rota
           const routingControl = L.Routing.control({
             waypoints: [
-              userMarkerRef.current!.getLatLng(),
-              routeInfo.destinationPosition
+              L.Routing.waypoint(userMarkerRef.current!.getLatLng()),
+              L.Routing.waypoint(routeInfo.destinationPosition!)
             ],
             routeWhileDragging: false,
             show: false,
@@ -716,8 +729,7 @@ export default function MapComponent({
               styles: [{ color: '#3B82F6', weight: 4 }],
               extendToWaypoints: true,
               missingRouteTolerance: 0
-            },
-            createMarker: () => null // Desativa a criação de marcadores
+            }
           });
 
           // Adiciona o controle ao mapa
@@ -787,6 +799,11 @@ export default function MapComponent({
     setCompletedInstructions([]);
     setCurrentInstructionIndex(0);
   };
+
+  const handleReservationComplete = () => {
+    // Atualiza a lista de marcadores após uma reserva ser feita
+    loadMarkers()
+  }
 
   return (
     <>
@@ -868,6 +885,18 @@ export default function MapComponent({
         isNavigating={routeInfo.isNavigating}
         spotDetails={routeInfo.spotDetails}
       />
+      {selectedParking && (
+        <ReservationModal
+          isOpen={isReservationModalOpen}
+          onClose={() => {
+            setIsReservationModalOpen(false)
+            setSelectedParking(null)
+          }}
+          parkingId={selectedParking.id}
+          parkingName={selectedParking.name}
+          onReservationComplete={handleReservationComplete}
+        />
+      )}
     </>
   )
 } 
