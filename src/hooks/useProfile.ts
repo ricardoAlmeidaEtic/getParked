@@ -5,14 +5,6 @@ import { useSupabase } from '@/providers/SupabaseProvider'
 import { Profile, UpdateProfileData } from '@/lib/api/profile'
 import { showToast } from '@/lib/toast'
 
-export interface Profile {
-  id: string
-  user_id: string
-  plan: 'Free' | 'Premium'
-  created_at: string
-  updated_at: string
-}
-
 export function useProfile() {
   const { supabase, session } = useSupabase()
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -31,7 +23,7 @@ export function useProfile() {
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
-          .eq('user_id', session.user.id)
+          .eq('id', session.user.id)
           .single()
 
         if (error) throw error
@@ -47,7 +39,7 @@ export function useProfile() {
   }, [session, supabase])
 
   const updateProfile = async (data: UpdateProfileData) => {
-    if (!session) throw new Error('Usuário não autenticado')
+    if (!session?.user) throw new Error('Usuário não autenticado')
 
     try {
       // Atualizar metadata do usuário no Auth
@@ -84,7 +76,21 @@ export function useProfile() {
   }
 
   const refreshProfile = async () => {
-    await fetchProfile()
+    if (!session?.user) return
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single()
+
+      if (error) throw error
+      setProfile(data)
+    } catch (err) {
+      console.error('Erro ao atualizar perfil:', err)
+      throw err
+    }
   }
 
   return {
