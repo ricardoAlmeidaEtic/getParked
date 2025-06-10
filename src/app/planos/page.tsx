@@ -91,10 +91,10 @@ export default function PlanosPage() {
   }
 
   const handlePaymentSuccess = async () => {
-    if (!selectedPlanData) return
+    if (!selectedPlanData || !profile) return
 
     try {
-      console.log('Updating plan for profile:', profile?.id)
+      console.log('Updating plan for profile:', profile.id)
       console.log('New plan data:', selectedPlanData)
 
       const { data, error } = await supabase
@@ -103,7 +103,7 @@ export default function PlanosPage() {
           plan: selectedPlanData.name,
           updated_at: new Date().toISOString()
         })
-        .eq('id', profile?.id)
+        .eq('id', profile.id)
         .select()
 
       if (error) {
