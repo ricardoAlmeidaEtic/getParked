@@ -8,23 +8,8 @@ export default function AdminPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        // Check if user has admin role
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.user_metadata?.role === 'admin') {
-          router.replace('/admin/dashboard');
-        } else {
-          router.replace('/admin/login');
-        }
-      } else {
-        router.replace('/admin/login');
-      }
-    };
-
-    checkAuth();
+    // AdminSupabaseProvider handles all validation, just redirect to login
+    router.replace('/admin/login');
   }, [router]);
 
   return (
