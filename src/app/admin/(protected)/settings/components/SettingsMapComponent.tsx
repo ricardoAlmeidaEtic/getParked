@@ -19,7 +19,7 @@ const createParkingIcon = () => {
   return L.divIcon({
     className: 'custom-marker public-spot',
     html: `
-      <div style="width: 24px; height: 24px; background-color: #ef4444; border-radius: 50%; border: 2px solid #b91c1c; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: white;">
+      <div style="width: 24px; height: 24px; background-color: #ef4444; border-radius: 50%; border: 2px solid #b91c1c; display: flex; align-items: center; justify-center; font-size: 12px; font-weight: bold; color: white;">
         P
       </div>
     `,
@@ -40,7 +40,6 @@ export default function AdminMapComponent({
   const userMarkerRef = useRef<L.CircleMarker | null>(null)
   const creatorRef = useRef<AdminSpotCreator | null>(null)
   const userLocationDetected = useRef<boolean>(false)
-  const markers = useRef<L.Marker[]>([])
 
   useEffect(() => {
     if (!mapContainerRef.current) return
@@ -57,72 +56,28 @@ export default function AdminMapComponent({
       zoomSnap: 0.5,
       zoomDelta: 0.5,
       wheelDebounceTime: 40,
-      preferCanvas: true,
-      updateWhenIdle: true,
-      updateWhenZooming: false,
-      keepBuffer: 2
+      preferCanvas: true
     }).setView(initialCenter, 16)
     mapRef.current = map
 
-    // Adiciona o tile layer do OpenStreetMap
+    // Add OpenStreetMap tile layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
       tileSize: 256,
       zoomOffset: 0,
-      detectRetina: true,
-      updateWhenIdle: true,
-      updateWhenZooming: false,
-      keepBuffer: 2
+      detectRetina: true
     }).addTo(map)
 
-    // Adiciona controles de zoom
+    // Add zoom controls
     L.control.zoom({
       position: 'bottomright'
     }).addTo(map)
 
-    // Função para adicionar a localização do usuário
-    const addUserLocation = (position: GeolocationPosition) => {
-      if (!mapRef.current || userLocationDetected.current) return
-
-      const { latitude, longitude } = position.coords
-      const userLatLng = L.latLng(latitude, longitude)
-      
-      console.log('ADMIN: User location detected at:', latitude, longitude)
-      userLocationDetected.current = true
-      onUserPositionChange(userLatLng)
-
-      mapRef.current.setView(userLatLng, 16)
-      
-      const accuracy = position.coords.accuracy
-      const circle = L.circleMarker(userLatLng, {
-        radius: 15,
-        color: '#3B82F6',
-        fillColor: '#3B82F6',
-        fillOpacity: 0.3,
-        weight: 2,
-      }).addTo(mapRef.current)
-
-      userMarkerRef.current = circle
-
-      L.circleMarker(userLatLng, {
-        radius: 8,
-        color: '#3B82F6',
-        fillColor: '#3B82F6',
-        fillOpacity: 0.8,
-        weight: 2,
-      }).addTo(mapRef.current)
-
-      L.circle(userLatLng, {
-        radius: accuracy,
-        color: '#3B82F6',
-        fillColor: '#3B82F6',
-        fillOpacity: 0.1,
-        weight: 1,
-        dashArray: '5, 5',
-      }).addTo(mapRef.current)
-
-      circle.bindPopup(`Sua localização atual (precisão: ${Math.round(accuracy)}m)`)
+    // Create location pane with lower z-index
+    const locationPane = map.createPane('locationPane')
+    if (locationPane) {
+      locationPane.style.zIndex = '400' // Below markers (600)
     }
 
     // Wait for map to load completely
@@ -132,34 +87,54 @@ export default function AdminMapComponent({
         const parkingLatLng = initialPosition instanceof L.LatLng 
           ? initialPosition 
           : L.latLng(initialPosition.lat, initialPosition.lng)
-        addUserLocation({ coords: { latitude: parkingLatLng.lat, longitude: parkingLatLng.lng, accuracy: 10 } } as GeolocationPosition)
-        
-        // Also create a marker at the initial position
-        const initialMarker = L.marker(parkingLatLng, {
-          draggable: true,
-          icon: createParkingIcon()
-        }).addTo(map)
-        
-        markers.current.push(initialMarker)
-        
-        // Update the marker position callback with initial position
-        console.log('ADMIN: Setting initial marker position:', parkingLatLng)
-        onMarkerPositionChange(parkingLatLng)
-        
-        // Make the marker draggable and update position on drag
-        initialMarker.on('dragend', (e) => {
-          const newPosition = e.target.getLatLng()
-          console.log('ADMIN: Marker dragged to:', newPosition)
-          onMarkerPositionChange(newPosition)
-        })
-      } else if (navigator.geolocation && !userLocationDetected.current) {
-        // Otherwise get user location (register page)
-        navigator.geolocation.getCurrentPosition(
-          addUserLocation,
-          (error) => {
-            console.error('ADMIN: Erro ao obter localização:', error)
+
+        // First create the orange marker
+        creatorRef.current = new AdminSpotCreator(map, parkingLatLng)
+        creatorRef.current.startCreation((position) => {
+          if (position) {
+            console.log('ADMIN: Setting initial marker position:', position)
+            onMarkerPositionChange(position)
           }
-        )
+        }, false) // Set to false to ensure marker is created
+
+        // Then add the blue location markers
+        userLocationDetected.current = true
+        onUserPositionChange(parkingLatLng)
+        
+        // Create blue circle marker for location
+        const circle = L.circleMarker(parkingLatLng, {
+          radius: 15,
+          color: '#3B82F6',
+          fillColor: '#3B82F6',
+          fillOpacity: 0.3,
+          weight: 2,
+          pane: 'locationPane'
+        }).addTo(map)
+
+        userMarkerRef.current = circle
+
+        // Add center point
+        L.circleMarker(parkingLatLng, {
+          radius: 8,
+          color: '#3B82F6',
+          fillColor: '#3B82F6',
+          fillOpacity: 0.8,
+          weight: 2,
+          pane: 'locationPane'
+        }).addTo(map)
+
+        // Add accuracy circle
+        L.circle(parkingLatLng, {
+          radius: 10, // Fixed small radius for settings page
+          color: '#3B82F6',
+          fillColor: '#3B82F6',
+          fillOpacity: 0.1,
+          weight: 1,
+          dashArray: '5, 5',
+          pane: 'locationPane'
+        }).addTo(map)
+
+        circle.bindPopup('Localização atual do estacionamento')
       }
     })
 
@@ -168,40 +143,35 @@ export default function AdminMapComponent({
       if (mapRef.current) {
         mapRef.current.remove()
       }
+      if (creatorRef.current) {
+        creatorRef.current.stopCreation()
+      }
       userLocationDetected.current = false
     }
-  }, []) // Remove onUserPositionChange dependency to prevent loop
+  }, [])
 
-  // Efeito para gerenciar o modo de criação de spots
+  // Effect to manage spot creation mode
   useEffect(() => {
-    if (!mapRef.current || !userMarkerRef.current) return
+    if (!mapRef.current) return
 
-    if (isCreatingSpot) {
-      // Only start creation if not already started
-      if (!creatorRef.current) {
-        const userPosition = userMarkerRef.current.getLatLng()
-        console.log('ADMIN: Starting creation mode at user position:', userPosition.lat, userPosition.lng)
-        
-        creatorRef.current = new AdminSpotCreator(mapRef.current, userPosition)
-        
-        creatorRef.current.startCreation((position) => {
-          if (position) {
-            console.log('ADMIN: Marker position changed to:', position.lat, position.lng)
-            console.log('ADMIN: About to call onMarkerPositionChange with:', position)
-            onMarkerPositionChange(position)
-            console.log('ADMIN: Called onMarkerPositionChange')
-          }
-        }, false) // Not editing, creating new
-      }
-    } else {
-      if (creatorRef.current) {
-        console.log('ADMIN: Stopping creation mode')
-        creatorRef.current.stopCreation()
-        creatorRef.current = null
-      }
+    if (isCreatingSpot && !creatorRef.current && initialPosition) {
+      const parkingLatLng = initialPosition instanceof L.LatLng 
+        ? initialPosition 
+        : L.latLng(initialPosition.lat, initialPosition.lng)
+      
+      creatorRef.current = new AdminSpotCreator(mapRef.current, parkingLatLng)
+      creatorRef.current.startCreation((position) => {
+        if (position) {
+          console.log('ADMIN: Marker position changed to:', position)
+          onMarkerPositionChange(position)
+        }
+      }, false) // Set to false to ensure marker is created
+    } else if (!isCreatingSpot && creatorRef.current) {
+      creatorRef.current.stopCreation()
+      creatorRef.current = null
       onMarkerPositionChange(null)
     }
-  }, [isCreatingSpot, onMarkerPositionChange])
+  }, [isCreatingSpot])
 
   return (
     <div 

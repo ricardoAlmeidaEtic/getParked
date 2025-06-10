@@ -130,21 +130,43 @@ export default function Settings() {
 
       if (updateError) throw updateError;
 
-      // Update or insert into private_parking_markers table
-      const { error: markerError } = await supabase
+      // First check if a marker exists
+      const { data: existingMarker } = await supabase
         .from('private_parking_markers')
-        .upsert({
-          parking_id: parking.id,
-          parking_name: settings.name,
-          latitude: parseFloat(settings.latitude),
-          longitude: parseFloat(settings.longitude),
-          opening_time: settings.opening_time,
-          closing_time: settings.closing_time,
-          phone: settings.phone
-        }, {
-          onConflict: 'parking_id'
-        });
+        .select('id')
+        .eq('parking_id', parking.id)
+        .single();
 
+      let markerOperation;
+      if (existingMarker) {
+        // Update existing marker
+        markerOperation = supabase
+          .from('private_parking_markers')
+          .update({
+            parking_name: settings.name,
+            latitude: parseFloat(settings.latitude),
+            longitude: parseFloat(settings.longitude),
+            opening_time: settings.opening_time,
+            closing_time: settings.closing_time,
+            phone: settings.phone
+          })
+          .eq('parking_id', parking.id);
+      } else {
+        // Insert new marker
+        markerOperation = supabase
+          .from('private_parking_markers')
+          .insert({
+            parking_id: parking.id,
+            parking_name: settings.name,
+            latitude: parseFloat(settings.latitude),
+            longitude: parseFloat(settings.longitude),
+            opening_time: settings.opening_time,
+            closing_time: settings.closing_time,
+            phone: settings.phone
+          });
+      }
+
+      const { error: markerError } = await markerOperation;
       if (markerError) throw markerError;
 
       setSuccess('Configurações atualizadas com sucesso!');
