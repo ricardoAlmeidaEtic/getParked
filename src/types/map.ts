@@ -6,29 +6,53 @@ export interface MapMarker {
   type: 'public' | 'private'
 }
 
-export interface PublicSpotMarker extends MapMarker {
-  type: 'public'
-  total_spots: number
-  available_spots: number
+export interface PublicSpotMarker {
+  id: string
+  user_id: string
+  user_name: string
+  user_email: string
+  latitude: number
+  longitude: number
+  is_available: boolean
+  is_occupied: boolean
+  created_at: string
   expires_at: string
-  status: string
+  occupied_at: string | null
+  occupied_by: string | null
+  credits_earned: number
+  updated_at: string
+  available_spots: number
+  total_spots: number
   price_per_hour: number
+  status: string
+  name: string
   address: string
 }
 
-export interface PrivateParkingMarker extends MapMarker {
-  type: 'private'
+export interface PrivateParkingMarker {
   parking_id: string
   parking_name: string
+  latitude: number
+  longitude: number
   available_spots: number
-  opening_time: string | null
-  closing_time: string | null
-  phone: string | null
-  created_at: string
+  total_spots: number
+  price_per_hour: number
+  is_open: boolean
+  opening_time?: string
+  closing_time?: string
+  phone?: string
 }
 
 export interface RouteInfo {
   duration: number // em minutos
   distance: number // em quilômetros
   waypoints: [number, number][] // array de [latitude, longitude]
+}
+
+export interface RouteInstruction {
+  distance: number
+  time: number
+  text: string
+  type: string
+  coordinates: [number, number] | null
 } 

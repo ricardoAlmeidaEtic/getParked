@@ -39,6 +39,8 @@ export async function getPublicSpotMarkers(): Promise<PublicSpotMarker[]> {
 
 export async function getPrivateParkingMarkers(): Promise<PrivateParkingMarker[]> {
   try {
+    console.log('Iniciando busca de marcadores privados...')
+    
     const { data, error } = await supabase
       .from('private_parking_markers')
       .select('*')
@@ -49,6 +51,8 @@ export async function getPrivateParkingMarkers(): Promise<PrivateParkingMarker[]
       return []
     }
 
+    console.log('Dados brutos recebidos do Supabase:', data)
+
     // Transforma os dados para o formato esperado pelo mapa
     const markers = data.map(marker => ({
       ...marker,
@@ -57,7 +61,7 @@ export async function getPrivateParkingMarkers(): Promise<PrivateParkingMarker[]
       id: marker.parking_id
     }))
 
-    console.log('Marcadores privados carregados:', markers)
+    console.log('Marcadores privados processados:', markers)
     return markers
   } catch (error) {
     console.error('Erro ao buscar marcadores privados:', error)

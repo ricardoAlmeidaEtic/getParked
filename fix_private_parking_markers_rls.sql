@@ -8,6 +8,7 @@ DROP POLICY IF EXISTS "Users can view all markers" ON private_parking_markers;
 DROP POLICY IF EXISTS "Parking owners can insert markers" ON private_parking_markers;
 DROP POLICY IF EXISTS "Parking owners can update own markers" ON private_parking_markers;
 DROP POLICY IF EXISTS "Parking owners can delete own markers" ON private_parking_markers;
+DROP POLICY IF EXISTS "Premium users can update available spots" ON private_parking_markers;
 
 -- Create RLS policies for private_parking_markers table
 
@@ -42,5 +43,22 @@ CREATE POLICY "Parking owners can delete own markers" ON private_parking_markers
       SELECT 1 FROM parkings 
       WHERE parkings.id = parking_id 
       AND parkings.owner_id = auth.uid()
+    )
+  );
+
+-- Policy 5: Allow premium users to update available spots
+CREATE POLICY "Premium users can update available spots" ON private_parking_markers
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.plan = 'Premium'
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.plan = 'Premium'
     )
   ); 

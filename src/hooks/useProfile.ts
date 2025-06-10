@@ -11,38 +11,35 @@ export function useProfile() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
-  const fetchProfile = async () => {
-    if (!session) {
+  useEffect(() => {
+    if (!session?.user) {
       setProfile(null)
       setLoading(false)
       return
     }
 
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single()
+    async function fetchProfile() {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single()
 
-      if (error) throw error
-
-      setProfile(data)
-    } catch (err) {
-      console.error('Erro ao carregar perfil:', err)
-      setError(err instanceof Error ? err : new Error('Erro ao carregar perfil'))
-      showToast.error('Erro ao carregar perfil')
-    } finally {
-      setLoading(false)
+        if (error) throw error
+        setProfile(data)
+      } catch (err) {
+        setError(err as Error)
+      } finally {
+        setLoading(false)
+      }
     }
-  }
 
-  useEffect(() => {
     fetchProfile()
   }, [session, supabase])
 
   const updateProfile = async (data: UpdateProfileData) => {
-    if (!session) throw new Error('Usuário não autenticado')
+    if (!session?.user) throw new Error('Usuário não autenticado')
 
     try {
       // Atualizar metadata do usuário no Auth
@@ -79,7 +76,21 @@ export function useProfile() {
   }
 
   const refreshProfile = async () => {
-    await fetchProfile()
+    if (!session?.user) return
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single()
+
+      if (error) throw error
+      setProfile(data)
+    } catch (err) {
+      console.error('Erro ao atualizar perfil:', err)
+      throw err
+    }
   }
 
   return {

@@ -374,4 +374,26 @@ create policy "Parking owners can delete their markers"
 on private_parking_markers for delete
 using (parking_id in (
   select id from parkings where owner_id = auth.uid()
-)); 
+));
+
+-- Função para atualizar available_spots quando uma nova reserva é criada
+create or replace function update_available_spots_on_reservation()
+returns trigger as $$
+begin
+  -- Atualiza o número de vagas disponíveis no estacionamento
+  update private_parking_markers
+  set available_spots = available_spots - 1
+  where parking_id = (
+    select parking_id 
+    from spots 
+    where id = NEW.spot_id
+  );
+  return NEW;
+end;
+$$ language plpgsql;
+
+-- Trigger para atualizar available_spots quando uma nova reserva é criada
+create trigger trg_update_available_spots
+after insert on reservations
+for each row
+execute function update_available_spots_on_reservation(); 
