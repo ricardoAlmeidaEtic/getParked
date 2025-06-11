@@ -3,6 +3,7 @@ import { Poppins } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
 import '@/styles/globals.css'
 import FrontendWrapper from '../components/auth/frontend-wrapper'
+import { CookieConsent } from "@/components/ui/cookie-consent"
 
 const poppins = Poppins({ 
   weight: ['400', '500', '600', '700'],
@@ -38,6 +39,7 @@ export default function RootLayout({
         <FrontendWrapper>
           {children}
         </FrontendWrapper>
+        <CookieConsent />
       </body>
     </html>
   )
