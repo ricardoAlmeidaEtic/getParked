@@ -53,7 +53,7 @@ export default function ProfilePage() {
   const { profile: supabaseProfile, loading: profileLoading, updateProfile } = useProfile()
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [isAddingVehicle, setIsAddingVehicle] = useState(false)
-  const [profileImage, setProfileImage] = useState<string>("/images/parking-map.png")
+  const [profileImage, setProfileImage] = useState<string>("/placeholder-avatar.png")
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [vehicles, setVehicles] = useState<Vehicle[]>([])

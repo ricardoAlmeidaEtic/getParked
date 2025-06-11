@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { SupabaseClient, User, Session, AuthChangeEvent } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
@@ -24,68 +24,28 @@ export default function AdminSupabaseProvider({
   const router = useRouter()
 
   useEffect(() => {
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session?.user) {
-        // Check if user has owner or admin role
-        console.log('🔍 Checking profile for user:', session.user.id);
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single()
-        
-        console.log('📋 Profile result:', { profile, profileError });
-        
-        if (profileError) {
-          console.error('❌ Profile error:', profileError);
-          // Don't sign out immediately - let's see what the error is
-          setUser(null)
-        } else if (profile?.role === 'owner' || profile?.role === 'admin') {
-          console.log('✅ User authorized with role:', profile.role);
-          setUser(session.user)
-        } else {
-          console.log('🚫 User not authorized, role:', profile?.role);
-          setUser(null)
-          await supabase.auth.signOut()
-        }
-      } else {
-        setUser(null)
-      }
-      
-      setLoading(false)
-    }
-
-    getSession()
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, session: Session | null) => {
+        // Handle all auth states (including INITIAL_SESSION)
         if (session?.user) {
-          // Check if user has owner or admin role
-          console.log('🔄 Auth change - checking profile for user:', session.user.id);
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('role')
             .eq('id', session.user.id)
             .single()
-          
-          console.log('📋 Auth change - Profile result:', { profile, profileError });
-          
+
           if (profileError) {
-            console.error('❌ Auth change - Profile error:', profileError);
             setUser(null)
           } else if (profile?.role === 'owner' || profile?.role === 'admin') {
-            console.log('✅ Auth change - User authorized with role:', profile.role);
             setUser(session.user)
           } else {
-            console.log('🚫 Auth change - User not authorized, role:', profile?.role);
             setUser(null)
             await supabase.auth.signOut()
           }
         } else {
           setUser(null)
         }
+        
         setLoading(false)
       }
     )
@@ -93,7 +53,7 @@ export default function AdminSupabaseProvider({
     return () => {
       subscription.unsubscribe()
     }
-  }, [supabase, router])
+  }, [])
 
   const signOut = async () => {
     await supabase.auth.signOut()
@@ -101,8 +61,15 @@ export default function AdminSupabaseProvider({
     router.push('/admin/login')
   }
 
+  const value = {
+    supabase,
+    user,
+    loading,
+    signOut
+  }
+
   return (
-    <Context.Provider value={{ supabase, user, loading, signOut }}>
+    <Context.Provider value={value}>
       {children}
     </Context.Provider>
   )

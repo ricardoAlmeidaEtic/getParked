@@ -43,15 +43,18 @@ export default function AppDownloadSection() {
           </FadeIn>
           <FadeIn direction="right" duration={800} delay={200}>
             <div className="relative">
-              <div className="relative z-10 transform transition-transform duration-500 hover:rotate-3">
-                <Image
-                  src="/mapaimg.png"
-                  alt="GetParked Mobile App"
-                  width={300}
-                  height={600}
-                  className="mx-auto"
+              <div className="relative z-10 transform transition-transform duration-500 hover:rotate-3 w-full h-full">
+                <video
+                  src="/mapa-video.mp4"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover rounded-lg shadow-2xl"
+                  poster="/mapaimg.png"
                 />
               </div>
+
               <div className="absolute -bottom-6 -right-6 w-48 h-48 bg-black rounded-full z-0 opacity-10 animate-pulse"></div>
               <div className="absolute -top-6 -left-6 w-24 h-24 bg-black rounded-full z-0 opacity-10"></div>
             </div>

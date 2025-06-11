@@ -20,11 +20,10 @@ export class AdminSpotCreator {
     this.selectionArea.show()
 
     const userPosition = this.selectionArea.getUserPosition()
-
-    // Se não estiver editando, cria o marcador na posição do usuário
-    if (!isEditing) {
-      this.createOrUpdateMarker(userPosition)
-    }
+    console.log('AdminSpotCreator: Creating initial marker at:', userPosition.lat, userPosition.lng)
+    
+    // Always create the marker in settings page
+    this.createOrUpdateMarker(userPosition)
 
     this.map.on('click', this.handleMapClick)
     console.log('AdminSpotCreator: Creation mode started')
@@ -48,12 +47,12 @@ export class AdminSpotCreator {
     return L.divIcon({
       className: 'custom-marker public-spot',
       html: `
-        <div style="width: 24px; height: 24px; background-color: #ef4444; border-radius: 50%; border: 2px solid #b91c1c; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: white;">
+        <div class="w-8 h-8 bg-yellow-400 rounded-full border-2 border-yellow-600 flex items-center justify-center text-xs font-bold text-yellow-800" style="z-index: 1000;">
           P
         </div>
       `,
-      iconSize: [24, 24],
-      iconAnchor: [12, 12],
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
     })
   }
 
@@ -67,7 +66,8 @@ export class AdminSpotCreator {
       console.log('Creating new marker with icon...')
       this.marker = L.marker(position, {
         draggable: true,
-        icon: this.createMarkerIcon()
+        icon: this.createMarkerIcon(),
+        zIndexOffset: 1000 // Ensure the marker appears above others
       }).addTo(this.map)
 
       console.log('Marker added to map:', this.marker)

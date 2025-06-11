@@ -1,11 +1,14 @@
 'use client';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdminSupabase } from '@/providers/AdminSupabaseProvider';
+import AdminSidebar from '@/components/admin/AdminSidebar';
+import OwnerSidebar from '@/components/admin/OwnerSidebar';
 
 export default function AdminProtectedLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, signOut, supabase } = useAdminSupabase();
   const router = useRouter();
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     const checkUserAndParking = async () => {
@@ -22,6 +25,8 @@ export default function AdminProtectedLayout({ children }: { children: React.Rea
           .select('role')
           .eq('id', user.id)
           .single();
+
+        setUserRole(profile?.role || null);
 
         if (profile?.role === 'owner') {
           const { data: parking } = await supabase
@@ -58,33 +63,13 @@ export default function AdminProtectedLayout({ children }: { children: React.Rea
     return null;
   }
 
+  const isAdmin = userRole === 'admin';
+  const isOwner = userRole === 'owner';
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar navigation for admin */}
-      <aside className="w-64 bg-white shadow h-screen flex flex-col p-6">
-        <span className="text-2xl font-bold text-primary mb-10">GetParked Admin</span>
-        <nav className="flex flex-col gap-4 flex-1">
-          <a href="/admin/dashboard" className="text-gray-700 hover:text-primary font-medium">Dashboard</a>
-          <a href="/admin/parking" className="text-gray-700 hover:text-primary font-medium">Vagas</a>
-          <a href="/admin/reservations" className="text-gray-700 hover:text-primary font-medium">Reservas</a>
-          <a href="/admin/settings" className="text-gray-700 hover:text-primary font-medium">Configurações</a>
-          
-          {/* Admin Section */}
-          <div className="mt-8 pt-4 border-t border-gray-200">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Administração</h3>
-            <a href="/admin/owners" className="text-gray-700 hover:text-primary font-medium block">Gerenciar Proprietários</a>
-          </div>
-        </nav>
-        <div className="mt-auto pt-4 border-t">
-          <div className="text-sm text-gray-600 mb-2">Logado como: {user.email}</div>
-          <button 
-            onClick={signOut}
-            className="w-full text-left text-red-600 hover:text-red-800 font-medium"
-          >
-            Sair
-          </button>
-        </div>
-      </aside>
+      {isAdmin && <AdminSidebar user={user} signOut={signOut} />}
+      {isOwner && <OwnerSidebar user={user} signOut={signOut} />}
       <main className="flex-1 container mx-auto px-8 py-8">
         {children}
       </main>

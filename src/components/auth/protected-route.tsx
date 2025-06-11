@@ -9,15 +9,13 @@ interface ProtectedRouteProps {
   children: React.ReactNode
 }
 
-// Lista de rotas públicas que não precisam de autenticação
+// Lista de rotas públicas que não precisam de autenticação (apenas frontend)
 const publicRoutes = [
   "/",
   "/auth/signin",
-  "/auth/signup",
+  "/auth/signup", 
   "/auth/forgot-password",
-  "/auth/reset-password",
-  "/admin/login",
-  "/admin/register"
+  "/auth/reset-password"
 ]
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
@@ -29,26 +27,25 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     if (!loading) {
       const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith(route + "/"))
       const isAuthRoute = pathname.startsWith("/auth")
-      const isAdminRoute = pathname.startsWith("/admin")
 
       // Se não estiver em uma rota pública e não estiver autenticado
       if (!isPublicRoute && !user) {
-        // Não mostra mensagem de erro se estiver na landing page ou durante o logout
-        if (pathname !== "/" && !pathname.includes("logout")) {
+        // Não mostra mensagem de erro se estiver na landing page
+        if (pathname !== "/") {
           showToast.error("Por favor, faça login para acessar esta página")
         }
-        
-        // Se for uma rota admin, redireciona para login admin
-        if (isAdminRoute) {
-          router.replace("/admin/login")
-        } else {
-          router.replace("/")
-        }
+        router.replace("/")
         return
       }
 
       // Se estiver autenticado e tentar acessar uma rota de auth, redireciona para o mapa
       if (user && isAuthRoute) {
+        router.replace("/map")
+        return
+      }
+
+      // Se estiver autenticado e estiver na landing page, redireciona para o mapa
+      if (user && pathname === "/") {
         router.replace("/map")
         return
       }
@@ -61,7 +58,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold mb-2">Verificando autenticação...</h2>
+          <h2 className="text-xl font-semibold mb-2">Verificando autenticação cliente...</h2>
           <p className="text-gray-600">Por favor, aguarde.</p>
         </div>
       </div>

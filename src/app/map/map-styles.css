@@ -82,11 +82,18 @@
 
 /* Estilos específicos para o pin privado */
 .custom-marker.private-parking div {
-  background-color: #9CA3AF !important;
-  border: 2px solid #6B7280 !important;
-  color: #1F2937 !important;
+  background-color: #3B82F6 !important;
+  border: 2px solid #1D4ED8 !important;
+  color: #FFFFFF !important;
   width: 32px !important;
   height: 32px !important;
+}
+
+.custom-marker.private-parking.selected div {
+  background-color: #2563EB !important;
+  border: 2px solid #1E40AF !important;
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
 }
 
 /* Estilos para popups */
@@ -439,15 +446,30 @@
 
 /* Estilos para o painel de instruções de navegação */
 .navigation-panel {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   padding: 16px;
   max-width: 400px;
-  width: 100%;
+  width: calc(100% - 2rem);
   max-height: 80vh;
   overflow-y: auto;
   z-index: 1000;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .navigation-panel h3 {
@@ -466,84 +488,66 @@
   border-radius: 8px;
   transition: all 0.2s ease;
   cursor: pointer;
+  margin-bottom: 8px;
+  background: #F9FAFB;
 }
 
 .instruction-item:hover {
   background-color: #F3F4F6;
 }
 
+.instruction-item.current {
+  background-color: #EFF6FF;
+  border-left: 4px solid #3B82F6;
+}
+
 .instruction-number {
+  flex-shrink: 0;
   width: 32px;
   height: 32px;
-  background-color: #EFF6FF;
   border-radius: 50%;
+  background: #E5E7EB;
+  color: #4B5563;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  color: #3B82F6;
   margin-right: 12px;
-  flex-shrink: 0;
 }
 
 .instruction-content {
-  flex: 1;
+  flex-grow: 1;
 }
 
 .instruction-text {
-  color: #1F2937;
   font-size: 14px;
-  line-height: 1.4;
+  color: #1F2937;
   margin-bottom: 4px;
 }
 
 .instruction-details {
-  color: #6B7280;
-  font-size: 12px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  font-size: 12px;
+  color: #6B7280;
 }
 
 .instruction-distance {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  margin-right: 12px;
 }
 
 .instruction-time {
   display: flex;
   align-items: center;
-  gap: 4px;
 }
 
-/* Estilo para a instrução atual */
-.instruction-item.current {
-  background-color: #EFF6FF;
+.instruction-time::before {
+  content: "•";
+  margin: 0 8px;
+  color: #D1D5DB;
 }
 
-.instruction-item.current .instruction-number {
-  background-color: #3B82F6;
-  color: white;
-}
-
-/* Animações para o painel de instruções */
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.navigation-panel {
-  animation: slideIn 0.3s ease-out;
-}
-
-/* Estilos para scrollbar personalizada */
+/* Estilização da barra de rolagem */
 .navigation-panel::-webkit-scrollbar {
   width: 6px;
 }
@@ -560,4 +564,156 @@
 
 .navigation-panel::-webkit-scrollbar-thumb:hover {
   background: #9CA3AF;
+}
+
+/* Estilos para o modal de instruções de navegação */
+.navigation-instructions-modal {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 1rem;
+  max-width: 400px;
+  width: calc(100% - 2rem);
+  max-height: 60vh;
+  overflow-y: auto;
+  z-index: 1000;
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.navigation-instructions-modal .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #E5E7EB;
+}
+
+.navigation-instructions-modal .title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.navigation-instructions-modal .close-button {
+  color: #6B7280;
+  padding: 0.375rem;
+  border-radius: 9999px;
+  transition: all 0.2s;
+}
+
+.navigation-instructions-modal .close-button:hover {
+  background-color: #F3F4F6;
+  color: #1F2937;
+}
+
+.navigation-instructions-modal .instructions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.navigation-instructions-modal .instruction-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+}
+
+.navigation-instructions-modal .instruction-item.current {
+  background-color: #EFF6FF;
+  border-left: 4px solid #3B82F6;
+}
+
+.navigation-instructions-modal .instruction-item.completed {
+  background-color: #F0FDF4;
+  border-left: 4px solid #10B981;
+}
+
+.navigation-instructions-modal .instruction-number {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  margin-right: 0.75rem;
+}
+
+.navigation-instructions-modal .instruction-content {
+  flex-grow: 1;
+}
+
+.navigation-instructions-modal .instruction-text {
+  font-size: 0.875rem;
+  color: #1F2937;
+  margin-bottom: 0.25rem;
+}
+
+.navigation-instructions-modal .instruction-details {
+  font-size: 0.75rem;
+  color: #6B7280;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Estilização da barra de rolagem */
+.navigation-instructions-modal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.navigation-instructions-modal::-webkit-scrollbar-track {
+  background: #F3F4F6;
+  border-radius: 3px;
+}
+
+.navigation-instructions-modal::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 3px;
+}
+
+.navigation-instructions-modal::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
+/* Estilos para a rota no mapa */
+.leaflet-routing-container {
+  display: none !important;
+}
+
+.leaflet-routing-alternatives-container {
+  display: none !important;
+}
+
+.leaflet-routing-geocoders {
+  display: none !important;
+}
+
+.leaflet-routing-error {
+  display: none !important;
+}
+
+/* Garante que a rota seja visível */
+.leaflet-routing-line {
+  stroke: #3B82F6 !important;
+  stroke-width: 4 !important;
+  stroke-opacity: 0.8 !important;
 } 
