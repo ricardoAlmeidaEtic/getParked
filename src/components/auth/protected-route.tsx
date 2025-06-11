@@ -47,6 +47,12 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         router.replace("/map")
         return
       }
+
+      // Se estiver autenticado e estiver na landing page, redireciona para o mapa
+      if (user && pathname === "/") {
+        router.replace("/map")
+        return
+      }
     }
   }, [user, loading, router, pathname])
 

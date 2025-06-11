@@ -78,8 +78,14 @@ export function ReservationModal({
     const [startHours, startMinutes] = formData.start_time.split(':')
     const [endHours, endMinutes] = formData.end_time.split(':')
 
+    // Ajusta as horas considerando o timezone
+    const timezoneOffset = today.getTimezoneOffset()
     startDate.setHours(parseInt(startHours), parseInt(startMinutes), 0, 0)
     endDate.setHours(parseInt(endHours), parseInt(endMinutes), 0, 0)
+
+    // Adiciona o offset do timezone para compensar a conversão para UTC
+    startDate.setMinutes(startDate.getMinutes() - timezoneOffset)
+    endDate.setMinutes(endDate.getMinutes() - timezoneOffset)
 
     // Verifica se o horário de fim é maior que o de início
     if (endDate <= startDate) {

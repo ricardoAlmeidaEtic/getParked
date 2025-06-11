@@ -4,25 +4,30 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAdminSupabase } from '@/providers/AdminSupabaseProvider';
 
+type TimeBasedStatus = 'waiting' | 'in_progress' | 'done' | 'cancelled';
+
 type Reservation = {
   id: string;
   client_id: string;
   spot_id: string;
   start_time: string;
   end_time: string;
-  total_price: number;
+  total_price: number | null;
   status: string;
   created_at: string;
-  client?: {
+  profiles: {
     id: string;
     full_name: string;
     email: string;
   };
-  spot?: {
+  spots: {
     id: string;
-    name: string;
-    address: string;
+    is_reserved: boolean;
+    is_available: boolean;
   };
+  client_name?: string;
+  client_email?: string;
+  timeStatus?: TimeBasedStatus;
 };
 
 export default function Reservations() {
@@ -48,56 +53,70 @@ export default function Reservations() {
         .eq('owner_id', user.id)
         .single();
 
-      if (parkingError) throw parkingError;
-      if (!parking) throw new Error('No parking found for this owner');
+      
+      if (parkingError) {
+        console.error('Error fetching parking:', parkingError);
+        throw new Error('Error fetching parking data. Please make sure you have a parking registered.');
+      }
+      if (!parking) {
+        console.error('No parking found for owner');
+        throw new Error('No parking found. Please register a parking first.');
+      }
 
-      // Fetch reservations with related client and spot data
-      const { data, error } = await supabase
+      // Get all spots for this parking
+      const { data: spots, error: spotsError } = await supabase
+        .from('spots')
+        .select('id, is_reserved, is_available')
+        .eq('parking_id', parking.id);
+
+      if (spotsError) {
+        console.error('Error fetching spots:', spotsError);
+        throw new Error('Error fetching parking spots.');
+      }
+      if (!spots || spots.length === 0) {
+        console.log('No spots found for parking');
+        setReservations([]);
+        return;
+      }
+
+      // Get spot IDs array
+      const spotIds = spots.map(spot => spot.id);
+
+      // Get all reservations for spots in the owner's parking
+      const { data: reservationsData, error: reservationsError } = await supabase
         .from('reservations')
         .select(`
           *,
-          client:profiles!reservations_client_id_fkey(
-            id,
-            full_name,
-            email
-          ),
-          spot:parkings!reservations_spot_id_fkey(
-            id,
-            name,
-            address
-          )
+          profiles (id, full_name, email),
+          spots (id, is_reserved, is_available)
         `)
-        .eq('spot_id', parking.id)
+        .in('spot_id', spotIds)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setReservations(data || []);
+      if (reservationsError) throw new Error('Error fetching reservations data.');
+      
+      // Add debug information to each reservation
+      const processedReservations = (reservationsData || []).map(reservation => {
+
+        const timeStatus = getTimeBasedStatus(
+          reservation.start_time,
+          reservation.end_time,
+          reservation.spots.is_reserved,
+          reservation.spots.is_available
+        );
+
+        return {
+          ...reservation,
+          timeStatus
+        };
+      });
+
+      setReservations(processedReservations);
     } catch (err: any) {
       console.error('Error fetching reservations:', err);
       setError(err.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const updateReservationStatus = async (reservationId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase
-        .from('reservations')
-        .update({ status: newStatus })
-        .eq('id', reservationId);
-
-      if (error) throw error;
-
-      // Update local state
-      setReservations(prev => prev.map(reservation => 
-        reservation.id === reservationId 
-          ? { ...reservation, status: newStatus }
-          : reservation
-      ));
-    } catch (err: any) {
-      console.error('Error updating reservation status:', err);
-      setError(err.message);
     }
   };
 
@@ -118,26 +137,94 @@ export default function Reservations() {
     }).format(price);
   };
 
-  const getStatusBadge = (status: string) => {
+  const getTimeBasedStatus = (startTime: string, endTime: string, isReserved: boolean, isAvailable: boolean): TimeBasedStatus => {
+    // If spot is not reserved and is available, the reservation was cancelled
+    if (!isReserved && isAvailable) {
+      return 'cancelled';
+    }
+
+    const now = new Date();
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+
+    // Compare full dates
+    if (start > now) {
+      return 'waiting';
+    }
+    
+    if (now >= start && now <= end) {
+      return 'in_progress';
+    }
+
+    return 'done';
+  };
+
+  const getStatusBadge = (timeStatus: TimeBasedStatus) => {
     const statusColors = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      confirmed: 'bg-green-100 text-green-800', 
-      cancelled: 'bg-red-100 text-red-800',
-      completed: 'bg-blue-100 text-blue-800'
+      waiting: 'bg-yellow-100 text-yellow-800',
+      in_progress: 'bg-green-100 text-green-800',
+      done: 'bg-blue-100 text-blue-800',
+      cancelled: 'bg-red-100 text-red-800'
     };
 
     const statusLabels = {
-      pending: 'Pendente',
-      confirmed: 'Confirmada',
-      cancelled: 'Cancelada', 
-      completed: 'Concluída'
+      waiting: 'Aguardando',
+      in_progress: 'Em andamento',
+      done: 'Finalizada',
+      cancelled: 'Cancelada'
     };
 
     return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[status as keyof typeof statusColors] || 'bg-gray-100 text-gray-800'}`}>
-        {statusLabels[status as keyof typeof statusLabels] || status}
+      <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[timeStatus]}`}>
+        {statusLabels[timeStatus]}
       </span>
     );
+  };
+
+  const getReservedBadge = (isReserved: boolean) => {
+    const statusColors = isReserved
+      ? 'bg-green-100 text-green-800'
+      : 'bg-red-100 text-red-800';
+
+    const statusLabel = isReserved ? 'Sim' : 'Não';
+
+    return (
+      <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors}`}>
+        {statusLabel}
+      </span>
+    );
+  };
+
+  const handleCancelReservation = async (reservation: Reservation) => {
+    try {
+      // Update the spot status
+      const { error: spotError } = await supabase
+        .from('spots')
+        .update({
+          is_reserved: false,
+          is_available: true
+        })
+        .eq('id', reservation.spot_id);
+
+      if (spotError) throw spotError;
+
+      // Update the reservation status
+      const { error: reservationError } = await supabase
+        .from('reservations')
+        .update({
+          status: 'cancelled'
+        })
+        .eq('id', reservation.id);
+
+      if (reservationError) throw reservationError;
+
+      // Refresh the reservations list
+      await fetchReservations();
+      
+    } catch (error: any) {
+      console.error('Error cancelling reservation:', error);
+      setError('Erro ao cancelar reserva. Por favor, tente novamente.');
+    }
   };
 
   if (loading) {
@@ -183,6 +270,7 @@ export default function Reservations() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reservada</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Período</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Total</th>
@@ -195,11 +283,14 @@ export default function Reservations() {
                   <tr key={reservation.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {reservation.client?.full_name || 'Nome não disponível'}
+                        {reservation.profiles?.full_name || 'Nome não disponível'}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {reservation.client?.email || 'Email não disponível'}
+                        {reservation.profiles?.email || 'Email não disponível'}
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getReservedBadge(Boolean(reservation.spots?.is_reserved))}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
@@ -210,41 +301,30 @@ export default function Reservations() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(reservation.status)}
+                      {getStatusBadge(getTimeBasedStatus(
+                        reservation.start_time, 
+                        reservation.end_time,
+                        reservation.spots.is_reserved,
+                        reservation.spots.is_available
+                      ))}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {formatPrice(reservation.total_price)}
+                      <span className={reservation.spots.is_reserved ? '' : 'line-through text-gray-500'}>
+                        {formatPrice(reservation.total_price ?? 0)}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(reservation.created_at)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      {reservation.status === 'pending' && (
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => updateReservationStatus(reservation.id, 'confirmed')}
-                            className="text-green-600 hover:text-green-800"
-                          >
-                            Confirmar
-                          </button>
-                          <button
-                            onClick={() => updateReservationStatus(reservation.id, 'cancelled')}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            Cancelar
-                          </button>
-                        </div>
-                      )}
-                      {reservation.status === 'confirmed' && (
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      {reservation.spots.is_reserved && 
+                       getTimeBasedStatus(reservation.start_time, reservation.end_time, true, false) === 'waiting' && (
                         <button
-                          onClick={() => updateReservationStatus(reservation.id, 'completed')}
-                          className="text-blue-600 hover:text-blue-800"
+                          onClick={() => handleCancelReservation(reservation)}
+                          className="text-red-600 hover:text-red-900 font-medium"
                         >
-                          Marcar como Concluída
+                          Cancelar
                         </button>
-                      )}
-                      {(reservation.status === 'cancelled' || reservation.status === 'completed') && (
-                        <span className="text-gray-400">-</span>
                       )}
                     </td>
                   </tr>
@@ -263,29 +343,23 @@ export default function Reservations() {
 
         {/* Summary Cards */}
         {reservations.length > 0 && (
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-              <h3 className="text-sm font-medium text-yellow-800">Pendentes</h3>
+              <h3 className="text-sm font-medium text-yellow-800">Aguardando</h3>
               <p className="text-2xl font-bold text-yellow-900">
-                {reservations.filter(r => r.status === 'pending').length}
+                {reservations.filter(r => getTimeBasedStatus(r.start_time, r.end_time, r.spots.is_reserved, r.spots.is_available) === 'waiting').length}
               </p>
             </div>
             <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <h3 className="text-sm font-medium text-green-800">Confirmadas</h3>
+              <h3 className="text-sm font-medium text-green-800">Em andamento</h3>
               <p className="text-2xl font-bold text-green-900">
-                {reservations.filter(r => r.status === 'confirmed').length}
+                {reservations.filter(r => getTimeBasedStatus(r.start_time, r.end_time, r.spots.is_reserved, r.spots.is_available) === 'in_progress').length}
               </p>
             </div>
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <h3 className="text-sm font-medium text-blue-800">Concluídas</h3>
+              <h3 className="text-sm font-medium text-blue-800">Finalizadas</h3>
               <p className="text-2xl font-bold text-blue-900">
-                {reservations.filter(r => r.status === 'completed').length}
-              </p>
-            </div>
-            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-              <h3 className="text-sm font-medium text-red-800">Canceladas</h3>
-              <p className="text-2xl font-bold text-red-900">
-                {reservations.filter(r => r.status === 'cancelled').length}
+                {reservations.filter(r => getTimeBasedStatus(r.start_time, r.end_time, r.spots.is_reserved, r.spots.is_available) === 'done').length}
               </p>
             </div>
           </div>

@@ -19,6 +19,10 @@ drop trigger if exists on_auth_user_updated on auth.users;
 drop function if exists public.handle_new_user();
 drop function if exists public.handle_user_update();
 
+-- Set timezone to Europe/Lisbon
+ALTER DATABASE postgres SET timezone TO 'Europe/Lisbon';
+SET TIME ZONE 'Europe/Lisbon';
+
 -- Tabela profiles (FIXED: includes admin role)
 create table profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -52,6 +56,18 @@ create policy "Usuários podem inserir seus próprios perfis"
 create policy "Serviço pode criar perfis"
   on profiles for insert
   with check (true);
+
+create policy "Parking owners can read profiles of clients with reservations"
+  on profiles for select
+  using (
+    exists (
+      select 1 from reservations r
+      join spots s on s.id = r.spot_id
+      join parkings p on p.id = s.parking_id
+      where r.client_id = profiles.id
+      and p.owner_id = auth.uid()
+    )
+  );
 
 -- Função para criar perfil automaticamente (FIXED: includes admin role)
 create or replace function public.handle_new_user()
