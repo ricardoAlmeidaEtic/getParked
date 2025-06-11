@@ -124,7 +124,7 @@ export default function MapPage() {
           <div className="flex justify-between flex-row-reverse items-center">
             <Button
               onClick={handleCreateSpotClick}
-              className="pointer-events-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+              className=" fixed mt-24 pointer-events-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
               variant={isCreatingSpot ? "destructive" : "default"}
             >
               {isCreatingSpot ? (
