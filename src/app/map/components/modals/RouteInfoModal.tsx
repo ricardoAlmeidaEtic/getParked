@@ -55,6 +55,8 @@ export default function RouteInfoModal({
   const { profile } = useProfile()
   const [isReservationModalOpen, setIsReservationModalOpen] = useState(false)
   const [shouldRenderReservationModal, setShouldRenderReservationModal] = useState(false)
+  const [hourlyRate, setHourlyRate] = useState<number | null>(null)
+  const { supabase: supabaseClient } = useSupabase()
 
   useEffect(() => {
     if (isOpen) {
@@ -95,6 +97,33 @@ export default function RouteInfoModal({
       return () => clearTimeout(timer)
     }
   }, [isReservationModalOpen])
+
+  useEffect(() => {
+    const fetchParkingPrice = async () => {
+      if (!spotDetails?.parkingId && !spotDetails?.parking_id) return
+
+      const parkingId = spotDetails.parkingId || spotDetails.parking_id
+
+      const { data: parking, error } = await supabaseClient
+        .from('parkings')
+        .select('hourly_rate')
+        .eq('id', parkingId)
+        .single()
+
+      if (error) {
+        console.error('Erro ao buscar preço do estacionamento:', error)
+        return
+      }
+
+      if (parking) {
+        setHourlyRate(parking.hourly_rate)
+      }
+    }
+
+    if (isOpen && spotDetails?.type === 'private') {
+      fetchParkingPrice()
+    }
+  }, [isOpen, spotDetails, supabaseClient])
 
   const handleConfirmSpot = async () => {
     try {
@@ -270,14 +299,13 @@ export default function RouteInfoModal({
                               <span className="text-gray-700">{spotDetails.phone}</span>
                             </p>
                           )}
+                          {hourlyRate !== null && (
+                            <p className="flex items-center text-sm">
+                              <span className="font-medium mr-2">Preço/hora:</span>
+                              <span className="text-gray-700">€{hourlyRate.toFixed(2)}</span>
+                            </p>
+                          )}
                         </>
-                      )}
-                      
-                      {spotDetails?.pricePerHour && (
-                        <p className="flex items-center text-sm">
-                          <span className="font-medium mr-2">Preço/hora:</span>
-                          <span className="text-gray-700">R$ {spotDetails.pricePerHour.toFixed(2)}</span>
-                        </p>
                       )}
                     </div>
                   </div>
