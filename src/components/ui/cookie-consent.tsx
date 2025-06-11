@@ -5,13 +5,9 @@ import Link from "next/link";
 import { X } from "lucide-react";
 import { Button } from "./button";
 import { setCookie, getCookie } from "@/lib/cookies";
-import { useSupabase } from "@/providers/SupabaseProvider";
 
 export function CookieConsent() {
   const [isVisible, setIsVisible] = useState(false);
-
-  // Access Supabase user (if logged in)
-  const { user, supabase } = useSupabase();
 
   useEffect(() => {
     const consent = getCookie("cookie-consent");
@@ -20,30 +16,13 @@ export function CookieConsent() {
     }
   }, []);
 
-  const persistConsent = async (value: boolean) => {
-    try {
-      if (user) {
-        await supabase.from("user_consents").upsert({
-          user_id: user.id,
-          consent_type: "essential",
-          consent_value: value,
-          consent_date: new Date().toISOString(),
-        });
-      }
-    } catch (error) {
-      console.error("Erro ao salvar consentimento:", error);
-    }
-  };
-
   const acceptCookies = () => {
     setCookie("cookie-consent", "true");
-    persistConsent(true);
     setIsVisible(false);
   };
 
   const declineCookies = () => {
     setCookie("cookie-consent", "false");
-    persistConsent(false);
     setIsVisible(false);
   };
 
