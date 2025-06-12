@@ -24,8 +24,8 @@ export default function SocialLogin() {
       if (error) throw error
       // Redirection handled by Supabase
     } catch (error: any) {
-      console.error("Erro ao fazer login com Google:", error)
-      showToast.error(error.message || "Erro ao fazer login com Google")
+      console.error("Erro ao iniciar sessão com Google:", error)
+      showToast.error(error.message || "Erro ao iniciar sessão com Google")
     } finally {
       setIsLoading(prev => ({ ...prev, google: false }))
     }
@@ -43,8 +43,8 @@ export default function SocialLogin() {
       if (error) throw error
       // Redirection handled by Supabase
     } catch (error: any) {
-      console.error("Erro ao fazer login com Facebook:", error)
-      showToast.error(error.message || "Erro ao fazer login com Facebook")
+      console.error("Erro ao iniciar sessão com Facebook:", error)
+      showToast.error(error.message || "Erro ao iniciar sessão com Facebook")
     } finally {
       setIsLoading(prev => ({ ...prev, facebook: false }))
     }
@@ -89,7 +89,7 @@ export default function SocialLogin() {
               />
             </g>
           </svg>
-          {isLoading.google ? "Processando..." : "Google"}
+          {isLoading.google ? "A processar..." : "Google"}
         </Button>
 
         <Button
@@ -102,7 +102,7 @@ export default function SocialLogin() {
           <svg className="h-5 w-5 mr-2" fill="#1877F2" viewBox="0 0 24 24">
             <path d="M9.19795 21.5H13.198V13.4901H16.8021L17.198 9.50977H13.198V7.5C13.198 6.94772 13.6457 6.5 14.198 6.5H17.198V2.5H14.198C11.4365 2.5 9.19795 4.73858 9.19795 7.5V9.50977H7.19795L6.80206 13.4901H9.19795V21.5Z" />
           </svg>
-          {isLoading.facebook ? "Processando..." : "Facebook"}
+          {isLoading.facebook ? "A processar..." : "Facebook"}
         </Button>
       </div>
     </div>

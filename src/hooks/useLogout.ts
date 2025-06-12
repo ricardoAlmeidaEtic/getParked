@@ -24,13 +24,13 @@ export const useLogout = () => {
       await supabase.auth.getSession()
       
       // 5. Mostra mensagem de sucesso
-      showToast.success("Logout realizado com sucesso!")
+      showToast.success("Sessão terminada com sucesso!")
       
       // 6. Força um reload completo da página
       window.location.replace("/")
     } catch (error) {
-      console.error("Erro ao fazer logout:", error)
-      showToast.error("Erro ao fazer logout. Tente novamente.")
+      console.error("Erro ao terminar sessão:", error)
+      showToast.error("Erro ao terminar sessão. Tente novamente.")
     }
   }
 

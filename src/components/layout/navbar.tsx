@@ -18,7 +18,7 @@ interface NavbarProps {
 
 export default function Navbar({ items = [] }: NavbarProps) {
   const pathname = usePathname()
-  const { user, loading } = useSupabase()
+  const { user, loading, profile } = useSupabase()
   const { handleLogout } = useLogout()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
@@ -36,11 +36,12 @@ export default function Navbar({ items = [] }: NavbarProps) {
   const authenticatedItems = [
     { href: "/map", label: "Mapa" },
     { href: "/planos", label: "Planos" },
+    { href: "/reserved-spots", label: "Minhas Reservas" },
   ]
 
   // Itens de navegação para usuários não autenticados
   const unauthenticatedItems = [
-    { href: "#features", label: "Recursos" },
+    { href: "#features", label: "Funcionalidades" },
     { href: "#how-it-works", label: "Como Funciona" },
     { href: "#pricing", label: "Planos" },
     { href: "#faq", label: "FAQ" },
@@ -95,7 +96,7 @@ export default function Navbar({ items = [] }: NavbarProps) {
                 >
                   <span className="flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    Meu Perfil
+                    O Meu Perfil
                   </span>
                 </Button>
               </Link>
@@ -120,12 +121,12 @@ export default function Navbar({ items = [] }: NavbarProps) {
                   variant="outline"
                   className="bg-white text-primary-foreground border-none hover:bg-gray-100"
                 >
-                  Entrar
+                  Iniciar sessão
                 </Button>
               </Link>
               <Link href="/auth/signup">
                 <Button className="bg-black text-white hover:bg-gray-800">
-                  Cadastre-se
+                  Registar-se
                 </Button>
               </Link>
             </>

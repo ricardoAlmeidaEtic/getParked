@@ -14,11 +14,10 @@ export default function HeroSection() {
             <div>
               <Badge className="mb-4 bg-black text-white">Novo</Badge>
               <h1 className="text-4xl md:text-5xl font-bold mb-6 text-black">
-                Encontre e reserve vagas de estacionamento em segundos
+                Encontre e reserve lugares de estacionamento em segundos
               </h1>
               <p className="text-lg mb-8 text-gray-800">
-                GetParked revoluciona a forma como você encontra estacionamento. Economize tempo, dinheiro e evite o
-                estresse de procurar vagas.
+                O GetParked revoluciona a forma como encontra estacionamento. Poupe tempo, dinheiro e evite o stress de procurar lugares.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button size="lg" className="bg-black text-white hover:bg-gray-800 transition-colors duration-300">

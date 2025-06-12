@@ -89,9 +89,9 @@ export default function TermsOfUsePage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">Contato</h2>
+          <h2 className="text-2xl font-semibold mb-4">Contacto</h2>
           <p>
-            Para questões sobre estes termos, entre em contato conosco através do email:
+            Para questões sobre estes termos, contacte-nos através do email:
             <a href="mailto:legal@getparked.com" className="text-primary hover:underline ml-1">
               legal@getparked.com
             </a>
@@ -100,4 +100,4 @@ export default function TermsOfUsePage() {
       </div>
     </div>
   );
-} 
+}

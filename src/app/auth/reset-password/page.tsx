@@ -34,11 +34,11 @@ export default function ResetPasswordPage() {
 
     try {
       if (formData.password !== formData.confirmPassword) {
-        throw new Error('As senhas não coincidem')
+        throw new Error('As palavras-passe não coincidem')
       }
 
       if (formData.password.length < 6) {
-        throw new Error('A senha deve ter pelo menos 6 caracteres')
+        throw new Error('A palavra-passe deve ter pelo menos 6 caracteres')
       }
 
       const { error: updateError } = await supabase.auth.updateUser({
@@ -47,12 +47,12 @@ export default function ResetPasswordPage() {
 
       if (updateError) throw updateError
 
-      showToast.success('Senha atualizada com sucesso!')
+      showToast.success('Palavra-passe atualizada com sucesso!')
       router.push('/auth/signin')
     } catch (error) {
-      console.error('Erro ao redefinir senha:', error)
-      setError(error instanceof Error ? error.message : 'Erro ao redefinir senha')
-      showToast.error(error instanceof Error ? error.message : 'Erro ao redefinir senha')
+      console.error('Erro ao redefinir palavra-passe:', error)
+      setError(error instanceof Error ? error.message : 'Erro ao redefinir palavra-passe')
+      showToast.error(error instanceof Error ? error.message : 'Erro ao redefinir palavra-passe')
     } finally {
       setLoading(false)
     }
@@ -62,12 +62,12 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen flex flex-col">
       <div className="flex min-h-screen flex-1 flex-col justify-center px-6 py-12 lg:px-8">
         <AuthHeader
-          title="Redefinir senha"
-          subtitle="Lembrou sua senha?"
+          title="Redefinir palavra-passe"
+          subtitle="Lembrou-se da sua palavra-passe?"
           subtitleLink={{
-            text: "Lembrou sua senha?",
+            text: "Lembrou-se da sua palavra-passe?",
             href: "/auth/signin",
-            label: "Voltar ao login",
+            label: "Voltar ao início de sessão",
           }}
         />
 
@@ -83,7 +83,7 @@ export default function ResetPasswordPage() {
 
                 <form className="space-y-6" onSubmit={handleSubmit}>
                   <div>
-                    <Label htmlFor="password">Nova senha</Label>
+                    <Label htmlFor="password">Nova palavra-passe</Label>
                     <div className="mt-2 relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Lock className="h-5 w-5 text-gray-400" />
@@ -115,7 +115,7 @@ export default function ResetPasswordPage() {
                   </div>
 
                   <div>
-                    <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
+                    <Label htmlFor="confirmPassword">Confirmar nova palavra-passe</Label>
                     <div className="mt-2 relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Lock className="h-5 w-5 text-gray-400" />
@@ -153,10 +153,10 @@ export default function ResetPasswordPage() {
                     >
                       {loading ? (
                         <span className="flex items-center">
-                          <span className="animate-spin mr-2">⏳</span> Atualizando...
+                          <span className="animate-spin mr-2">⏳</span> A atualizar...
                         </span>
                       ) : (
-                        "Atualizar senha"
+                        "Atualizar palavra-passe"
                       )}
                     </Button>
                   </div>

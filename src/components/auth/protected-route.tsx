@@ -36,7 +36,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       if (!isPublicRoute && !user) {
         // Não mostra mensagem de erro se estiver na landing page
         if (pathname !== "/") {
-          showToast.error("Por favor, faça login para acessar esta página")
+          showToast.error("Por favor, inicie sessão para aceder a esta página")
         }
         router.replace("/")
         return
@@ -62,7 +62,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold mb-2">Verificando autenticação cliente...</h2>
+          <h2 className="text-xl font-semibold mb-2">A verificar autenticação do cliente...</h2>
           <p className="text-gray-600">Por favor, aguarde.</p>
         </div>
       </div>

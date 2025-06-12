@@ -80,7 +80,7 @@ export default function MobileNav({ items }: MobileNavProps) {
                 onClick={closeMenu}
               >
                 <User className="h-4 w-4 mr-2" />
-                Meu Perfil
+                O Meu Perfil
               </Link>
               <Link
                 href="/map"
@@ -97,14 +97,14 @@ export default function MobileNav({ items }: MobileNavProps) {
                 className="flex items-center p-3 rounded-md text-gray-700 hover:bg-gray-100 transition-colors duration-200"
                 onClick={closeMenu}
               >
-                Entrar
+                Iniciar sessão
               </Link>
               <Link
                 href="/auth/signup"
                 className="flex items-center p-3 rounded-md text-primary font-medium hover:bg-primary/10 transition-colors duration-200"
                 onClick={closeMenu}
               >
-                Cadastre-se
+                Registar-se
               </Link>
             </>
           )}
