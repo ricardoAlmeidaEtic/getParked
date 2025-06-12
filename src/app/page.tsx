@@ -5,7 +5,6 @@ import FeaturesSection from "@/components/sections/features-section"
 import HowItWorksSection from "@/components/sections/how-it-works-section"
 import TestimonialsSection from "@/components/sections/testimonials-section"
 import PricingSection from "@/components/sections/pricing-section"
-import AppDownloadSection from "@/components/sections/app-download-section"
 import FaqSection from "@/components/sections/faq-section"
 import CtaSection from "@/components/sections/cta-section"
 
@@ -18,7 +17,6 @@ export default function LandingPage() {
       <HowItWorksSection />
       <TestimonialsSection />
       <PricingSection />
-      <AppDownloadSection />
       <FaqSection />
       <CtaSection />
       <Footer />

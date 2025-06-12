@@ -39,7 +39,7 @@ export function useProfile() {
   }, [session, supabase])
 
   const updateProfile = async (data: UpdateProfileData) => {
-    if (!session?.user) throw new Error('Usuário não autenticado')
+    if (!session?.user) throw new Error('Utilizador não autenticado')
 
     try {
       // Atualizar metadata do usuário no Auth
@@ -100,4 +100,4 @@ export function useProfile() {
     updateProfile,
     refreshProfile
   }
-} 
+}

@@ -38,7 +38,7 @@ export default function LogoutButton({
     >
       {isLoading ? (
         <span className="flex items-center">
-          <span className="animate-spin mr-2">⏳</span> Saindo...
+          <span className="animate-spin mr-2">⏳</span> A sair...
         </span>
       ) : (
         <>

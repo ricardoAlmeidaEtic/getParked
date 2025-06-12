@@ -53,7 +53,7 @@ export default function PricingSection() {
   const renderPlanFeatures = (plan: Plan) => {
     const features = [
       {
-        text: "Busca de estacionamentos próximos",
+        text: "Pesquisa de estacionamentos próximos",
         included: true,
       },
       {
@@ -65,7 +65,7 @@ export default function PricingSection() {
         included: true,
       },
       {
-        text: `${plan.vehicle_limit} veículo${plan.vehicle_limit > 1 ? "s" : ""} cadastrado${plan.vehicle_limit > 1 ? "s" : ""}`,
+        text: `${plan.vehicle_limit} veículo${plan.vehicle_limit > 1 ? "s" : ""} registado${plan.vehicle_limit > 1 ? "s" : ""}`,
         included: true,
       },
       {
@@ -73,11 +73,11 @@ export default function PricingSection() {
         included: plan.realtime_navigation,
       },
       {
-        text: "Reserva de vagas antecipada",
+        text: "Reserva de lugares antecipada",
         included: plan.allow_reservations,
       },
       {
-        text: "Descontos exclusivos em estacionamentos parceiros",
+        text: "Descontos exclusivos em parques parceiros",
         included: plan.priority_support,
       },
     ]

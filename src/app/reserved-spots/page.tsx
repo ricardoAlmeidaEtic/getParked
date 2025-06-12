@@ -102,15 +102,23 @@ export default function ReservedSpotsPage() {
   }, [user, supabase])
 
   if (!user) {
-    return <SessionExpired />
+    return (
+      <main className="flex min-h-screen flex-col">
+        <div className="flex-1 pt-24 pb-16 px-4 md:px-8 flex flex-col items-center justify-center">
+          <h1 className="text-2xl font-bold mb-4">Sessão expirada</h1>
+          <p className="mb-6">Por favor, inicie sessão novamente para ver os seus lugares reservados.</p>
+          <Button onClick={() => router.push("/auth/signin")}>Iniciar sessão</Button>
+        </div>
+      </main>
+    );
   }
 
   if (profileLoading || loading) {
-    return <LoadingState />
+    return <LoadingState />;
   }
 
   if (!profile) {
-    return <ProfileError />
+    return <ProfileError />;
   }
 
   return (
@@ -126,7 +134,7 @@ export default function ReservedSpotsPage() {
               Encontrar Vagas
             </Button>
           </div>
-          
+
           {reservations.length === 0 ? (
             <div className="bg-white rounded-lg shadow-sm p-8 text-center">
               <p className="text-lg text-gray-600 mb-4">Você ainda não tem nenhuma reserva.</p>
@@ -147,5 +155,5 @@ export default function ReservedSpotsPage() {
         </div>
       </div>
     </main>
-  )
-} 
+  );
+}

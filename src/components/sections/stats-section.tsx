@@ -3,10 +3,10 @@ import CountUp from "@/components/animations/count-up"
 
 export default function StatsSection() {
   const stats = [
-    { value: 30, suffix: "M+", label: "Vagas Encontradas", delay: 100 },
-    { value: 15, suffix: "+", label: "Cidades Cobertas", delay: 200 },
-    { value: 500, suffix: "K+", label: "Usuários Ativos", delay: 300 },
-    { value: 45, suffix: "min", label: "Tempo Médio Economizado", delay: 400 },
+    { value: 30, suffix: "M+", label: "Lugares Encontrados", delay: 100 },
+    { value: 15, suffix: "+", label: "Cidades Abrangidas", delay: 200 },
+    { value: 500, suffix: "K+", label: "Utilizadores Ativos", delay: 300 },
+    { value: 45, suffix: "min", label: "Tempo Médio Poupado", delay: 400 },
   ]
 
   return (

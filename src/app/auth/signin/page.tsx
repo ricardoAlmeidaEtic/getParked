@@ -43,7 +43,7 @@ export default function SignInPage() {
       if (signInError) throw signInError
 
       if (!data.user) {
-        throw new Error('Usuário não encontrado')
+        throw new Error('Utilizador não encontrado')
       }
 
       // Check user role and validate client access only
@@ -64,12 +64,12 @@ export default function SignInPage() {
         throw new Error('Tipo de conta não reconhecido.')
       }
 
-      showToast.success('Login realizado com sucesso!')
+      showToast.success('Sessão iniciada com sucesso!')
       router.push('/map')
     } catch (error) {
-      console.error('Erro no login:', error)
-      setError(error instanceof Error ? error.message : 'Erro ao fazer login')
-      showToast.error(error instanceof Error ? error.message : 'Erro ao fazer login')
+      console.error('Erro no início de sessão:', error)
+      setError(error instanceof Error ? error.message : 'Erro ao iniciar sessão')
+      showToast.error(error instanceof Error ? error.message : 'Erro ao iniciar sessão')
     } finally {
       setLoading(false)
     }
@@ -88,7 +88,7 @@ export default function SignInPage() {
           subtitleLink={{
             text: "Não tem uma conta?",
             href: "/auth/signup",
-            label: "Cadastre-se",
+            label: "Registe-se",
           }}
         />
 
@@ -116,7 +116,7 @@ export default function SignInPage() {
                         autoComplete="email"
                         required
                         className="pl-10"
-                        placeholder="seu@email.com"
+                        placeholder="o.seu@email.com"
                         value={formData.email}
                         onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                       />
@@ -125,13 +125,13 @@ export default function SignInPage() {
 
                   <div>
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="password">Senha</Label>
+                      <Label htmlFor="password">Palavra-Passe</Label>
                       <div className="text-sm">
                         <Link
                           href="/auth/forgot-password"
                           className="font-semibold text-primary hover:text-primary/80"
                         >
-                          Esqueceu a senha?
+                          Esqueceu-se da palavra-passe?
                         </Link>
                       </div>
                     </div>
@@ -172,7 +172,7 @@ export default function SignInPage() {
                       className="transition-colors duration-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                     />
                     <Label htmlFor="remember-me" className="ml-2 text-sm text-gray-900">
-                      Lembrar de mim
+                      Lembrar-se de mim
                     </Label>
                   </div>
 
@@ -184,7 +184,7 @@ export default function SignInPage() {
                     >
                       {loading ? (
                         <span className="flex items-center">
-                          <span className="animate-spin mr-2">⏳</span> Entrando...
+                          <span className="animate-spin mr-2">⏳</span> A entrar...
                         </span>
                       ) : (
                         "Entrar"

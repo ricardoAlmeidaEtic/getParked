@@ -42,16 +42,16 @@ export default function SignUpPage() {
       }
 
       if (formData.password !== formData.confirmPassword) {
-        throw new Error('As senhas não coincidem')
+        throw new Error('As palavras-passe não coincidem')
       }
 
       if (formData.password.length < 6) {
-        throw new Error('A senha deve ter pelo menos 6 caracteres')
+        throw new Error('A palavra-passe deve ter pelo menos 6 caracteres')
       }
 
-      console.log('Iniciando criação de usuário:', formData.email)
+      console.log('A iniciar criação de utilizador:', formData.email)
 
-      // Cria o usuário
+      // Cria o utilizador
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -63,16 +63,16 @@ export default function SignUpPage() {
       })
 
       if (signUpError) {
-        console.error('Erro no signup:', signUpError)
+        console.error('Erro no registo:', signUpError)
         throw signUpError
       }
 
       if (!data.user) {
-        console.error('Usuário não criado:', data)
-        throw new Error('Erro ao criar usuário')
+        console.error('Utilizador não criado:', data)
+        throw new Error('Erro ao criar utilizador')
       }
 
-      console.log('Usuário criado com sucesso:', data.user.id)
+      console.log('Utilizador criado com sucesso:', data.user.id)
 
       // Verifica se o perfil foi criado
       const { data: profile, error: profileError } = await supabase
@@ -87,10 +87,10 @@ export default function SignUpPage() {
         console.log('Perfil criado:', profile)
       }
 
-      showToast.success('Conta criada com sucesso! Por favor, verifique seu email.')
+      showToast.success('Conta criada com sucesso! Por favor, verifique o seu email.')
       router.push('/auth/signin')
     } catch (error) {
-      console.error('Erro no cadastro:', error)
+      console.error('Erro no registo:', error)
       setError(error instanceof Error ? error.message : 'Erro ao criar conta')
       showToast.error(error instanceof Error ? error.message : 'Erro ao criar conta')
     } finally {
@@ -102,12 +102,12 @@ export default function SignUpPage() {
     <div className="min-h-screen flex flex-col">
       <div className="flex min-h-screen flex-1 flex-col justify-center px-6 py-12 lg:px-8">
         <AuthHeader
-          title="Crie sua conta"
+          title="Crie a sua conta"
           subtitle="Já tem uma conta?"
           subtitleLink={{
             text: "Já tem uma conta?",
             href: "/auth/signin",
-            label: "Faça login",
+            label: "Iniciar sessão",
           }}
         />
 
@@ -135,7 +135,7 @@ export default function SignUpPage() {
                         autoComplete="name"
                         required
                         className="pl-10"
-                        placeholder="Seu nome completo"
+                        placeholder="O seu nome completo"
                         value={formData.name}
                         onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                       />
@@ -155,7 +155,7 @@ export default function SignUpPage() {
                         autoComplete="email"
                         required
                         className="pl-10"
-                        placeholder="seu@email.com"
+                        placeholder="o.seu@email.com"
                         value={formData.email}
                         onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                       />
@@ -163,7 +163,7 @@ export default function SignUpPage() {
                   </div>
 
                   <div>
-                    <Label htmlFor="password">Senha</Label>
+                    <Label htmlFor="password">Palavra-passe</Label>
                     <div className="mt-2 relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Lock className="h-5 w-5 text-gray-400" />
@@ -195,7 +195,7 @@ export default function SignUpPage() {
                   </div>
 
                   <div>
-                    <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+                    <Label htmlFor="confirmPassword">Confirmar Palavra-passe</Label>
                     <div className="mt-2 relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Lock className="h-5 w-5 text-gray-400" />
@@ -232,7 +232,7 @@ export default function SignUpPage() {
                   >
                     {loading ? (
                       <span className="flex items-center">
-                        <span className="animate-spin mr-2">⏳</span> Criando conta...
+                        <span className="animate-spin mr-2">⏳</span> A criar conta...
                       </span>
                     ) : (
                       <span className="flex items-center">

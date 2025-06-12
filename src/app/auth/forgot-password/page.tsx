@@ -51,12 +51,12 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex flex-col">
       <div className="flex min-h-screen flex-1 flex-col justify-center px-6 py-12 lg:px-8">
         <AuthHeader
-          title="Esqueceu sua senha?"
-          subtitle="Lembrou sua senha?"
+          title="Esqueceu-se da sua palavra-passe?"
+          subtitle="Lembrou-se da sua palavra-passe?"
           subtitleLink={{
-            text: "Lembrou sua senha?",
+            text: "Lembrou-se da sua palavra-passe?",
             href: "/auth/signin",
-            label: "Voltar ao login",
+            label: "Voltar ao início de sessão",
           }}
         />
 
@@ -73,7 +73,7 @@ export default function ForgotPasswordPage() {
                 {success ? (
                   <Alert className="mb-6 border-green-200 bg-green-50">
                     <AlertDescription className="text-green-800">
-                      ✉️ Email de recuperação enviado! Verifique sua caixa de entrada e siga as instruções para redefinir sua senha.
+                      ✉️ Email de recuperação enviado! Verifique a sua caixa de entrada e siga as instruções para redefinir a sua palavra-passe.
                     </AlertDescription>
                   </Alert>
                 ) : (
@@ -91,7 +91,7 @@ export default function ForgotPasswordPage() {
                           autoComplete="email"
                           required
                           className="pl-10"
-                          placeholder="seu@email.com"
+                          placeholder="o.seu@email.com"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                         />
@@ -106,7 +106,7 @@ export default function ForgotPasswordPage() {
                       >
                         {loading ? (
                           <span className="flex items-center">
-                            <span className="animate-spin mr-2">⏳</span> Enviando...
+                            <span className="animate-spin mr-2">⏳</span> A enviar...
                           </span>
                         ) : (
                           "Enviar email de recuperação"

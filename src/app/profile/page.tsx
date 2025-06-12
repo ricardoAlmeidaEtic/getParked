@@ -167,8 +167,8 @@ export default function ProfilePage() {
       <main className="flex min-h-screen flex-col">
         <div className="flex-1 pt-24 pb-16 px-4 md:px-8 flex flex-col items-center justify-center">
           <h1 className="text-2xl font-bold mb-4">Sessão expirada</h1>
-          <p className="mb-6">Por favor, faça login novamente para acessar seu perfil.</p>
-          <Button onClick={() => router.push("/auth/signin")}>Fazer Login</Button>
+          <p className="mb-6">Por favor, inicie sessão novamente para aceder ao seu perfil.</p>
+          <Button onClick={() => router.push("/auth/signin")}>Iniciar sessão</Button>
         </div>
       </main>
     )
@@ -180,7 +180,7 @@ export default function ProfilePage() {
         <div className="flex-1 pt-24 pb-16 px-4 md:px-8 flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Erro ao carregar perfil</h1>
-            <p className="mb-6">Não foi possível carregar seus dados de usuário.</p>
+            <p className="mb-6">Não foi possível carregar os seus dados de utilizador.</p>
             <Button onClick={() => window.location.reload()}>Tentar novamente</Button>
           </div>
         </div>
@@ -193,8 +193,8 @@ export default function ProfilePage() {
       <div className="flex-1 pt-24 pb-16 px-4 md:px-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">Perfil do Utilizador</h1>
-            <p className="text-gray-600">Gerencie suas informações pessoais e preferências</p>
+            <h1 className="text-3xl font-bold mb-2">Perfil de Utilizador</h1>
+            <p className="text-gray-600">Gira as suas informações pessoais e preferências</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -273,7 +273,7 @@ export default function ProfilePage() {
                     <CardHeader>
                       <CardTitle>Informações Pessoais</CardTitle>
                       <CardDescription>
-                        Atualize suas informações pessoais aqui. Estas informações serão exibidas publicamente.
+                        Atualize as suas informações pessoais aqui. Estas informações serão exibidas publicamente.
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -324,18 +324,18 @@ export default function ProfilePage() {
                 <TabsContent value="vehicles" className="mt-4">
                   <Card>
                     <CardHeader>
-                      <CardTitle>Meus Veículos</CardTitle>
+                      <CardTitle>Os Meus Veículos</CardTitle>
                       <CardDescription>
-                        Gerencie seus veículos cadastrados.
+                        Gira os seus veículos registados.
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       {vehicles.length === 0 ? (
                         <div className="text-center py-8">
                           <Car className="mx-auto h-12 w-12 text-gray-400" />
-                          <h3 className="mt-2 text-sm font-semibold text-gray-900">Nenhum veículo cadastrado</h3>
+                          <h3 className="mt-2 text-sm font-semibold text-gray-900">Nenhum veículo registado</h3>
                           <p className="mt-1 text-sm text-gray-500">
-                            Adicione seu primeiro veículo para começar a buscar vagas compatíveis.
+                            Adicione o seu primeiro veículo para começar a procurar lugares compatíveis.
                           </p>
                           <div className="mt-6">
                             <Button onClick={() => setIsAddingVehicle(true)}>
