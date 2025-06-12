@@ -511,14 +511,7 @@ CREATE POLICY "Parking owners can view their spots' reservations"
 
 CREATE POLICY "Users can create reservations"
   ON reservations FOR INSERT
-  WITH CHECK (
-    auth.uid() = client_id AND
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid()
-      AND plan = 'Premium'
-    )
-  );
+  WITH CHECK (auth.uid() = client_id);
 
 CREATE POLICY "Users can update their own reservations"
   ON reservations FOR UPDATE
