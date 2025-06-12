@@ -73,20 +73,41 @@ export default function Dashboard() {
         .select('id')
         .eq('parking_id', parking.id);
 
+      // Initialize empty data if no spots found
       if (!spots?.length) {
-        throw new Error('No spots found');
+        setStats({
+          totalReservations: 0,
+          totalRevenue: 0,
+          activeReservations: 0,
+          upcomingReservations: 0,
+          completedReservations: 0,
+          reservationsByStatus: [
+            { name: 'Aguardando', total: 0 },
+            { name: 'Em andamento', total: 0 },
+            { name: 'Finalizadas', total: 0 }
+          ],
+          revenueByMonth: Array.from(new Map<string, number>().entries()).map(([name, total]) => ({
+            name: name.charAt(0).toUpperCase() + name.slice(1),
+            total
+          }))
+        });
+        return;
       }
 
       const spotIds = spots.map(spot => spot.id);
 
       // Get all reservations
-      const { data: reservations } = await supabase
+      const { data: reservations, error: reservationsError } = await supabase
         .from('reservations')
         .select('*')
         .in('spot_id', spotIds);
 
+      if (reservationsError) {
+        throw new Error('Error fetching reservations: ' + reservationsError.message);
+      }
+
       if (!reservations) {
-        throw new Error('Error fetching reservations');
+        throw new Error('No reservations found');
       }
 
       // Calculate statistics
