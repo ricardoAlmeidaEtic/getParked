@@ -17,6 +17,14 @@ import { useProfile } from '@/hooks/useProfile'
 // Importa o leaflet-routing-machine
 import 'leaflet-routing-machine'
 
+// Corrige o problema dos ícones quebrados do Leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+})
+
 interface MapComponentProps {
   isCreatingSpot: boolean
   onMarkerPositionChange: (position: L.LatLng | null) => void
@@ -492,7 +500,10 @@ export default function MapComponent({
       zoomOffset: 0,
       detectRetina: true,
       crossOrigin: true,
-      errorTileUrl: 'https://tile.openstreetmap.org/0/0/0.png'
+      errorTileUrl: 'https://tile.openstreetmap.org/0/0/0.png',
+      updateWhenIdle: true,
+      updateWhenZooming: false,
+      keepBuffer: 2
     }).addTo(map)
 
     // Adiciona tratamento de erros para o tile layer
@@ -510,6 +521,11 @@ export default function MapComponent({
       if (map.getZoom() >= 19) {
         tileLayer.redraw();
       }
+    });
+
+    // Adiciona evento para limpar cache de tiles
+    map.on('moveend', () => {
+      tileLayer.redraw();
     });
 
     // Adiciona controles de zoom

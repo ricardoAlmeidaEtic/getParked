@@ -32,10 +32,55 @@ export function ReservationModal({
   const { supabase, session } = useSupabase()
   const { profile } = useProfile()
   const [isSaving, setIsSaving] = useState(false)
+  const [pricePerHour, setPricePerHour] = useState<number>(0)
+  const [totalPrice, setTotalPrice] = useState<number>(0)
   const [formData, setFormData] = useState({
     start_time: '',
     end_time: ''
   })
+
+  // Busca o preço por hora do estacionamento
+  useEffect(() => {
+    const fetchParkingPrice = async () => {
+      if (!parkingId) return
+
+      const { data: parking, error } = await supabase
+        .from('parkings')
+        .select('hourly_rate')
+        .eq('id', parkingId)
+        .single()
+
+      if (error) {
+        console.error('Erro ao buscar preço do estacionamento:', error)
+        return
+      }
+
+      if (parking) {
+        setPricePerHour(parking.hourly_rate)
+      }
+    }
+
+    if (isOpen) {
+      fetchParkingPrice()
+    }
+  }, [isOpen, parkingId, supabase])
+
+  // Calcula o valor total quando os horários são alterados
+  useEffect(() => {
+    if (formData.start_time && formData.end_time) {
+      const startDate = new Date()
+      const endDate = new Date()
+      const [startHours, startMinutes] = formData.start_time.split(':')
+      const [endHours, endMinutes] = formData.end_time.split(':')
+
+      startDate.setHours(parseInt(startHours), parseInt(startMinutes), 0, 0)
+      endDate.setHours(parseInt(endHours), parseInt(endMinutes), 0, 0)
+
+      const diffInHours = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60)
+      const total = diffInHours * pricePerHour
+      setTotalPrice(total)
+    }
+  }, [formData.start_time, formData.end_time, pricePerHour])
 
   // Reset form when modal opens
   useEffect(() => {
@@ -44,6 +89,7 @@ export function ReservationModal({
         start_time: '',
         end_time: ''
       })
+      setTotalPrice(0)
     }
   }, [isOpen])
 
@@ -153,6 +199,7 @@ export function ReservationModal({
           spot_id: newSpot.id,
           start_time: startDate.toISOString(),
           end_time: endDate.toISOString(),
+          total_price: totalPrice,
           status: 'confirmed'
         })
 
@@ -213,6 +260,16 @@ export function ReservationModal({
                 min={formData.start_time || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
               />
             </div>
+            {totalPrice > 0 && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right">
+                  Valor Total
+                </Label>
+                <div className="col-span-3 text-lg font-semibold text-green-600">
+                  €{totalPrice.toFixed(2)}
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
