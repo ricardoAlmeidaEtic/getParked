@@ -71,8 +71,17 @@ export class RouteManager {
           serviceUrl: 'https://routing.openstreetmap.de/routed-car/route/v1',
           timeout: 30000,
           profile: 'driving',
-          useHints: true
-        })
+          useHints: true,
+          language: 'pt',
+          optimize: true,
+          alternatives: false,
+          continue_straight: true
+        }),
+        createMarker: () => null, // Desativa marcadores padrão
+        show: false, // Esconde o painel de instruções padrão
+        addWaypoints: false, // Desativa adição de waypoints
+        draggableWaypoints: false, // Desativa arrastar waypoints
+        waypointMode: 'snap' // Melhor precisão nos waypoints
       })
 
       console.log('Controle de rota criado, adicionando ao mapa...')
