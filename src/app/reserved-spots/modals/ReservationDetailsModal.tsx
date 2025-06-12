@@ -3,6 +3,10 @@ import { Button } from "@/components/ui/button"
 import { Calendar, Clock, MapPin, Car, CreditCard, AlertCircle, CheckCircle2, XCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { useSupabase } from "@/providers/SupabaseProvider"
+import { showToast } from "@/lib/toast"
+import { useState } from "react"
+import { ConfirmCancelModal } from "./ConfirmCancelModal"
 
 interface ReservationDetailsModalProps {
   isOpen: boolean
@@ -24,10 +28,14 @@ interface ReservationDetailsModalProps {
       }
     }[]
   }
+  onReservationCancelled?: () => void
 }
 
-export function ReservationDetailsModal({ isOpen, onClose, reservation }: ReservationDetailsModalProps) {
+export function ReservationDetailsModal({ isOpen, onClose, reservation, onReservationCancelled }: ReservationDetailsModalProps) {
   const router = useRouter()
+  const { supabase } = useSupabase()
+  const [isCancelling, setIsCancelling] = useState(false)
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString('pt-BR', {
@@ -93,118 +101,173 @@ export function ReservationDetailsModal({ isOpen, onClose, reservation }: Reserv
     return `${minutes}m`
   }
 
+  const handleCancelClick = () => {
+    setIsConfirmModalOpen(true)
+  }
+
+  const handleCancelReservation = async () => {
+    setIsCancelling(true)
+    try {
+      // Atualiza o status da reserva
+      const { error: reservationError } = await supabase
+        .from('reservations')
+        .update({
+          status: 'cancelled'
+        })
+        .eq('id', reservation.id)
+
+      if (reservationError) {
+        console.error('Erro ao cancelar reserva:', reservationError)
+        throw reservationError
+      }
+
+      showToast.success('Reserva cancelada com sucesso!')
+      onReservationCancelled?.()
+      setIsConfirmModalOpen(false)
+      onClose()
+    } catch (error: any) {
+      console.error('Erro ao cancelar reserva:', error)
+      showToast.error('Erro ao cancelar reserva. Por favor, tente novamente.')
+    } finally {
+      setIsCancelling(false)
+    }
+  }
+
+  const canCancelReservation = () => {
+    // Mostra o botão apenas se a reserva estiver confirmada
+    return reservation.status === 'confirmed'
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-gray-900">
-            Detalhes da Reserva
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-gray-900">
+              Detalhes da Reserva
+            </DialogTitle>
+          </DialogHeader>
 
-        <div className="mt-6 space-y-6">
-          {/* Status e ID da Reserva */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {getStatusIcon(reservation.status)}
-              <span className="font-medium text-gray-900">
-                {getStatusText(reservation.status)}
-              </span>
-            </div>
-            <span className="text-sm text-gray-500">
-              ID: {reservation.id.slice(0, 8)}...
-            </span>
-          </div>
-
-          {/* Informações do Estacionamento */}
-          <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-            <h3 className="font-semibold text-gray-900">
-              {reservation.spots[0]?.parkings?.name}
-            </h3>
-            <div className="flex items-center gap-2 text-gray-600">
-              <MapPin className="h-4 w-4 flex-shrink-0" />
-              <span>{reservation.spots[0]?.parkings?.address}</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-600">
-              <Car className="h-4 w-4 flex-shrink-0" />
-              <span>Vaga {reservation.spots[0]?.number}</span>
-            </div>
-          </div>
-
-          {/* Detalhes da Reserva */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-gray-600">
-                <Calendar className="h-4 w-4 flex-shrink-0" />
-                <span>Data</span>
-              </div>
-              <p className="font-medium text-gray-900">
-                {formatDate(reservation.start_time)}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-gray-600">
-                <Clock className="h-4 w-4 flex-shrink-0" />
-                <span>Horário</span>
-              </div>
-              <p className="font-medium text-gray-900">
-                {formatTime(reservation.start_time)} - {formatTime(reservation.end_time)}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-gray-600">
-                <Clock className="h-4 w-4 flex-shrink-0" />
-                <span>Duração</span>
-              </div>
-              <p className="font-medium text-gray-900">
-                {calculateDuration()}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-gray-600">
-                <CreditCard className="h-4 w-4 flex-shrink-0" />
-                <span>Valor/Hora</span>
-              </div>
-              <p className="font-medium text-gray-900">
-                R$ {reservation.spots[0]?.parkings?.hourly_rate.toFixed(2)}
-              </p>
-            </div>
-          </div>
-
-          {/* Valor Total */}
-          <div className="border-t pt-4">
+          <div className="mt-6 space-y-6">
+            {/* Status e ID da Reserva */}
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Valor Total</span>
-              <span className="text-xl font-bold text-primary-600">
-                R$ {reservation.total_price?.toFixed(2) || '0.00'}
+              <div className="flex items-center gap-2">
+                {getStatusIcon(reservation.status)}
+                <span className="font-medium text-gray-900">
+                  {getStatusText(reservation.status)}
+                </span>
+              </div>
+              <span className="text-sm text-gray-500">
+                ID: {reservation.id.slice(0, 8)}...
               </span>
             </div>
-          </div>
 
-          {/* Botões de Ação */}
-          <div className="flex gap-3 pt-4">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={onClose}
-            >
-              Fechar
-            </Button>
-            <Button
-              className="flex-1 bg-primary hover:bg-primary/90"
-              onClick={() => {
-                onClose()
-                router.push(`/map?spot=${reservation.spots[0]?.id}`)
-              }}
-            >
-              Ver no Mapa
-            </Button>
+            {/* Informações do Estacionamento */}
+            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+              <h3 className="font-semibold text-gray-900">
+                {reservation.spots[0]?.parkings?.name}
+              </h3>
+              <div className="flex items-center gap-2 text-gray-600">
+                <MapPin className="h-4 w-4 flex-shrink-0" />
+                <span>{reservation.spots[0]?.parkings?.address}</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-600">
+                <Car className="h-4 w-4 flex-shrink-0" />
+                <span>Vaga {reservation.spots[0]?.number}</span>
+              </div>
+            </div>
+
+            {/* Detalhes da Reserva */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Calendar className="h-4 w-4 flex-shrink-0" />
+                  <span>Data</span>
+                </div>
+                <p className="font-medium text-gray-900">
+                  {formatDate(reservation.start_time)}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Clock className="h-4 w-4 flex-shrink-0" />
+                  <span>Horário</span>
+                </div>
+                <p className="font-medium text-gray-900">
+                  {formatTime(reservation.start_time)} - {formatTime(reservation.end_time)}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Clock className="h-4 w-4 flex-shrink-0" />
+                  <span>Duração</span>
+                </div>
+                <p className="font-medium text-gray-900">
+                  {calculateDuration()}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <CreditCard className="h-4 w-4 flex-shrink-0" />
+                  <span>Valor/Hora</span>
+                </div>
+                <p className="font-medium text-gray-900">
+                  R$ {reservation.spots[0]?.parkings?.hourly_rate.toFixed(2)}
+                </p>
+              </div>
+            </div>
+
+            {/* Valor Total */}
+            <div className="border-t pt-4">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">Valor Total</span>
+                <span className="text-xl font-bold text-primary-600">
+                  R$ {reservation.total_price?.toFixed(2) || '0.00'}
+                </span>
+              </div>
+            </div>
+
+            {/* Botões de Ação */}
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={onClose}
+              >
+                Fechar
+              </Button>
+              {canCancelReservation() && (
+                <Button
+                  variant="destructive"
+                  className="flex-1"
+                  onClick={handleCancelClick}
+                >
+                  Cancelar Reserva
+                </Button>
+              )}
+              <Button
+                className="flex-1 bg-primary hover:bg-primary/90"
+                onClick={() => {
+                  onClose()
+                  router.push(`/map?spot=${reservation.spots[0]?.id}`)
+                }}
+              >
+                Ver no Mapa
+              </Button>
+            </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmCancelModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        onConfirm={handleCancelReservation}
+        isCancelling={isCancelling}
+      />
+    </>
   )
 } 
