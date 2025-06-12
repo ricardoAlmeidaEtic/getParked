@@ -11,12 +11,6 @@
   image-rendering: crisp-edges;
   image-rendering: pixelated;
   transition: transform 0.3s ease-out;
-  
-}
-html, body {
-  overflow: hidden !important;
-  height: 100% !important;
-  touch-action: none; /* Optional: disables touch scroll on mobile */
 }
 
 /* Controles do mapa */

@@ -76,6 +76,7 @@ export default function Reservations() {
       if (!spots || spots.length === 0) {
         console.log('No spots found for parking');
         setReservations([]);
+        setLoading(false);
         return;
       }
 

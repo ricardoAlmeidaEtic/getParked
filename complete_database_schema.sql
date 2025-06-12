@@ -325,6 +325,87 @@ alter table reservations enable row level security;
 alter table public_spots enable row level security;
 alter table public_spot_markers enable row level security;
 alter table private_parking_markers enable row level security;
+alter table spots enable row level security;
+
+-- Disable RLS for admin dashboard tables
+alter table parkings disable row level security;
+alter table vehicles disable row level security;
+alter table daily_searches disable row level security;
+
+-- Drop existing policies
+DROP POLICY IF EXISTS "Users can view all public spot markers" ON public_spot_markers;
+DROP POLICY IF EXISTS "Users can create public spot markers" ON public_spot_markers;
+DROP POLICY IF EXISTS "Users can update their public spot markers" ON public_spot_markers;
+DROP POLICY IF EXISTS "Users can delete their public spot markers" ON public_spot_markers;
+
+DROP POLICY IF EXISTS "Users can view all private parking markers" ON private_parking_markers;
+DROP POLICY IF EXISTS "Users can create private parking markers" ON private_parking_markers;
+DROP POLICY IF EXISTS "Users can update their private parking markers" ON private_parking_markers;
+DROP POLICY IF EXISTS "Users can delete their private parking markers" ON private_parking_markers;
+
+-- Create policies for public_spot_markers
+CREATE POLICY "Users can view all public spot markers"
+  ON public_spot_markers FOR SELECT
+  USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Users can create public spot markers"
+  ON public_spot_markers FOR INSERT
+  WITH CHECK (
+    auth.role() = 'authenticated' AND
+    auth.uid() = user_id
+  );
+
+CREATE POLICY "Users can update their public spot markers"
+  ON public_spot_markers FOR UPDATE
+  USING (
+    auth.role() = 'authenticated' AND
+    auth.uid() = user_id
+  );
+
+CREATE POLICY "Users can delete their public spot markers"
+  ON public_spot_markers FOR DELETE
+  USING (
+    auth.role() = 'authenticated' AND
+    auth.uid() = user_id
+  );
+
+-- Create policies for private_parking_markers
+CREATE POLICY "Users can view all private parking markers"
+  ON private_parking_markers FOR SELECT
+  USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Users can create private parking markers"
+  ON private_parking_markers FOR INSERT
+  WITH CHECK (
+    auth.role() = 'authenticated' AND
+    EXISTS (
+      SELECT 1 FROM parkings
+      WHERE id = parking_id
+      AND owner_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can update their private parking markers"
+  ON private_parking_markers FOR UPDATE
+  USING (
+    auth.role() = 'authenticated' AND
+    EXISTS (
+      SELECT 1 FROM parkings
+      WHERE id = parking_id
+      AND owner_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can delete their private parking markers"
+  ON private_parking_markers FOR DELETE
+  USING (
+    auth.role() = 'authenticated' AND
+    EXISTS (
+      SELECT 1 FROM parkings
+      WHERE id = parking_id
+      AND owner_id = auth.uid()
+    )
+  );
 
 -- Criar políticas RLS após habilitar RLS
 create policy "Usuários podem ver seus próprios perfis"
@@ -355,88 +436,101 @@ create policy "Parking owners can read profiles of clients with reservations"
     )
   );
 
-create policy "Usuários podem ver suas próprias reservas"
-  on reservations for select
-  using (auth.uid() = client_id);
+-- Drop existing policies for spots and reservations
+DROP POLICY IF EXISTS "Users can view all spots" ON spots;
+DROP POLICY IF EXISTS "Users can create spots" ON spots;
+DROP POLICY IF EXISTS "Users can update spots" ON spots;
+DROP POLICY IF EXISTS "Users can delete spots" ON spots;
+DROP POLICY IF EXISTS "Usuários premium podem criar reservas" ON reservations;
+DROP POLICY IF EXISTS "Usuários podem ver suas próprias reservas" ON reservations;
+DROP POLICY IF EXISTS "Admins podem ver todas as reservas" ON reservations;
+DROP POLICY IF EXISTS "Parking owners can view reservations for their spots" ON reservations;
+DROP POLICY IF EXISTS "Usuários podem atualizar suas próprias reservas" ON reservations;
+DROP POLICY IF EXISTS "Usuários podem cancelar suas próprias reservas" ON reservations;
 
-create policy "Parking owners can view reservations for their spots"
-  on reservations for select
-  using (
-    exists (
-      select 1 from spots s
-      join parkings p on p.id = s.parking_id
-      where s.id = reservations.spot_id
-      and p.owner_id = auth.uid()
+-- Create simplified policies for spots
+CREATE POLICY "Users can view all spots"
+  ON spots FOR SELECT
+  USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Users can create spots"
+  ON spots FOR INSERT
+  WITH CHECK (
+    auth.role() = 'authenticated' AND
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid()
+      AND plan = 'Premium'
     )
   );
 
-create policy "Usuários premium podem criar reservas"
-  on reservations for insert
-  with check (
-    auth.uid() = client_id and
-    exists (
-      select 1 from profiles
-      where id = auth.uid()
-      and plan = 'Premium'
+CREATE POLICY "Users can update spots"
+  ON spots FOR UPDATE
+  USING (
+    auth.role() = 'authenticated' AND
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid()
+      AND plan = 'Premium'
     )
   );
 
-create policy "Usuários podem atualizar suas próprias reservas"
-  on reservations for update
-  using (auth.uid() = client_id);
+CREATE POLICY "Users can delete spots"
+  ON spots FOR DELETE
+  USING (
+    auth.role() = 'authenticated' AND
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid()
+      AND plan = 'Premium'
+    )
+  );
 
-create policy "Usuários podem cancelar suas próprias reservas"
-  on reservations for delete
-  using (auth.uid() = client_id);
+-- Drop existing policies for reservations
+DROP POLICY IF EXISTS "Users can view their own reservations" ON reservations;
+DROP POLICY IF EXISTS "Users can create reservations" ON reservations;
+DROP POLICY IF EXISTS "Users can update their own reservations" ON reservations;
+DROP POLICY IF EXISTS "Users can delete their own reservations" ON reservations;
+DROP POLICY IF EXISTS "Admins can view all reservations" ON reservations;
 
-create policy "Creator can read their own public spots"
-  on public_spots for select
-  using (auth.uid() = creator_id);
+-- Create new policies for reservations
+CREATE POLICY "Users can view their own reservations"
+  ON reservations FOR SELECT
+  USING (auth.uid() = client_id);
 
-create policy "Users can create public spots"
-  on public_spots for insert
-  with check (auth.uid() = creator_id);
+CREATE POLICY "Parking owners can view their spots' reservations"
+  ON reservations FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM spots s
+      JOIN parkings p ON s.parking_id = p.id
+      WHERE s.id = reservations.spot_id
+      AND p.owner_id = auth.uid()
+    )
+  );
 
-create policy "Another user can validate public spots"
-  on public_spots for update
-  using (auth.uid() != creator_id)
-  with check (is_validated = true and validator_id = auth.uid());
+CREATE POLICY "Users can create reservations"
+  ON reservations FOR INSERT
+  WITH CHECK (
+    auth.uid() = client_id AND
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid()
+      AND plan = 'Premium'
+    )
+  );
 
-create policy "Usuários podem ver todas as vagas públicas não expiradas"
-  on public_spot_markers for select
-  using (expires_at > timezone('utc'::text, now()));
+CREATE POLICY "Users can update their own reservations"
+  ON reservations FOR UPDATE
+  USING (auth.uid() = client_id);
 
-create policy "Usuários autenticados podem criar vagas públicas"
-  on public_spot_markers for insert
-  with check (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own reservations"
+  ON reservations FOR DELETE
+  USING (auth.uid() = client_id);
 
-create policy "Usuários podem atualizar suas próprias vagas"
-  on public_spot_markers for update
-  using (auth.uid() = user_id);
-
-create policy "Usuários podem deletar suas próprias vagas"
-  on public_spot_markers for delete
-  using (auth.uid() = user_id);
-
-create policy "Users can view all private parking markers"
-  on private_parking_markers for select
-  using (true);
-
-create policy "Authenticated users can create private parking markers"
-  on private_parking_markers for insert
-  with check (auth.role() = 'authenticated');
-
-create policy "Parking owners can update their markers"
-  on private_parking_markers for update
-  using (parking_id in (
-    select id from parkings where owner_id = auth.uid()
-  ));
-
-create policy "Parking owners can delete their markers"
-  on private_parking_markers for delete
-  using (parking_id in (
-    select id from parkings where owner_id = auth.uid()
-  ));
+CREATE POLICY "Admins can view all reservations"
+  ON reservations FOR SELECT
+  USING (auth.jwt() ->> 'role' = 'admin');
 
 -- Inserir dados iniciais após criar todas as tabelas e políticas
 insert into plans (name, price, search_limit, vehicle_limit, allow_reservations, realtime_navigation, priority_support)
