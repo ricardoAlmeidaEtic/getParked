@@ -50,17 +50,17 @@ TOTAL_TESTS=0
 PASSED_TESTS=0
 FAILED_TESTS=0
 
-echo -e "${YELLOW}Executando testes para todas as seções...${NC}\n"
+echo -e "${YELLOW}A executar testes para todas as secções...${NC}\n"
 
 # Executar os testes
 run_test "landing.test.tsx" "Página Principal"
 run_test "map.test.tsx" "Mapa"
 run_test "profile.test.tsx" "Perfil"
 run_test "planos.test.tsx" "Planos"
-run_test "available-spots.test.tsx" "Vagas Disponíveis"
-run_test "signin.test.tsx" "Login"
-run_test "signup.test.tsx" "Registro"
-run_test "forgot-password.test.tsx" "Recuperação de Senha"
+run_test "available-spots.test.tsx" "Lugares Disponíveis"
+run_test "signin.test.tsx" "Iniciar Sessão"
+run_test "signup.test.tsx" "Registo"
+run_test "forgot-password.test.tsx" "Recuperação de Palavra-passe"
 
 # Relatório final
 echo -e "\n${YELLOW}================================================================${NC}"
@@ -71,11 +71,11 @@ echo -e "${BLUE}Total de seções testadas:${NC} $TOTAL_TESTS"
 echo -e "${GREEN}Seções com testes bem-sucedidos:${NC} $PASSED_TESTS"
 
 if [ $FAILED_TESTS -gt 0 ]; then
-  echo -e "${RED}Seções com testes falhados:${NC} $FAILED_TESTS"
-  echo -e "\n${RED}Alguns testes apresentaram falhas. Verifique os logs acima para detalhes.${NC}"
+  echo -e "${RED}Secções com testes falhados:${NC} $FAILED_TESTS"
+  echo -e "\n${RED}Alguns testes apresentaram falhas. Verifique os logs acima para mais detalhes.${NC}"
   echo -e "${BLUE}Após corrigir os problemas, execute este script novamente.${NC}"
-  echo -e "${YELLOW}Dica: Verifique se os mocks estão consistentes com as definições de interfaces.${NC}"
+  echo -e "${YELLOW}Dica: Verifique se as simulações estão consistentes com as definições de interfaces.${NC}"
 else
   echo -e "\n${GREEN}🎉 Todos os testes foram executados com sucesso!${NC}"
-  echo -e "${BLUE}As seções do site estão funcionando conforme esperado.${NC}"
+  echo -e "${BLUE}As secções do site estão a funcionar conforme esperado.${NC}"
 fi

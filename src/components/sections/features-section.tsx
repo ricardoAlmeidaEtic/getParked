@@ -7,30 +7,30 @@ export default function FeaturesSection() {
   const mainFeatures = [
     {
       icon: <Search className="h-6 w-6 text-primary" />,
-      title: "Busca Inteligente",
-      description: "Encontre vagas próximas a você ou em qualquer localização com nossa busca inteligente.",
+      title: "Pesquisa Inteligente",
+      description: "Encontre lugares próximos de si ou em qualquer localização com a nossa pesquisa inteligente.",
       features: [
         "Filtros avançados por preço e tipo",
         "Visualização em mapa interativo",
-        "Sugestões baseadas em histórico",
+        "Sugestões baseadas no histórico",
       ],
       delay: 100,
     },
     {
       icon: <Clock className="h-6 w-6 text-primary" />,
       title: "Reservas em Tempo Real",
-      description: "Reserve sua vaga com antecedência e garanta seu espaço quando chegar ao destino.",
+      description: "Reserve o seu lugar com antecedência e garanta o seu espaço ao chegar ao destino.",
       features: ["Confirmação instantânea", "Cancelamento flexível", "Lembretes automáticos"],
       delay: 200,
     },
     {
       icon: <CreditCard className="h-6 w-6 text-primary" />,
       title: "Pagamento Simplificado",
-      description: "Pague diretamente pelo aplicativo sem precisar de dinheiro ou tickets físicos.",
+      description: "Pague diretamente pela aplicação sem precisar de dinheiro ou bilhetes físicos.",
       features: [
         "Múltiplas formas de pagamento",
         "Recibos digitais automáticos",
-        "Transações seguras e criptografadas",
+        "Transações seguras e encriptadas",
       ],
       delay: 300,
     },
@@ -40,18 +40,18 @@ export default function FeaturesSection() {
     {
       icon: <Navigation className="h-6 w-6 text-primary" />,
       title: "Navegação Integrada",
-      description: "Navegue diretamente para a vaga escolhida com instruções passo a passo.",
+      description: "Navegue diretamente para o lugar escolhido com instruções passo a passo.",
       features: ["Rotas otimizadas em tempo real", "Informações sobre trânsito", "Localização precisa da entrada"],
       delay: 400,
     },
     {
       icon: <Shield className="h-6 w-6 text-primary" />,
       title: "Segurança Garantida",
-      description: "Informações detalhadas sobre segurança e monitoramento de cada estacionamento.",
+      description: "Informações detalhadas sobre segurança e monitorização de cada parque de estacionamento.",
       features: [
-        "Avaliações de outros usuários",
-        "Detalhes sobre câmeras e vigilância",
-        "Verificação de estacionamentos parceiros",
+        "Avaliações de outros utilizadores",
+        "Detalhes sobre câmaras e vigilância",
+        "Verificação de parques parceiros",
       ],
       delay: 500,
     },
@@ -96,9 +96,9 @@ export default function FeaturesSection() {
       <div className="container mx-auto">
         <FadeIn direction="up">
           <div className="text-center mb-16">
-            <Badge className="mb-4">Recursos</Badge>
+            <Badge className="mb-4">Funcionalidades</Badge>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Tudo o que você precisa para estacionar sem estresse
+              Tudo o que precisa para estacionar sem stress
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               GetParked oferece uma solução completa para encontrar, reservar e pagar por estacionamento, tudo em um só

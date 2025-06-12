@@ -18,7 +18,7 @@ export default function UserProfile({ showLogout = true }: UserProfileProps) {
   if (!user) return null
 
   // Acessando os metadados do usuário do Supabase de forma segura
-  const displayName = user.user_metadata?.name || (user.email ? user.email.split('@')[0] : 'Usuário')
+  const displayName = user.user_metadata?.name || (user.email ? user.email.split('@')[0] : 'Utilizador')
   const avatarUrl = user.user_metadata?.avatar_url || null
   const userInitial = displayName.charAt(0).toUpperCase()
 

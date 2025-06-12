@@ -8,23 +8,23 @@ export default function TestimonialsSection() {
   const testimonials = [
     {
       rating: 5,
-      text: "Economizo pelo menos 20 minutos todos os dias procurando estacionamento. O GetParked é um divisor de águas para quem trabalha no centro da cidade.",
+      text: "Poupo pelo menos 20 minutos todos os dias à procura de estacionamento. O GetParked é uma mudança radical para quem trabalha no centro da cidade.",
       name: "Ana Silva",
-      since: "Usuária desde 2022",
+      since: "Utilizadora desde 2022",
       delay: 100,
     },
     {
       rating: 5,
-      text: "A função de reserva antecipada é perfeita! Chego ao meu destino sabendo exatamente onde vou estacionar, sem estresse e sem perder tempo.",
+      text: "A função de reserva antecipada é perfeita! Chego ao meu destino sabendo exatamente onde vou estacionar, sem stress e sem perder tempo.",
       name: "Carlos Mendes",
-      since: "Usuário desde 2023",
+      since: "Utilizador desde 2023",
       delay: 200,
     },
     {
       rating: 4,
-      text: "O pagamento pelo app é super prático. Não preciso mais me preocupar com moedas ou ficar correndo para renovar o ticket. Recomendo a todos!",
+      text: "O pagamento pela app é super prático. Já não preciso de me preocupar com moedas ou correr para renovar o ticket. Recomendo a todos!",
       name: "Mariana Costa",
-      since: "Usuária desde 2023",
+      since: "Utilizadora desde 2023",
       delay: 300,
     },
   ]
@@ -34,10 +34,10 @@ export default function TestimonialsSection() {
       <div className="container mx-auto">
         <FadeIn direction="up">
           <div className="text-center mb-16">
-            <Badge className="mb-4">Depoimentos</Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">O que nossos usuários dizem</h2>
+            <Badge className="mb-4">Testemunhos</Badge>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">O que dizem os nossos utilizadores</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Milhares de motoristas já economizam tempo e dinheiro com o GetParked.
+              Milhares de condutores já poupam tempo e dinheiro com o GetParked.
             </p>
           </div>
         </FadeIn>

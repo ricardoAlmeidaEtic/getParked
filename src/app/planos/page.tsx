@@ -78,7 +78,7 @@ export default function PlanosPage() {
 
   const handleSubscribe = async (planName: string, planType: string, price: number) => {
     if (planName === "free") {
-      showToast.info("Você já está no plano Gratuito")
+      showToast.info("Já está no plano Gratuito")
       return
     }
 
@@ -147,34 +147,34 @@ export default function PlanosPage() {
     {
       question: "Posso mudar de plano a qualquer momento?",
       answer:
-        "Sim, você pode fazer upgrade ou downgrade do seu plano a qualquer momento. As mudanças entram em vigor imediatamente e o valor será ajustado proporcionalmente ao período restante da sua assinatura atual.",
+        "Sim, pode fazer upgrade ou downgrade do seu plano a qualquer momento. As alterações entram em vigor imediatamente e o valor será ajustado proporcionalmente ao período restante da sua subscrição atual.",
     },
     {
       question: "Qual a política de reembolso?",
       answer:
-        "Oferecemos reembolso total nos primeiros 30 dias após a assinatura se você não estiver satisfeito com o serviço. Após este período, reembolsos são avaliados caso a caso pela nossa equipe de suporte.",
+        "Oferecemos reembolso total nos primeiros 30 dias após a subscrição se não estiver satisfeito com o serviço. Após este período, os reembolsos são avaliados caso a caso pela nossa equipa de suporte.",
     },
     {
       question: "Preciso fornecer dados de pagamento para o plano gratuito?",
       answer:
-        "Não, o plano gratuito não requer nenhuma informação de pagamento e pode ser usado por tempo indeterminado com as funcionalidades básicas do GetParked.",
+        "Não, o plano gratuito não requer qualquer informação de pagamento e pode ser usado por tempo indeterminado com as funcionalidades básicas do GetParked.",
     },
     {
       question: "Posso usar o mesmo plano em múltiplos dispositivos?",
       answer:
-        "Sim, você pode acessar sua conta GetParked em múltiplos dispositivos simultaneamente. Todas as suas informações, como veículos cadastrados e histórico de estacionamentos, estarão sincronizadas em todos os dispositivos.",
+        "Sim, pode aceder à sua conta GetParked em múltiplos dispositivos em simultâneo. Todas as suas informações, como veículos registados e histórico de estacionamentos, estarão sincronizadas em todos os dispositivos.",
     },
     {
       question: "Como funciona a cobrança para planos anuais?",
       answer:
-        "Nos planos anuais, o valor total é cobrado de uma só vez no momento da assinatura. Você recebe um desconto significativo em comparação ao pagamento mensal, resultando em uma economia de 20% ao longo do ano.",
+        "Nos planos anuais, o valor total é cobrado de uma só vez no momento da subscrição. Recebe um desconto significativo em comparação com o pagamento mensal, resultando numa poupança de 20% ao longo do ano.",
     },
   ]
 
   const renderPlanFeatures = (plan: Plan) => {
     const features = [
       {
-        text: "Busca de estacionamentos próximos",
+        text: "Pesquisa de parques de estacionamento próximos",
         included: true
       },
       {
@@ -186,7 +186,7 @@ export default function PlanosPage() {
         included: true
       },
       {
-        text: `${plan.vehicle_limit} veículo${plan.vehicle_limit > 1 ? 's' : ''} cadastrado${plan.vehicle_limit > 1 ? 's' : ''}`,
+        text: `${plan.vehicle_limit} veículo${plan.vehicle_limit > 1 ? 's' : ''} registado${plan.vehicle_limit > 1 ? 's' : ''}`,
         included: true
       },
       {
@@ -194,11 +194,11 @@ export default function PlanosPage() {
         included: plan.realtime_navigation
       },
       {
-        text: "Reserva de vagas antecipada",
+        text: "Reserva de lugares antecipada",
         included: plan.allow_reservations
       },
       {
-        text: "Descontos exclusivos em estacionamentos parceiros",
+        text: "Descontos exclusivos em parques parceiros",
         included: plan.priority_support
       }
     ]
@@ -321,7 +321,7 @@ export default function PlanosPage() {
                         ) : (
                           <>
                             <span className="flex items-center transition-transform duration-300 group-hover:-translate-x-2">
-                              Assinar Agora
+                              Subscrever Agora
                             </span>
                             <ArrowRight className="absolute right-4 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:right-6" />
                           </>
@@ -378,7 +378,7 @@ export default function PlanosPage() {
                         ) : (
                           <>
                             <span className="flex items-center transition-transform duration-300 group-hover:-translate-x-2">
-                              Assinar Agora
+                              Subscrever Agora
                             </span>
                             <ArrowRight className="absolute right-4 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:right-6" />
                           </>

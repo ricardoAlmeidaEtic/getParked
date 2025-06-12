@@ -124,9 +124,9 @@ export default function TestAuthPage() {
         <CardHeader>
           <CardTitle className="text-center">Teste de Autenticação</CardTitle>
           <CardDescription className="text-center">
-            {loading ? "Verificando autenticação..." : 
+            {loading ? "A verificar autenticação..." : 
              user ? `Autenticado como ${user.email}` : 
-             "Faça login ou crie uma conta para testar"}
+             "Inicie sessão ou crie uma conta para testar"}
           </CardDescription>
         </CardHeader>
         
@@ -146,7 +146,7 @@ export default function TestAuthPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Senha</Label>
+                  <Label htmlFor="password">Palavra-passe</Label>
                   <Input
                     id="password"
                     name="password"
@@ -160,10 +160,10 @@ export default function TestAuthPage() {
             </CardContent>
             <CardFooter className="flex justify-between">
               <Button onClick={handleSignUp} variant="outline" disabled={isLoading}>
-                {isLoading ? "Processando..." : "Criar Conta"}
+                {isLoading ? "A processar..." : "Criar Conta"}
               </Button>
               <Button onClick={handleLogin} disabled={isLoading}>
-                {isLoading ? "Processando..." : "Login"}
+                {isLoading ? "A processar..." : "Iniciar sessão"}
               </Button>
             </CardFooter>
           </>
@@ -184,7 +184,7 @@ export default function TestAuthPage() {
                   {userDetails && (
                     <div className="mt-2">
                       <p className="text-sm">Plano: {userDetails.plan || "Gratuito"}</p>
-                      <p className="text-sm">Desde: {new Date(userDetails.created_at || user.created_at).toLocaleDateString('pt-BR')}</p>
+                      <p className="text-sm">Desde: {new Date(userDetails.created_at || user.created_at).toLocaleDateString('pt-PT')}</p>
                     </div>
                   )}
                 </div>

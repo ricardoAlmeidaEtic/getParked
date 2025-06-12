@@ -12,8 +12,8 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  title: 'GetParked - Sistema de Gerenciamento de Estacionamento',
-  description: 'Sistema inteligente para gerenciamento de estacionamentos',
+  title: 'GetParked - Sistema de Gestão de Estacionamento',
+  description: 'Sistema inteligente para gestão de estacionamentos',
 }
 
 export default function RootLayout({
@@ -22,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang="pt-PT" suppressHydrationWarning>
       <body className={poppins.className} suppressHydrationWarning>
         <Toaster
           toastOptions={{
