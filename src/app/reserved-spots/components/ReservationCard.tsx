@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { Calendar, Clock, MapPin, Car, ExternalLink } from 'lucide-react'
+import { Calendar, Clock, MapPin, Car, ExternalLink, CreditCard, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import {
   Tooltip,
@@ -8,8 +8,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ReservationDetailsModal } from '../modals/ReservationDetailsModal'
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { useSupabase } from "@/providers/SupabaseProvider"
+import { showToast } from "@/lib/toast"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { AlertTriangle } from "lucide-react"
 
 interface ReservationCardProps {
   reservation: {
@@ -29,11 +35,21 @@ interface ReservationCardProps {
       }
     }[]
   }
+  onReservationCancelled?: () => void
+  onReservationDeleted?: () => void
 }
 
-export function ReservationCard({ reservation }: ReservationCardProps) {
+export function ReservationCard({ reservation, onReservationCancelled, onReservationDeleted }: ReservationCardProps) {
   const router = useRouter()
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+  const [currentReservation, setCurrentReservation] = useState(reservation)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const { supabase } = useSupabase()
+
+  useEffect(() => {
+    setCurrentReservation(reservation)
+  }, [reservation])
 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString('pt-BR', {
@@ -48,13 +64,13 @@ export function ReservationCard({ reservation }: ReservationCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed':
-        return 'bg-green-500 text-white'
-      case 'pending':
-        return 'bg-yellow-500 text-white'
+        return 'bg-green-100 text-green-800'
       case 'cancelled':
-        return 'bg-red-500 text-white'
+        return 'bg-red-100 text-red-800'
+      case 'completed':
+        return 'bg-blue-100 text-blue-800'
       default:
-        return 'bg-gray-500 text-white'
+        return 'bg-gray-100 text-gray-800'
     }
   }
 
@@ -62,10 +78,10 @@ export function ReservationCard({ reservation }: ReservationCardProps) {
     switch (status) {
       case 'confirmed':
         return 'Confirmada'
-      case 'pending':
-        return 'Pendente'
       case 'cancelled':
         return 'Cancelada'
+      case 'completed':
+        return 'Concluída'
       default:
         return status
     }
@@ -73,109 +89,144 @@ export function ReservationCard({ reservation }: ReservationCardProps) {
 
   const getTimeRemaining = () => {
     const now = new Date()
-    const end = new Date(reservation.end_time)
+    const end = new Date(currentReservation.end_time)
     
-    if (now > end) return null
+    if (now > end) return 'Encerrada'
     
     const diff = end.getTime() - now.getTime()
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+    const minutes = Math.floor(diff / (1000 * 60))
     
-    if (hours > 0) {
-      return `${hours}h ${minutes}m restantes`
-    }
-    return `${minutes}m restantes`
+    if (minutes < 0) return 'Encerrada'
+    if (minutes < 60) return `${minutes}m`
+    const hours = Math.floor(minutes / 60)
+    return `${hours}h ${minutes % 60}m`
   }
 
   const timeRemaining = getTimeRemaining()
 
+  const canDeleteReservation = () => {
+    return currentReservation.status === 'cancelled' || currentReservation.status === 'completed'
+  }
+
+  const handleDeleteReservation = async () => {
+    setIsDeleting(true)
+    try {
+      const { error } = await supabase
+        .from('reservations')
+        .delete()
+        .eq('id', currentReservation.id)
+
+      if (error) throw error
+
+      showToast.success('Reserva excluída com sucesso!')
+      onReservationDeleted?.()
+      setIsDeleteModalOpen(false)
+    } catch (error: any) {
+      console.error('Erro ao excluir reserva:', error)
+      showToast.error('Erro ao excluir reserva. Por favor, tente novamente.')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   return (
     <>
-      <div className="group bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all duration-200 border border-gray-200 hover:border-primary/30">
-        <div className="flex items-center justify-between mb-4">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <h2 className="text-xl font-semibold truncate max-w-[200px] text-gray-900">
-                  {reservation.spots[0]?.parkings?.name}
-                </h2>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{reservation.spots[0]?.parkings?.name}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
-          <span className={cn(
-            "px-3 py-1 rounded-full text-xs font-medium shadow-sm",
-            getStatusColor(reservation.status)
-          )}>
-            {getStatusText(reservation.status)}
-          </span>
-        </div>
-        
-        <div className="space-y-3 mb-4">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-2 text-sm text-gray-700">
-                  <MapPin className="h-4 w-4 flex-shrink-0 text-gray-500" />
-                  <span className="truncate">{reservation.spots[0]?.parkings?.address}</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{reservation.spots[0]?.parkings?.address}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
-          <div className="flex items-center gap-2 text-sm text-gray-700">
-            <Car className="h-4 w-4 flex-shrink-0 text-gray-500" />
-            <span>Vaga {reservation.spots[0]?.number}</span>
-          </div>
-
-          <div className="flex items-center gap-2 text-sm text-gray-700">
-            <Calendar className="h-4 w-4 flex-shrink-0 text-gray-500" />
-            <span>{formatDateTime(reservation.start_time).split(' ')[0]}</span>
-          </div>
-
-          <div className="flex items-center gap-2 text-sm text-gray-700">
-            <Clock className="h-4 w-4 flex-shrink-0 text-gray-500" />
-            <span>
-              {formatDateTime(reservation.start_time).split(' ')[1]} - {formatDateTime(reservation.end_time).split(' ')[1]}
-            </span>
-          </div>
-
-          {timeRemaining && reservation.status === 'confirmed' && (
-            <div className="mt-2 text-sm font-medium text-primary-600">
-              {timeRemaining}
+      <Card className="w-full hover:shadow-lg transition-shadow duration-200">
+        <CardContent className="p-6">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {currentReservation.spots[0]?.parkings?.name || 'Vaga'}
+              </h3>
+              <p className="text-sm text-gray-500">
+                {currentReservation.spots[0]?.parkings?.address || 'Endereço não disponível'}
+              </p>
             </div>
-          )}
-        </div>
-
-        <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-          <div className="flex flex-col">
-            <span className="text-xs text-gray-500">Valor Total</span>
-            <span className="text-lg font-semibold text-primary-600">
-              R$ {reservation.total_price?.toFixed(2) || '0.00'}
-            </span>
+            <Badge className={getStatusColor(currentReservation.status)}>
+              {getStatusText(currentReservation.status)}
+            </Badge>
           </div>
-          <Button 
-            variant="outline" 
-            onClick={() => setIsDetailsModalOpen(true)}
-            className="group-hover:bg-primary group-hover:text-white transition-colors border-gray-200 hover:border-primary"
-          >
-            <span className="mr-2">Ver Detalhes</span>
-            <ExternalLink className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center text-gray-600">
+              <Calendar className="w-4 h-4 mr-2" />
+              <span>{formatDateTime(currentReservation.start_time).split(' ')[0]}</span>
+            </div>
+            <div className="flex items-center text-gray-600">
+              <Clock className="w-4 h-4 mr-2" />
+              <span>
+                {formatDateTime(currentReservation.start_time).split(' ')[1]} - {formatDateTime(currentReservation.end_time).split(' ')[1]}
+              </span>
+            </div>
+            <div className="flex items-center text-gray-600">
+              <Car className="w-4 h-4 mr-2" />
+              <span>{currentReservation.spots[0]?.number || 'Vaga'}</span>
+            </div>
+            <div className="flex items-center text-gray-600">
+              <CreditCard className="w-4 h-4 mr-2" />
+              <span>R$ {currentReservation.total_price?.toFixed(2) || '0.00'}</span>
+            </div>
+          </div>
+
+          <div className="mt-4 flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setIsDetailsModalOpen(true)}
+            >
+              Ver Detalhes
+            </Button>
+            {canDeleteReservation() && (
+              <Button
+                variant="destructive"
+                className="flex-1"
+                onClick={() => setIsDeleteModalOpen(true)}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Excluir
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <ReservationDetailsModal
         isOpen={isDetailsModalOpen}
         onClose={() => setIsDetailsModalOpen(false)}
-        reservation={reservation}
+        reservation={currentReservation}
+        onReservationCancelled={onReservationCancelled}
       />
+
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" />
+              Confirmar Exclusão
+            </DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir esta reserva? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 pt-4">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setIsDeleteModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              onClick={handleDeleteReservation}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Excluindo...' : 'Confirmar Exclusão'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   )
 } 
