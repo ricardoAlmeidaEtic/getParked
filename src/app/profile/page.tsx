@@ -237,7 +237,9 @@ export default function ProfilePage() {
                     <div className="flex items-center justify-center gap-2">
                       <Calendar className="h-4 w-4" />
                       <p>
-                        Membro desde: <span className="font-medium text-gray-700">{profile.join_date}</span>
+                        Membro desde: <span className="font-small text-gray-700">
+                          {new Date(profile.join_date).toLocaleDateString('pt-PT')}
+                        </span>
                       </p>
                     </div>
                     <div className="flex items-center justify-center gap-2">
