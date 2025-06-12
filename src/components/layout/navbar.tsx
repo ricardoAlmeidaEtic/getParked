@@ -18,7 +18,7 @@ interface NavbarProps {
 
 export default function Navbar({ items = [] }: NavbarProps) {
   const pathname = usePathname()
-  const { user, loading } = useSupabase()
+  const { user, loading, profile } = useSupabase()
   const { handleLogout } = useLogout()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
@@ -36,6 +36,7 @@ export default function Navbar({ items = [] }: NavbarProps) {
   const authenticatedItems = [
     { href: "/map", label: "Mapa" },
     { href: "/planos", label: "Planos" },
+    { href: "/reserved-spots", label: "Minhas Reservas" },
   ]
 
   // Itens de navegação para usuários não autenticados
