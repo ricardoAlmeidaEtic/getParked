@@ -9,6 +9,8 @@ import { ReservationCard } from './components/ReservationCard'
 import { LoadingState } from './components/LoadingState'
 import { ProfileError } from './components/ProfileError'
 import { SessionExpired } from './components/SessionExpired'
+import { showToast } from '@/lib/toast'
+import { Loader2 } from 'lucide-react'
 
 interface Reservation {
   id: string
@@ -41,63 +43,64 @@ export default function ReservedSpotsPage() {
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchReservations = async () => {
-      if (!user) {
-        console.log('Usuário não autenticado')
-        return
-      }
-
-      console.log('Buscando reservas para o usuário:', user.id)
-
-      try {
-        const { data, error } = await supabase
-          .from('reservations')
-          .select(`
-            id,
-            client_id,
-            spot_id,
-            start_time,
-            end_time,
-            total_price,
-            status,
-            created_at,
-            spots (
-              id,
-              parking_id,
-              number,
-              is_available,
-              is_reserved,
-              parkings (
-                id,
-                name,
-                address,
-                hourly_rate
-              )
-            )
-          `)
-          .eq('client_id', user.id)
-          .order('created_at', { ascending: false })
-
-        if (error) {
-          console.error('Erro ao buscar reservas:', error)
-          throw error
-        }
-
-        const formattedReservations = (data || []).map(reservation => ({
-          ...reservation,
-          spots: Array.isArray(reservation.spots) ? reservation.spots : [reservation.spots]
-        })) as unknown as Reservation[]
-
-        console.log('Reservas encontradas:', formattedReservations)
-        setReservations(formattedReservations)
-      } catch (error) {
-        console.error('Erro ao buscar reservas:', error)
-      } finally {
-        setLoading(false)
-      }
+  const fetchReservations = async () => {
+    if (!user) {
+      console.log('Usuário não autenticado')
+      return
     }
 
+    console.log('Buscando reservas para o usuário:', user.id)
+
+    try {
+      const { data, error } = await supabase
+        .from('reservations')
+        .select(`
+          id,
+          client_id,
+          spot_id,
+          start_time,
+          end_time,
+          total_price,
+          status,
+          created_at,
+          spots (
+            id,
+            parking_id,
+            number,
+            is_available,
+            is_reserved,
+            parkings (
+              id,
+              name,
+              address,
+              hourly_rate
+            )
+          )
+        `)
+        .eq('client_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Erro ao buscar reservas:', error)
+        throw error
+      }
+
+      const formattedReservations = (data || []).map(reservation => ({
+        ...reservation,
+        spots: Array.isArray(reservation.spots) ? reservation.spots : [reservation.spots]
+      })) as unknown as Reservation[]
+
+      console.log('Reservas encontradas:', formattedReservations)
+      setReservations(formattedReservations)
+    } catch (error) {
+      console.error('Erro ao buscar reservas:', error)
+      showToast.error('Erro ao carregar reservas')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     fetchReservations()
   }, [user, supabase])
 
@@ -121,6 +124,17 @@ export default function ReservedSpotsPage() {
     return <ProfileError />;
   }
 
+  if (reservations.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">Minhas Reservas</h1>
+        <div className="text-center py-12">
+          <p className="text-gray-500">Você ainda não tem reservas.</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <main className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 md:px-8 py-8">
@@ -135,23 +149,16 @@ export default function ReservedSpotsPage() {
             </Button>
           </div>
 
-          {reservations.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-              <p className="text-lg text-gray-600 mb-4">Você ainda não tem nenhuma reserva.</p>
-              <Button 
-                onClick={() => router.push('/map')}
-                className="bg-primary hover:bg-primary/90"
-              >
-                Encontrar Vagas
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {reservations.map((reservation) => (
-                <ReservationCard key={reservation.id} reservation={reservation} />
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {reservations.map((reservation) => (
+              <ReservationCard 
+                key={reservation.id} 
+                reservation={reservation}
+                onReservationCancelled={fetchReservations}
+                onReservationDeleted={fetchReservations}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </main>

@@ -358,7 +358,7 @@ export default function RouteInfoModal({
                   )}
 
                   {/* Confirmation Buttons */}
-                  {isNearDestination && (
+                  {isNearDestination && spotDetails?.type === 'public' && (
                     <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
                       <h4 className="text-sm sm:text-base font-medium text-gray-900 mb-4">Você chegou ao destino! A vaga está disponível?</h4>
                       <div className="grid grid-cols-2 gap-4">
