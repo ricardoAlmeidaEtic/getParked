@@ -206,21 +206,10 @@ export default function ProfilePage() {
                     <div className="relative">
                       <Avatar className="h-24 w-24">
                         <AvatarImage src={profile.profile_image || profileImage} alt={profile.full_name} />
-                        <AvatarFallback>{profile.full_name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback>
+                          {profile.full_name.split(' ').map(name => name.charAt(0)).join('')}
+                        </AvatarFallback>
                       </Avatar>
-                      <label
-                        htmlFor="profile-image-upload"
-                        className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1.5 shadow-md cursor-pointer hover:bg-primary/90 transition-colors"
-                      >
-                        <Edit className="h-4 w-4" />
-                        <input
-                          id="profile-image-upload"
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleImageChange}
-                        />
-                      </label>
                     </div>
                   </div>
                   <CardTitle>{profile.full_name}</CardTitle>

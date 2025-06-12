@@ -2,114 +2,93 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Menu, X, User } from "lucide-react"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { useSupabase } from "@/providers/SupabaseProvider"
+import { Menu, X, LogOut, Loader2 } from "lucide-react"
+import Image from "next/image"
+import { cn } from "@/lib/utils"
+import { useLogout } from "@/hooks/useLogout"
+
+interface NavItem {
+  href: string
+  label: string
+  icon?: string
+}
 
 interface MobileNavProps {
-  items: {
-    href: string
-    label: string
-  }[]
+  items: NavItem[]
 }
 
 export default function MobileNav({ items }: MobileNavProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const { user } = useSupabase()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const pathname = usePathname()
+  const { handleLogout } = useLogout()
 
-  const closeMenu = () => setIsOpen(false)
-  const toggleMenu = () => setIsOpen(!isOpen)
+  const handleMobileLogout = async () => {
+    if (isLoggingOut) return
+    setIsLoggingOut(true)
+    await handleLogout()
+  }
 
   return (
     <div className="md:hidden">
-      {/* Menu Button */}
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 text-primary-foreground hover:bg-white/10"
-        onClick={toggleMenu}
+        className="text-primary-foreground hover:text-white"
+        onClick={() => setIsOpen(!isOpen)}
       >
-        <Menu className="h-5 w-5" />
-        <span className="sr-only">Menu</span>
+        {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
       </Button>
 
-      {/* Overlay */}
-      {isOpen && <div className="fixed inset-0 bg-black/50 z-40" onClick={closeMenu} />}
-
-      {/* Menu Panel */}
-      <div
-        className={`
-        fixed top-0 right-0 h-full w-[280px] bg-white z-50 transform transition-transform duration-300 ease-in-out
-        ${isOpen ? "translate-x-0" : "translate-x-full"}
-      `}
-      >
-        {/* Header */}
-        <div className="p-4 bg-primary flex justify-between items-center">
-          <span className="font-bold text-lg text-primary-foreground">Menu</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={closeMenu}
-            className="h-8 w-8 text-primary-foreground hover:bg-white/10"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
-
-        {/* Menu Items */}
-        <div className="flex flex-col p-4 space-y-1">
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 bg-primary shadow-lg py-4 px-6 space-y-4">
           {items.map((item, index) => (
             <Link
               key={index}
               href={item.href}
-              className="flex items-center p-3 rounded-md text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-              onClick={closeMenu}
+              className={cn(
+                "block text-primary-foreground hover:text-white font-medium transition-all duration-200 py-2 px-4 rounded-md",
+                pathname === item.href && "bg-white/10 text-white"
+              )}
+              onClick={() => setIsOpen(false)}
             >
-              {item.label}
+              <div className="flex items-center gap-3">
+                {item.icon && (
+                  <Image
+                    src={item.icon}
+                    alt={item.label}
+                    width={20}
+                    height={20}
+                    className={cn(
+                      "transition-colors duration-200",
+                      pathname === item.href ? "text-white" : "text-primary-foreground"
+                    )}
+                  />
+                )}
+                {item.label}
+              </div>
             </Link>
           ))}
-
-          {/* Separator */}
-          <div className="border-t border-gray-200 my-4"></div>
-
-          {user ? (
-            <>
-              <Link
-                href="/profile"
-                className="flex items-center p-3 rounded-md text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                onClick={closeMenu}
-              >
-                <User className="h-4 w-4 mr-2" />
-                O Meu Perfil
-              </Link>
-              <Link
-                href="/map"
-                className="flex items-center p-3 rounded-md text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                onClick={closeMenu}
-              >
-                Mapa
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link
-                href="/auth/signin"
-                className="flex items-center p-3 rounded-md text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                onClick={closeMenu}
-              >
-                Iniciar sessão
-              </Link>
-              <Link
-                href="/auth/signup"
-                className="flex items-center p-3 rounded-md text-primary font-medium hover:bg-primary/10 transition-colors duration-200"
-                onClick={closeMenu}
-              >
-                Registar-se
-              </Link>
-            </>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full bg-red-500/10 text-red-500 hover:bg-red-500/20 border-none flex items-center justify-center gap-2 px-4 transition-all duration-200"
+            onClick={handleMobileLogout}
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <LogOut className="h-4 w-4" />
+                <span>Sair</span>
+              </>
+            )}
+          </Button>
         </div>
-      </div>
+      )}
     </div>
   )
 }
