@@ -11,9 +11,7 @@ RUN npm install
 
 COPY . .
 
-# Generate Tailwind CSS
-RUN npm run build
-
 EXPOSE 3000
 
+# Start the development server
 CMD ["npm", "run", "dev"] 
