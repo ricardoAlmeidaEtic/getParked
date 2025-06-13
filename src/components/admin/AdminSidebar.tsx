@@ -14,7 +14,7 @@ export default function AdminSidebar({ user, signOut }: AdminSidebarProps) {
       <span className="text-2xl font-bold text-primary mb-10">GetParked Admin</span>
       <nav className="flex flex-col gap-4 flex-1">
         <a href="/admin/dashboard" className="text-gray-700 hover:text-primary font-medium">Administração</a>
-        <a href="/admin/owners" className="text-gray-700 hover:text-primary font-medium">Gerenciar Proprietários</a>
+        <a href="/admin/owners" className="text-gray-700 hover:text-primary font-medium">Gerenciar Estacionamentos</a>
       </nav>
       <div className="mt-auto pt-4 border-t">
         <div className="text-sm text-gray-600 mb-2">Logado como: {user.email}</div>
