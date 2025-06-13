@@ -46,10 +46,10 @@ export default function Navbar({ items = [] }: NavbarProps) {
 
   // Itens de navegação para usuários não autenticados
   const unauthenticatedItems: NavItem[] = [
-    { href: "#features", label: "Funcionalidades" },
-    { href: "#how-it-works", label: "Como Funciona" },
-    { href: "#pricing", label: "Planos" },
-    { href: "#faq", label: "FAQ" },
+    { href: "#features", label: "Funcionalidades", icon: "/icons/navbar/features.svg" },
+    { href: "#how-it-works", label: "Como Funciona", icon: "/icons/navbar/how-it-works.svg" },
+    { href: "#pricing", label: "Planos", icon: "/icons/navbar/plans.svg" },
+    { href: "#faq", label: "FAQ", icon: "/icons/navbar/faq.svg" },
   ]
 
   const navItems = items.length > 0 ? items : (user ? authenticatedItems : unauthenticatedItems)
@@ -63,30 +63,29 @@ export default function Navbar({ items = [] }: NavbarProps) {
   // Renderiza null ou um placeholder enquanto carrega
   if (loading) {
     return (
-      <header className="bg-primary py-4 px-6 sticky top-0 z-50">
+      <header className="bg-primary py-3 px-4 sm:py-4 sm:px-6 sticky top-0 z-50">
         <div className="container mx-auto flex justify-between items-center">
-          <Link href="/" className="font-bold text-xl text-primary-foreground uppercase tracking-wider">
+          <Link href="/" className="font-bold text-lg sm:text-xl text-primary-foreground uppercase tracking-wider">
             GET<span className="font-black">PARKED</span>
           </Link>
-          {/* Placeholder ou apenas o logo enquanto carrega */}
         </div>
       </header>
     )
   }
 
   return (
-    <header className="bg-primary py-4 px-6 sticky top-0 z-50 shadow-lg">
+    <header className="bg-primary py-3 px-4 sm:py-4 sm:px-6 sticky top-0 z-50 shadow-lg">
       <div className="container mx-auto flex justify-between items-center">
-        <Link href="/" className="font-bold text-xl text-primary-foreground uppercase tracking-wider hover:opacity-90 transition-opacity">
+        <Link href="/" className="font-bold text-lg sm:text-xl text-primary-foreground uppercase tracking-wider hover:opacity-90 transition-opacity">
           GET<span className="font-black">PARKED</span>
         </Link>
-        <nav className="hidden md:flex space-x-8">
+        <nav className="hidden lg:flex space-x-6 xl:space-x-8">
           {navItems.map((item, index) => (
             <Link
               key={index}
               href={item.href}
               className={cn(
-                "text-primary-foreground hover:text-white font-medium transition-all duration-200 flex items-center gap-2 px-3 py-2 rounded-md",
+                "text-primary-foreground hover:text-white font-medium transition-all duration-200 flex items-center gap-2 px-3 py-2 rounded-md text-sm xl:text-base",
                 pathname === item.href && "bg-white/10 text-white"
               )}
             >
@@ -106,14 +105,14 @@ export default function Navbar({ items = [] }: NavbarProps) {
             </Link>
           ))}
         </nav>
-        <div className="hidden md:flex items-center space-x-4">
+        <div className="hidden lg:flex items-center space-x-3 xl:space-x-4">
           {user ? (
             <>
               <Link href="/profile">
                 <Button
                   variant="outline"
                   className={cn(
-                    "bg-white text-primary-foreground border-none hover:bg-gray-100 transition-all duration-200",
+                    "bg-white text-primary-foreground border-none hover:bg-gray-100 transition-all duration-200 text-sm xl:text-base",
                     pathname === "/profile" && "ring-2 ring-white"
                   )}
                 >
@@ -126,7 +125,7 @@ export default function Navbar({ items = [] }: NavbarProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-red-500/10 text-red-500 hover:bg-red-500/20 border-none flex items-center gap-2 px-4 transition-all duration-200"
+                className="bg-red-500/10 text-red-500 hover:bg-red-500/20 border-none flex items-center gap-2 px-3 xl:px-4 transition-all duration-200 text-sm xl:text-base"
                 onClick={handleNavbarLogout}
                 disabled={isLoggingOut}
               >
@@ -145,13 +144,13 @@ export default function Navbar({ items = [] }: NavbarProps) {
               <Link href="/auth/signin">
                 <Button
                   variant="outline"
-                  className="bg-white text-primary-foreground border-none hover:bg-gray-100 transition-all duration-200"
+                  className="bg-white text-primary-foreground border-none hover:bg-gray-100 transition-all duration-200 text-sm xl:text-base"
                 >
                   Iniciar sessão
                 </Button>
               </Link>
               <Link href="/auth/signup">
-                <Button className="bg-black text-white hover:bg-gray-800 transition-all duration-200">
+                <Button className="bg-black text-white hover:bg-gray-800 transition-all duration-200 text-sm xl:text-base">
                   Registar-se
                 </Button>
               </Link>
