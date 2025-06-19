@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAdminSupabase } from '@/providers/AdminSupabaseProvider';
 import dynamic from 'next/dynamic';
-import L from 'leaflet';
 
 // Use custom SettingsMapComponent with no limitations
 const SettingsMapComponent = dynamic(() => import('./components/SettingsMapComponent'), {
@@ -33,7 +32,7 @@ export default function Settings() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isCreatingSpot, setIsCreatingSpot] = useState(true); // Set to true to enable marker interaction
-  const [userPosition, setUserPosition] = useState<L.LatLng | null>(null);
+  const [userPosition, setUserPosition] = useState<any | null>(null);
   const [settings, setSettings] = useState<ParkingSettings>({
     name: '',
     address: '',
@@ -51,9 +50,12 @@ export default function Settings() {
 
   // Set initial marker position when settings are loaded
   useEffect(() => {
-    if (settings.latitude && settings.longitude) {
-      const position = L.latLng(parseFloat(settings.latitude), parseFloat(settings.longitude));
-      handleMarkerPositionChange(position);
+    if (settings.latitude && settings.longitude && typeof window !== 'undefined') {
+      // Dynamically import Leaflet only on client side
+      import('leaflet').then((L) => {
+        const position = L.default.latLng(parseFloat(settings.latitude), parseFloat(settings.longitude));
+        handleMarkerPositionChange(position);
+      });
     }
   }, [settings.latitude, settings.longitude]);
 
@@ -173,7 +175,9 @@ export default function Settings() {
       
       // Refresh the page after 2 seconds to show updated data
       setTimeout(() => {
-        window.location.reload();
+        if (typeof window !== 'undefined') {
+          window.location.reload();
+        }
       }, 2000);
     } catch (err: any) {
       console.error('Error updating parking settings:', err);
@@ -192,7 +196,7 @@ export default function Settings() {
   };
 
   // Handle marker position changes from MapComponent
-  const handleMarkerPositionChange = (position: L.LatLng | null) => {
+  const handleMarkerPositionChange = (position: any | null) => {
     console.log('SETTINGS: handleMarkerPositionChange called with:', position);
     if (position) {
       console.log('SETTINGS: Updating settings with lat:', position.lat, 'lng:', position.lng);
@@ -209,7 +213,7 @@ export default function Settings() {
     // Do nothing for settings use case
   };
 
-  const handleUserPositionChange = (position: L.LatLng) => {
+  const handleUserPositionChange = (position: any) => {
     setUserPosition(position);
   };
 

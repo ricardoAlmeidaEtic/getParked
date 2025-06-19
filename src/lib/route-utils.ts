@@ -59,7 +59,6 @@ export class RouteManager {
         ],
         routeWhileDragging: false,
         showAlternatives: false,
-        fitSelectedRoutes: 'smart',
         lineOptions: {
           styles: [
             { color: '#3B82F6', weight: 6, opacity: 0.8 }
@@ -69,20 +68,12 @@ export class RouteManager {
         },
         router: L.Routing.osrmv1({
           serviceUrl: 'https://routing.openstreetmap.de/routed-car/route/v1',
-          timeout: 30000,
-          profile: 'driving',
-          useHints: true,
-          language: 'pt',
-          optimize: true,
-          alternatives: false,
-          continue_straight: true
+          timeout: 30000
         }),
-        createMarker: () => null, // Desativa marcadores padrão
         show: false, // Esconde o painel de instruções padrão
         addWaypoints: false, // Desativa adição de waypoints
-        draggableWaypoints: false, // Desativa arrastar waypoints
-        waypointMode: 'snap' // Melhor precisão nos waypoints
-      })
+        draggableWaypoints: false // Desativa arrastar waypoints
+      } as any)
 
       console.log('Controle de rota criado, adicionando ao mapa...')
       

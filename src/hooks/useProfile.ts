@@ -20,6 +20,10 @@ export function useProfile() {
 
     async function fetchProfile() {
       try {
+        if (!session?.user?.id) {
+          throw new Error('User session not available')
+        }
+
         const { data, error } = await supabase
           .from('profiles')
           .select('*')

@@ -26,6 +26,7 @@
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@supabase/supabase-js": "^2.49.8",
+    "@types/react-leaflet": "^2.8.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.15.0",
@@ -36,6 +37,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.5.2",
+    "react-leaflet": "^4.2.1",
     "recharts": "^2.15.3",
     "tailwind-merge": "^3.3.0",
     "tailwindcss-animate": "^1.0.7"
