@@ -30,6 +30,7 @@ interface MapComponentProps {
   onMarkerPositionChange: (position: L.LatLng | null) => void
   onMarkerCreated: () => void
   onUserPositionChange: (position: L.LatLng) => void
+  onMapReady?: (map: L.Map) => void
 }
 
 interface RouteInstruction {
@@ -44,7 +45,8 @@ export default function MapComponent({
   isCreatingSpot,
   onMarkerPositionChange,
   onMarkerCreated,
-  onUserPositionChange
+  onUserPositionChange,
+  onMapReady
 }: MapComponentProps) {
   const mapRef = useRef<L.Map | null>(null)
   const mapContainerRef = useRef<HTMLDivElement>(null)
@@ -56,6 +58,7 @@ export default function MapComponent({
   const positionUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const initialLoadDoneRef = useRef<boolean>(false)
   const markersRef = useRef<Map<string, L.Marker>>(new Map())
+  const isInitialLocationLoadRef = useRef<boolean>(true)
   const [routeInfo, setRouteInfo] = useState<{
     isOpen: boolean
     distance: number
@@ -548,21 +551,6 @@ export default function MapComponent({
 
     window.addEventListener('startNavigation', handleNavigation as EventListener)
 
-    // Aguarda o mapa carregar completamente
-    map.whenReady(() => {
-      console.log('Mapa inicializado e pronto')
-      
-      // Ensure dragging is enabled for desktop
-      if (map.dragging) {
-        map.dragging.enable()
-      }
-      
-      if (!initialLoadDoneRef.current) {
-        loadMarkers()
-        initialLoadDoneRef.current = true
-      }
-    })
-
     // Função para adicionar a localização do usuário
     const addUserLocation = (position: GeolocationPosition) => {
       if (!mapRef.current) return
@@ -572,8 +560,10 @@ export default function MapComponent({
       
       updateUserPosition(userLatLng)
 
-      if (hasPositionChangedSignificantly(userLatLng)) {
+      // Only auto-center on the initial location load
+      if (isInitialLocationLoadRef.current && hasPositionChangedSignificantly(userLatLng)) {
         mapRef.current.setView(userLatLng, 16)
+        isInitialLocationLoadRef.current = false
       }
       
       const accuracy = position.coords.accuracy
@@ -609,6 +599,14 @@ export default function MapComponent({
 
     // Aguarda o mapa carregar completamente
     map.whenReady(() => {
+      console.log('Mapa inicializado e pronto')
+      
+      // Ensure dragging is enabled for desktop
+      if (map.dragging) {
+        map.dragging.enable()
+      }
+      
+      // Initialize geolocation
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           addUserLocation,
@@ -620,36 +618,20 @@ export default function MapComponent({
       } else {
         showToast.error('Seu navegador não suporta geolocalização')
       }
-
-      // Carrega os marcadores apenas uma vez na inicialização
+      
+      // Load markers only once on initialization
       if (!initialLoadDoneRef.current) {
         loadMarkers()
         initialLoadDoneRef.current = true
       }
 
-      // Efeito para recarregar os marcadores periodicamente
+      // Periodic marker reload
       const intervalId = setInterval(() => {
         console.log('Recarregando marcadores...')
         loadMarkers()
-      }, 30000) // Recarrega a cada 30 segundos
+      }, 30000) // Reloads every 30 seconds
 
-      // Cleanup
-      return () => {
-        clearInterval(intervalId)
-      }
-    })
-
-    // Adiciona o listener para o evento de abrir o modal de reserva
-    const handleOpenReservationModal = (event: CustomEvent) => {
-      const { parkingId, parkingName } = event.detail
-      setSelectedParking({ id: parkingId, name: parkingName })
-      setIsReservationModalOpen(true)
-    }
-
-    window.addEventListener('openReservationModal', handleOpenReservationModal as EventListener)
-
-    // Add mobile-specific touch event handling
-    map.whenReady(() => {
+      // Add mobile-specific touch event handling
       const mapElement = mapContainerRef.current
       if (mapElement) {
         // Only apply touch-action on touch devices
@@ -670,7 +652,26 @@ export default function MapComponent({
           mapElement.style.touchAction = 'none'
         }
       }
+
+      // Notify parent component that map is ready
+      if (onMapReady) {
+        onMapReady(map)
+      }
+
+      // Cleanup function for the interval
+      return () => {
+        clearInterval(intervalId)
+      }
     })
+
+    // Adiciona o listener para o evento de abrir o modal de reserva
+    const handleOpenReservationModal = (event: CustomEvent) => {
+      const { parkingId, parkingName } = event.detail
+      setSelectedParking({ id: parkingId, name: parkingName })
+      setIsReservationModalOpen(true)
+    }
+
+    window.addEventListener('openReservationModal', handleOpenReservationModal as EventListener)
 
     // Cleanup
     return () => {
