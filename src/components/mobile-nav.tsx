@@ -4,10 +4,11 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Menu, X, LogOut, Loader2 } from "lucide-react"
+import { Menu, X, LogOut, Loader2, User } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { useLogout } from "@/hooks/useLogout"
+import { useSupabase } from "@/providers/SupabaseProvider"
 
 interface NavItem {
   href: string
@@ -24,6 +25,7 @@ export default function MobileNav({ items }: MobileNavProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const pathname = usePathname()
   const { handleLogout } = useLogout()
+  const { user } = useSupabase()
 
   const handleMobileLogout = async () => {
     if (isLoggingOut) return
@@ -71,22 +73,59 @@ export default function MobileNav({ items }: MobileNavProps) {
               </div>
             </Link>
           ))}
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full bg-red-500/10 text-red-500 hover:bg-red-500/20 border-none flex items-center justify-center gap-2 px-4 transition-all duration-200 text-sm sm:text-base mt-2 sm:mt-3"
-            onClick={handleMobileLogout}
-            disabled={isLoggingOut}
-          >
-            {isLoggingOut ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <>
-                <LogOut className="h-4 w-4" />
-                <span>Sair</span>
-              </>
-            )}
-          </Button>
+          
+          {/* Profile Link for authenticated users */}
+          {user && (
+            <Link
+              href="/profile"
+              className={cn(
+                "block text-primary-foreground hover:text-white font-medium transition-all duration-200 py-2 px-3 sm:py-2.5 sm:px-4 rounded-md text-sm sm:text-base border-t border-white/10 mt-2 pt-4",
+                pathname === "/profile" && "bg-white/10 text-white"
+              )}
+              onClick={() => setIsOpen(false)}
+            >
+              <div className="flex items-center gap-2 sm:gap-3">
+                <User className="h-4 w-4 sm:h-5 sm:w-5" />
+                O Meu Perfil
+              </div>
+            </Link>
+          )}
+
+          {/* Auth buttons for non-authenticated users */}
+          {!user ? (
+            <div className="border-t border-white/10 mt-2 pt-4 space-y-2">
+              <Link href="/auth/signin" onClick={() => setIsOpen(false)}>
+                <Button
+                  variant="outline"
+                  className="w-full bg-white text-primary-foreground border-none hover:bg-gray-100 transition-all duration-200 text-sm sm:text-base"
+                >
+                  Iniciar sessão
+                </Button>
+              </Link>
+              <Link href="/auth/signup" onClick={() => setIsOpen(false)}>
+                <Button className="w-full bg-black text-white hover:bg-gray-800 transition-all duration-200 text-sm sm:text-base">
+                  Registar-se
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full bg-red-500/10 text-red-500 hover:bg-red-500/20 border-none flex items-center justify-center gap-2 px-4 transition-all duration-200 text-sm sm:text-base mt-2 sm:mt-3 border-t border-white/10 pt-4"
+              onClick={handleMobileLogout}
+              disabled={isLoggingOut}
+            >
+              {isLoggingOut ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <LogOut className="h-4 w-4" />
+                  <span>Sair</span>
+                </>
+              )}
+            </Button>
+          )}
         </div>
       )}
     </div>

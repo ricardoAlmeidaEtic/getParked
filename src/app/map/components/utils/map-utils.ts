@@ -11,6 +11,7 @@ export function createPublicSpotMarker(marker: PublicSpotMarker): L.Marker {
     `,
     iconSize: [24, 24],
     iconAnchor: [12, 12],
+    popupAnchor: [0, -12],
   })
 
   const markerInstance = L.marker([marker.latitude, marker.longitude], { icon })
@@ -39,6 +40,7 @@ export function createPrivateParkingMarker(marker: PrivateParkingMarker, isPremi
     `,
     iconSize: [24, 24],
     iconAnchor: [12, 12],
+    popupAnchor: [0, -12],
   })
 
   console.log('Ícone criado:', icon)

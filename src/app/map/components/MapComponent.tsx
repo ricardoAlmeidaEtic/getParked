@@ -483,11 +483,27 @@ export default function MapComponent({
       zoomControl: false,
       minZoom: 0,
       maxZoom: 19,
-      zoomSnap: 0.5,
-      zoomDelta: 0.5,
-      wheelDebounceTime: 40,
-      preferCanvas: true,
-      maxBoundsViscosity: 1.0
+      zoomSnap: 0.25,
+      zoomDelta: 1,
+      wheelDebounceTime: 60,
+      preferCanvas: false,
+      maxBoundsViscosity: 1.0,
+      scrollWheelZoom: true,
+      touchZoom: true,
+      doubleClickZoom: true,
+      boxZoom: true,
+      keyboard: true,
+      dragging: true,
+      zoomAnimation: true,
+      zoomAnimationThreshold: 4,
+      fadeAnimation: true,
+      markerZoomAnimation: true,
+      transform3DLimit: 8388608,
+      worldCopyJump: false,
+      // Smoother dragging settings
+      inertia: true,
+      inertiaDeceleration: 3000,
+      inertiaMaxSpeed: 1500
     }).setView([0, 0], 16)
     mapRef.current = map
 
@@ -501,31 +517,18 @@ export default function MapComponent({
       detectRetina: true,
       crossOrigin: true,
       errorTileUrl: 'https://tile.openstreetmap.org/0/0/0.png',
-      updateWhenIdle: true,
-      updateWhenZooming: false,
-      keepBuffer: 2
+      updateWhenIdle: false,
+      updateWhenZooming: true,
+      keepBuffer: 3,
+      // Smoother tile loading
+      noWrap: false,
+      opacity: 1,
+      zIndex: 1
     }).addTo(map)
 
-    // Adiciona tratamento de erros para o tile layer
+    // Simplified tile error handling
     tileLayer.on('tileerror', (e) => {
-      console.error('Erro ao carregar tile:', e);
-      // Tenta recarregar o tile
-      const tile = e.tile;
-      if (tile) {
-        tile.src = tile.src;
-      }
-    });
-
-    // Adiciona evento para recarregar tiles quando necessário
-    map.on('zoomend', () => {
-      if (map.getZoom() >= 19) {
-        tileLayer.redraw();
-      }
-    });
-
-    // Adiciona evento para limpar cache de tiles
-    map.on('moveend', () => {
-      tileLayer.redraw();
+      console.warn('Tile loading error:', e);
     });
 
     // Adiciona controles de zoom
@@ -548,6 +551,12 @@ export default function MapComponent({
     // Aguarda o mapa carregar completamente
     map.whenReady(() => {
       console.log('Mapa inicializado e pronto')
+      
+      // Ensure dragging is enabled for desktop
+      if (map.dragging) {
+        map.dragging.enable()
+      }
+      
       if (!initialLoadDoneRef.current) {
         loadMarkers()
         initialLoadDoneRef.current = true
@@ -638,6 +647,30 @@ export default function MapComponent({
     }
 
     window.addEventListener('openReservationModal', handleOpenReservationModal as EventListener)
+
+    // Add mobile-specific touch event handling
+    map.whenReady(() => {
+      const mapElement = mapContainerRef.current
+      if (mapElement) {
+        // Only apply touch-action on touch devices
+        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+          mapElement.style.touchAction = 'pan-x pan-y'
+          
+          // Add passive event listeners for better scroll performance on mobile
+          mapElement.addEventListener('touchstart', (e) => {
+            // Allow page scroll if user is trying to scroll vertically outside map interaction
+            e.stopPropagation()
+          }, { passive: true })
+          
+          mapElement.addEventListener('touchend', (e) => {
+            e.stopPropagation()
+          }, { passive: true })
+        } else {
+          // Desktop: ensure no touch-action interference
+          mapElement.style.touchAction = 'none'
+        }
+      }
+    })
 
     // Cleanup
     return () => {

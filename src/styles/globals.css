@@ -78,6 +78,17 @@
 
   html {
     scroll-behavior: smooth;
+    /* Enable momentum scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+    /* Improve scroll performance */
+    overscroll-behavior: auto;
+  }
+
+  body {
+    /* Prevent pull-to-refresh on mobile when scrolling */
+    overscroll-behavior-y: contain;
+    /* Enable momentum scrolling */
+    -webkit-overflow-scrolling: touch;
   }
 }
 

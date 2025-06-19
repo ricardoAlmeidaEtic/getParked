@@ -3,14 +3,28 @@
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   z-index: 1;
   position: relative;
+  
+  /* Optimized performance settings */
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   transform: translateZ(0);
-  will-change: transform;
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-  image-rendering: pixelated;
-  transition: transform 0.3s ease-out;
+  will-change: auto;
+  image-rendering: auto;
+  
+  /* Default: Allow all interactions for desktop */
+  touch-action: auto;
+  
+  /* Desktop: Allow normal mouse interaction */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  
+  /* Scroll behavior improvements */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Controles do mapa */
@@ -54,20 +68,29 @@
 .custom-marker {
   background: none !important;
   border: none !important;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+  /* Ensure proper positioning during zoom */
+  position: absolute !important;
 }
 
 .custom-marker div {
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
+  position: relative;
+  transform: translate3d(0, 0, 0);
+  /* Prevent sub-pixel rendering issues */
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
 .custom-marker div:hover {
-  transform: scale(1.15) translateY(-2px);
+  transform: scale(1.15) translateY(-2px) translate3d(0, 0, 0);
   box-shadow: 0 6px 16px rgba(0,0,0,0.2);
 }
 
@@ -177,25 +200,20 @@
 .leaflet-pane {
   z-index: 400;
   transform: translateZ(0);
-  will-change: transform;
-  transition: transform 0.3s ease-out;
+  will-change: auto;
 }
 
 .leaflet-tile {
-  will-change: transform;
+  will-change: auto;
   transform: translateZ(0);
   backface-visibility: hidden;
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-  image-rendering: pixelated;
-  transition: opacity 0.2s ease;
+  image-rendering: auto;
 }
 
 .leaflet-tile-container {
-  will-change: transform;
+  will-change: auto;
   transform: translateZ(0);
   backface-visibility: hidden;
-  transition: transform 0.3s ease-out;
 }
 
 /* Melhorias para carregamento de tiles */
@@ -221,39 +239,34 @@
 }
 
 /* Garante que o mapa permaneça visível em zoom alto */
-.leaflet-pane {
-  z-index: 400;
-  transform: translateZ(0);
-  will-change: transform;
-  transition: transform 0.3s ease-out;
-}
-
 .leaflet-overlay-pane {
   z-index: 500;
   transform: translateZ(0);
-  will-change: transform;
-  transition: transform 0.3s ease-out;
 }
 
 .leaflet-marker-pane {
   z-index: 600;
-  transform: translateZ(0);
+  transform: translate3d(0, 0, 0);
   will-change: transform;
-  transition: transform 0.3s ease-out;
+}
+
+/* Ensure Leaflet markers maintain position during zoom */
+.leaflet-marker-icon {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  /* Prevent rendering issues during zoom */
+  image-rendering: auto;
+  backface-visibility: hidden;
 }
 
 .leaflet-tooltip-pane {
   z-index: 700;
   transform: translateZ(0);
-  will-change: transform;
-  transition: transform 0.3s ease-out;
 }
 
 .leaflet-popup-pane {
   z-index: 800;
   transform: translateZ(0);
-  will-change: transform;
-  transition: transform 0.3s ease-out;
 }
 
 /* Ajuste para o painel de informações da rota */
@@ -716,4 +729,38 @@
   stroke: #3B82F6 !important;
   stroke-width: 4 !important;
   stroke-opacity: 0.8 !important;
-} 
+}
+
+/* Mobile scrolling improvements */
+@media (max-width: 768px) and (pointer: coarse) {
+  .leaflet-container {
+    /* Touch event handling for mobile only */
+    touch-action: pan-x pan-y pinch-zoom !important;
+  }
+  
+  /* Improve touch responsiveness */
+  .leaflet-control-zoom a {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+}
+
+/* Mobile touch devices only - prevent scroll capture when user is scrolling past map */
+@media (pointer: coarse) {
+  .leaflet-container:not(.leaflet-dragging):not(.leaflet-zoom-anim) {
+    touch-action: auto;
+  }
+}
+
+/* Desktop - ensure normal mouse interaction */
+@media (pointer: fine) {
+  .leaflet-container {
+    touch-action: auto !important;
+  }
+}
+
+/* Improve scrolling on the page containing the map */
+body:has(.leaflet-container) {
+  overscroll-behavior: auto;
+  -webkit-overflow-scrolling: touch;
+}
