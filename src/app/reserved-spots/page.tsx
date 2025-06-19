@@ -106,11 +106,18 @@ export default function ReservedSpotsPage() {
 
   if (!user) {
     return (
-      <main className="flex min-h-screen flex-col">
-        <div className="flex-1 pt-24 pb-16 px-4 md:px-8 flex flex-col items-center justify-center">
-          <h1 className="text-2xl font-bold mb-4">Sessão expirada</h1>
-          <p className="mb-6">Por favor, inicie sessão novamente para ver os seus lugares reservados.</p>
-          <Button onClick={() => router.push("/auth/signin")}>Iniciar sessão</Button>
+      <main className="flex min-h-screen flex-col bg-gray-50">
+        <div className="flex-1 pt-24 pb-16 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center">
+          <div className="max-w-md mx-auto text-center">
+            <h1 className="text-xl sm:text-2xl font-bold mb-4 text-gray-900">Sessão expirada</h1>
+            <p className="mb-6 text-sm sm:text-base text-gray-600">Por favor, inicie sessão novamente para ver os seus lugares reservados.</p>
+            <Button 
+              onClick={() => router.push("/auth/signin")}
+              className="bg-primary hover:bg-primary/90 text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6"
+            >
+              Iniciar sessão
+            </Button>
+          </div>
         </div>
       </main>
     );
@@ -126,30 +133,40 @@ export default function ReservedSpotsPage() {
 
   if (reservations.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Minhas Reservas</h1>
-        <div className="text-center py-12">
-          <p className="text-gray-500">Você ainda não tem reservas.</p>
+      <main className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6 text-center sm:text-left">Minhas Reservas</h1>
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-sm sm:text-base">Você ainda não tem reservas.</p>
+              <Button 
+                onClick={() => router.push('/map')}
+                className="mt-4 bg-primary hover:bg-primary/90"
+              >
+                Encontrar Vagas
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
     )
   }
 
   return (
     <main className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 md:px-8 py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Minhas Reservas</h1>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 text-center sm:text-left">Minhas Reservas</h1>
             <Button 
               onClick={() => router.push('/map')}
-              className="bg-primary hover:bg-primary/90"
+              className="bg-primary hover:bg-primary/90 text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6"
             >
               Encontrar Vagas
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {reservations.map((reservation) => (
               <ReservationCard 
                 key={reservation.id} 

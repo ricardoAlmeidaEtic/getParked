@@ -141,50 +141,50 @@ export function ReservationDetailsModal({ isOpen, onClose, reservation, onReserv
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-gray-900">
+            <DialogTitle className="text-xl sm:text-2xl font-bold text-gray-900 pr-8">
               Detalhes da Reserva
             </DialogTitle>
           </DialogHeader>
 
-          <div className="mt-6 space-y-6">
+          <div className="mt-4 sm:mt-6 space-y-4 sm:space-y-6">
             {/* Status e ID da Reserva */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
               <div className="flex items-center gap-2">
                 {getStatusIcon(reservation.status)}
-                <span className="font-medium text-gray-900">
+                <span className="font-medium text-gray-900 text-sm sm:text-base">
                   {getStatusText(reservation.status)}
                 </span>
               </div>
-              <span className="text-sm text-gray-500">
+              <span className="text-xs sm:text-sm text-gray-500">
                 ID: {reservation.id.slice(0, 8)}...
               </span>
             </div>
 
             {/* Informações do Estacionamento */}
-            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-              <h3 className="font-semibold text-gray-900">
+            <div className="bg-gray-50 rounded-lg p-3 sm:p-4 space-y-3">
+              <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
                 {reservation.spots[0]?.parkings?.name}
               </h3>
-              <div className="flex items-center gap-2 text-gray-600">
-                <MapPin className="h-4 w-4 flex-shrink-0" />
-                <span>{reservation.spots[0]?.parkings?.address}</span>
+              <div className="flex items-start gap-2 text-gray-600">
+                <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <span className="text-xs sm:text-sm break-words">{reservation.spots[0]?.parkings?.address}</span>
               </div>
               <div className="flex items-center gap-2 text-gray-600">
                 <Car className="h-4 w-4 flex-shrink-0" />
-                <span>Vaga {reservation.spots[0]?.number}</span>
+                <span className="text-xs sm:text-sm">Vaga {reservation.spots[0]?.number}</span>
               </div>
             </div>
 
             {/* Detalhes da Reserva */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-gray-600">
                   <Calendar className="h-4 w-4 flex-shrink-0" />
-                  <span>Data</span>
+                  <span className="text-xs sm:text-sm">Data</span>
                 </div>
-                <p className="font-medium text-gray-900">
+                <p className="font-medium text-gray-900 text-sm sm:text-base">
                   {formatDate(reservation.start_time)}
                 </p>
               </div>
@@ -192,9 +192,9 @@ export function ReservationDetailsModal({ isOpen, onClose, reservation, onReserv
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-gray-600">
                   <Clock className="h-4 w-4 flex-shrink-0" />
-                  <span>Horário</span>
+                  <span className="text-xs sm:text-sm">Horário</span>
                 </div>
-                <p className="font-medium text-gray-900">
+                <p className="font-medium text-gray-900 text-sm sm:text-base break-all">
                   {formatTime(reservation.start_time)} - {formatTime(reservation.end_time)}
                 </p>
               </div>
@@ -202,9 +202,9 @@ export function ReservationDetailsModal({ isOpen, onClose, reservation, onReserv
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-gray-600">
                   <Clock className="h-4 w-4 flex-shrink-0" />
-                  <span>Duração</span>
+                  <span className="text-xs sm:text-sm">Duração</span>
                 </div>
-                <p className="font-medium text-gray-900">
+                <p className="font-medium text-gray-900 text-sm sm:text-base">
                   {calculateDuration()}
                 </p>
               </div>
@@ -212,29 +212,29 @@ export function ReservationDetailsModal({ isOpen, onClose, reservation, onReserv
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-gray-600">
                   <CreditCard className="h-4 w-4 flex-shrink-0" />
-                  <span>Valor/Hora</span>
+                  <span className="text-xs sm:text-sm">Valor/Hora</span>
                 </div>
-                <p className="font-medium text-gray-900">
+                <p className="font-medium text-gray-900 text-sm sm:text-base">
                   R$ {reservation.spots[0]?.parkings?.hourly_rate.toFixed(2)}
                 </p>
               </div>
             </div>
 
             {/* Valor Total */}
-            <div className="border-t pt-4">
+            <div className="border-t pt-3 sm:pt-4">
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Valor Total</span>
-                <span className="text-xl font-bold text-primary-600">
+                <span className="text-gray-600 text-sm sm:text-base">Valor Total</span>
+                <span className="text-lg sm:text-xl font-bold text-primary-600">
                   R$ {reservation.total_price?.toFixed(2) || '0.00'}
                 </span>
               </div>
             </div>
 
             {/* Botões de Ação */}
-            <div className="flex gap-3 pt-4">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4">
               <Button
                 variant="outline"
-                className="flex-1"
+                className="flex-1 text-sm sm:text-base py-2 sm:py-3"
                 onClick={onClose}
               >
                 Fechar
@@ -242,14 +242,14 @@ export function ReservationDetailsModal({ isOpen, onClose, reservation, onReserv
               {canCancelReservation() && (
                 <Button
                   variant="destructive"
-                  className="flex-1"
+                  className="flex-1 text-sm sm:text-base py-2 sm:py-3"
                   onClick={handleCancelClick}
                 >
                   Cancelar Reserva
                 </Button>
               )}
               <Button
-                className="flex-1 bg-primary hover:bg-primary/90"
+                className="flex-1 bg-primary hover:bg-primary/90 text-sm sm:text-base py-2 sm:py-3"
                 onClick={() => {
                   onClose()
                   router.push(`/map?spot=${reservation.spots[0]?.id}`)

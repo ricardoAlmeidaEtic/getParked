@@ -132,46 +132,46 @@ export function ReservationCard({ reservation, onReservationCancelled, onReserva
   return (
     <>
       <Card className="w-full hover:shadow-lg transition-shadow duration-200">
-        <CardContent className="p-6">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+            <div className="flex-1">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                 {currentReservation.spots[0]?.parkings?.name || 'Vaga'}
               </h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-xs sm:text-sm text-gray-500 break-words">
                 {currentReservation.spots[0]?.parkings?.address || 'Endereço não disponível'}
               </p>
             </div>
-            <Badge className={getStatusColor(currentReservation.status)}>
+            <Badge className={cn("text-xs", getStatusColor(currentReservation.status))}>
               {getStatusText(currentReservation.status)}
             </Badge>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             <div className="flex items-center text-gray-600">
-              <Calendar className="w-4 h-4 mr-2" />
-              <span>{formatDateTime(currentReservation.start_time).split(' ')[0]}</span>
+              <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
+              <span className="text-xs sm:text-sm">{formatDateTime(currentReservation.start_time).split(' ')[0]}</span>
             </div>
             <div className="flex items-center text-gray-600">
-              <Clock className="w-4 h-4 mr-2" />
-              <span>
+              <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
+              <span className="text-xs sm:text-sm break-all">
                 {formatDateTime(currentReservation.start_time).split(' ')[1]} - {formatDateTime(currentReservation.end_time).split(' ')[1]}
               </span>
             </div>
             <div className="flex items-center text-gray-600">
-              <Car className="w-4 h-4 mr-2" />
-              <span>{currentReservation.spots[0]?.number || 'Vaga'}</span>
+              <Car className="w-4 h-4 mr-2 flex-shrink-0" />
+              <span className="text-xs sm:text-sm">{currentReservation.spots[0]?.number || 'Vaga'}</span>
             </div>
             <div className="flex items-center text-gray-600">
-              <CreditCard className="w-4 h-4 mr-2" />
-              <span>R$ {currentReservation.total_price?.toFixed(2) || '0.00'}</span>
+              <CreditCard className="w-4 h-4 mr-2 flex-shrink-0" />
+              <span className="text-xs sm:text-sm font-medium">R$ {currentReservation.total_price?.toFixed(2) || '0.00'}</span>
             </div>
           </div>
 
-          <div className="mt-4 flex gap-2">
+          <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
-              className="flex-1"
+              className="flex-1 text-xs sm:text-sm py-2"
               onClick={() => setIsDetailsModalOpen(true)}
             >
               Ver Detalhes
@@ -179,10 +179,10 @@ export function ReservationCard({ reservation, onReservationCancelled, onReserva
             {canDeleteReservation() && (
               <Button
                 variant="destructive"
-                className="flex-1"
+                className="flex-1 text-xs sm:text-sm py-2"
                 onClick={() => setIsDeleteModalOpen(true)}
               >
-                <Trash2 className="w-4 h-4 mr-2" />
+                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 Excluir
               </Button>
             )}

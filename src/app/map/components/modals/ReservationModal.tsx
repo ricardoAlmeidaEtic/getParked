@@ -221,39 +221,39 @@ export function ReservationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] mx-4 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Reservar Vaga</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl">Reservar Vaga</DialogTitle>
+          <DialogDescription className="text-sm sm:text-base">
             Preencha os detalhes da sua reserva para o estacionamento {parkingName}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleReservation}>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="start_time" className="text-right">
+            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-2 sm:gap-4">
+              <Label htmlFor="start_time" className="text-sm sm:text-right font-medium">
                 Horário de Início
               </Label>
               <Input
                 id="start_time"
                 name="start_time"
                 type="time"
-                className="col-span-3"
+                className="sm:col-span-3"
                 value={formData.start_time}
                 onChange={handleInputChange}
                 required
                 min={new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="end_time" className="text-right">
+            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-2 sm:gap-4">
+              <Label htmlFor="end_time" className="text-sm sm:text-right font-medium">
                 Horário de Fim
               </Label>
               <Input
                 id="end_time"
                 name="end_time"
                 type="time"
-                className="col-span-3"
+                className="sm:col-span-3"
                 value={formData.end_time}
                 onChange={handleInputChange}
                 required
@@ -261,21 +261,21 @@ export function ReservationModal({
               />
             </div>
             {totalPrice > 0 && (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-2 sm:gap-4">
+                <Label className="text-sm sm:text-right font-medium">
                   Valor Total
                 </Label>
-                <div className="col-span-3 text-lg font-semibold text-green-600">
+                <div className="sm:col-span-3 text-lg font-semibold text-green-600">
                   €{totalPrice.toFixed(2)}
                 </div>
               </div>
             )}
           </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={onClose} className="text-sm sm:text-base py-2 sm:py-3">
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSaving}>
+            <Button type="submit" disabled={isSaving} className="text-sm sm:text-base py-2 sm:py-3">
               {isSaving ? (
                 <>
                   <span className="animate-spin mr-2">⏳</span> Salvando...
